@@ -21,7 +21,7 @@ class Tools:
     class Valves(BaseModel):
         shuffle_options: bool = Field(
             default=True,
-            description="Wether or not to use the choice order from the llm or to make it random",
+            description="Whether or not to use the choice order from the llm or to make it random",
         )
 
     async def generate_quiz(self, title, questions_and_answers: list[dict]):
