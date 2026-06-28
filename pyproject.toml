@@ -1,0 +1,17 @@
+[project]
+name = "openquizui"
+version = "0.1.0"
+description = "A simple multiple choice questions tool/function for displaying quizzes with OpenWebUi. "
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "pytest~=8.4.1",
+    "pytest-asyncio==1.4.0",
+    "pydantic==2.12.5",
+    "fastapi==0.135.1",
+    "pytest-asyncio==1.4.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]

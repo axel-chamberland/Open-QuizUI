@@ -3,10 +3,8 @@ title: QuizUI
 author: Axel Chamberland
 git_url: https://github.com/axel-chamberland/OpenQuizUI
 description: Converts a multiple choice quiz messages into an interactive HTML quiz
-version: 2.0
+version: 1.0
 """
-
-from sys import exception
 
 from pydantic import BaseModel, Field
 from fastapi.responses import HTMLResponse
@@ -21,7 +19,7 @@ class Action:
 
         # TODO: Option to define a custom format?
 
-        # TODO: Option to show explaination? Would be hard to implement
+        # TODO: Option to show explanation? Would be hard to implement
 
         shuffle_choices: bool = Field(
             default=True,
@@ -39,6 +37,7 @@ class Action:
             default="standard",
             description="How the answer key is presented. Options: 'standard' (A header followed by a numbered list of correct answers with a,b,c,d,...)",
         )
+        # TODO: implement this
         dark_mode: int = Field(
             default=-1,
             description="-1: Let browser decide. 0: Light mode. 1: Enable dark mode",
@@ -52,26 +51,24 @@ class Action:
     ):
 
         try:
-            debug = False
+            # Take latest message.
+            # Contrary to the API endpoint which has output field, the body element only contains
+            # the raw content with reasoning blocks included.
+            # Verify with:
+            # prints = []
+            # for k, v in body["messages"][0].items():
+            #     prints.append((k, type(v)))
+            # raise Exception(f"{prints}")
 
-            # Take latest message
             text = body["messages"][-1]["content"]
 
-            # Remove html tags, reasoning blocks and other artefacts
+            # Remove HTML tags, reasoning blocks and other artifacts
             text = clean_text(text)
-
-            html = text
-            if debug:
-                return HTMLResponse(
-                    content=html, headers={"Content-Disposition": "inline"}
-                )
 
             if not text:
                 raise ValueError("No quiz content received")
 
-            title, questions = parse_quiz(
-                text, self.valves.question_format, self.valves.answer_format
-            )
+            title, questions = parse_quiz(text)
 
             if self.valves.shuffle_choices:
                 shuffle_options(questions)
@@ -102,49 +99,50 @@ class Action:
 
 def parse_quiz(
     text: str,
-    question_mode,
-    answer_,
-):
+) -> tuple[str, list[dict]]:
 
     lines = [line.strip() for line in text.split("\n")]
 
-    if question_mode == "standard":
-        questions, first_question_line = question_parser_standard(lines)
+    # -------------------------
+    # Parse questions
+    # -------------------------
 
-    else:
-        questions, first_question_line = ([], 0)
+    questions, first_question_line = question_parser_standard(lines)
 
     # -------------------------
     # Attempt to Infer Title
     # -------------------------
 
-    title = infer_title(lines, first_question_line)
+    title: str = infer_title(lines, first_question_line)
 
-    # -------------------------
-    # Parse questions
-    # -------------------------
     # -------------------------
     # Parse answer key (anywhere in the text)
     # -------------------------
 
-    # raise Exception(f"{len(questions)}")
+    # We use various degrees of detection.
+    # The first one is a numbered list, if not found, try the next pattern.
+    # Works both if answers are below each questions or in an answer key.
+    # The current regex may be too permissive, but we verify answer counts after to make up for that fact.
+    # This needs polishing, as some could be redundant.
+    # \*{0,2} is used to allow bold characters.
+    # Asterix could also be stripped them from lines to simplify the regex.
     answer_patterns = [
-        # 1. B
-        r"^\s*\d+\s*[\.\):-]\s*\**([A-Z])\**\b",
+        # Numbered list: 1. B
+        r"^\s*\*{0,2}\d+\s*\*{0,2}\s*[\.\):-]\s*\*{0,2}([A-Z])\*{0,2}\b",
+        # Réponse : B / Answer: B / Correct answer: B or even **Answer** or **R:** or R:
+        r"^\s*\*{0,2}(?:réponse|answer|correct answer|r|a)\s*\*{0,2}\s*[:\-]?\s*\*{0,2}\s*([A-Z])\b",
+        # In Bullet Point
+        r"^\s*[*\-]?\s*\*{0,2}\s*(?:r|answer|réponse|correct answer)\s*\*{0,2}\s*[:\-]?\s*\*{0,2}\s*([A-Z])\b",
+        # **Q1 Answer:** **c) ...** / **Q1 Answer:** **c)** trailing text
+        r"^\s*\*{0,2}\s*q\s*\d+\s*(?:r|answer|réponse|correct answer)\s*\*{0,2}\s*[:\-]?\s*\*{0,2}\s*\*{0,2}\s*([A-Z])\b",
         # Question 1 : B
         r"^\s*question\s*\d+.*?([A-Z])\b",
-        # Réponse : B / Answer: B / Correct answer: B or even **Answer** or **R:** or R:
-        r"^\s*(?:\*{0,2}\s*?:réponse|answer|correct answer|r|a)\s*\*{0,2}\s*[:\-]?\s*([A-Z])\b",
-        # In Bullet Point
-        r"^\s*[*\-]?\s*\*{0,2}\s*(?:r|answer|réponse|correct answer)\s*\*{0,2}\s*[:\-]?\s*\*{0,2}\s*([A-Z])",
-        # **Q1 Answer:** **c) ...** / **Q1 Answer:** **c)** trailing text
-        r"^\s*\*{0,2}\s*q\s*\d+\s*answer\s*\*{0,2}\s*:?\s*\*{0,2}\s*\*{0,2}\s*([A-Z])\b",
     ]
 
     for pattern in answer_patterns:
         matches = [m.group(1).upper() for m in re.finditer(pattern, text, re.I | re.M)]
 
-        if len(matches) == len(questions):
+        if len(matches) == len(questions):  # Verification step
             for q, letter in zip(questions, matches):
                 q["correct_index"] = ord(letter) - ord("A")
             break
