@@ -3,9 +3,9 @@ This is tool / action function for displaying multiple choice quizzes inside Ope
 As Frontend and Backend are seperate, it can easily be adapted to work outside Open WebUI.
 
 ## Usage
-There are too options:
-- Paste the tool code in your tools inside Open WebUI.
-- Paste the function code in your administrator functions.
+There are two options:
+- Put the tool code in Workspace > Tools > New Tool.
+- Put the function code in Admin Panel > Functions > New Function.
 While the tool will work, I recommend using the action function since it is easier for an LLM to write quizzes how he was trained then by using a specific structures format via tool calling.
 
 The function is triggered by pressing the action button under an LLM's message.
