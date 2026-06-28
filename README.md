@@ -13,7 +13,7 @@ While the tool will work, I recommend using the action function since it is easi
 
 The function is triggered by pressing the action button under an LLM's message.
 
-## Recommended Models
+## Recommendations
 
 - Any model will work. However, some models such as Qwen3.5 9B make formatting mistakes and doubt themselves, causing duplications. Gemma usually has better formatting.
 - Currently, answers keys in a markdown table are not supported. Most other formatting should work (adjust your prompt as needed).
