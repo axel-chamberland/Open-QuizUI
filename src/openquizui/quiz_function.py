@@ -2,7 +2,7 @@
 title: QuizUI
 author: Axel Chamberland
 git_url: https://github.com/axel-chamberland/OpenQuizUI
-description: Converts a multiple choice quiz messages into an interactive HTML quiz
+description: Converts a multiple choice quiz message into an interactive HTML quiz
 version: 1.0
 """
 
