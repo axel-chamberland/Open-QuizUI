@@ -29,19 +29,11 @@ class Action:
             default=False,
             description="Disabled by default for privacy and performance. Enable LaTeX/math rendering with MathJax. Requires Internet access to load the MathJax library from a CDN. When disabled or offline, LaTeX expressions are displayed as plain text.",
         )
-        question_format: str = Field(
-            default="standard",
-            description="Format of the questions. Options: 'standard' (flexible detection)",
-        )
-        answer_format: str = Field(
-            default="standard",
-            description="How the answer key is presented. Options: 'standard' (A header followed by a numbered list of correct answers with a,b,c,d,...)",
-        )
         # TODO: implement this
-        dark_mode: int = Field(
-            default=-1,
-            description="-1: Let browser decide. 0: Light mode. 1: Enable dark mode",
-        )
+        # dark_mode: int = Field(
+        #     default=-1,
+        #     description="-1: Let browser decide. 0: Light mode. 1: Enable dark mode",
+        # )
 
     def __init__(self):
         self.valves = self.Valves()
