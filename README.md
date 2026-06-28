@@ -6,7 +6,7 @@ As Frontend and Backend are seperate, it can easily be adapted to work outside O
 There are two options:
 - Put the tool code in Workspace > Tools > New Tool.
 - Put the function code in Admin Panel > Functions > New Function.
-While the tool will work, I recommend using the action function since it is easier for an LLM to write quizzes how he was trained then by using a specific structures format via tool calling.
+While the tool will work, I recommend using the action function since it is easier for an LLM to write quizzes naturally then by using a specific structure format via tool calling.
 
 The function is triggered by pressing the action button under an LLM's message.
 
