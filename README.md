@@ -6,6 +6,9 @@ As Frontend and Backend are seperate, it can easily be adapted to work outside O
 There are two options:
 - Put the tool code in Workspace > Tools > New Tool.
 - Put the function code in Admin Panel > Functions > New Function.
+
+> For the UI to render LaTeX with MathJax, you must turn it on in the settings (gear icon)
+
 While the tool will work, I recommend using the action function since it is easier for an LLM to write quizzes naturally then by using a specific structure format via tool calling.
 
 The function is triggered by pressing the action button under an LLM's message.
