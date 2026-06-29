@@ -39,8 +39,8 @@ def test_each_case(file):
         f.write(json.dumps({"expected": output}))
 
     assert output[0] == expected[0], (
-        f"\nDifferent title recieveed. FILE: {file}\nEXPECTED: {expected}\nGOT: {output}. \n This may not be a bad thing: verify the title."
+        f"\nDifferent title recieved. FILE: {file}\nEXPECTED: {expected[0]}\nGOT: {output[0]}. \n This may not be a bad thing: verify the title."
     )
     assert output[1] == expected[1], (
-        f"\nDifferent questions recieved. FILE: {file}\nEXPECTED: {expected}\nGOT: {output}. \n."
+        f"\nDifferent questions recieved. FILE: {file}\nEXPECTED: {expected[1]}\nGOT: {output[1]}. \n."
     )

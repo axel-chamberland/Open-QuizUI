@@ -129,10 +129,15 @@ def parse_quiz(
         r"^\s*\*{0,2}\s*q\s*\d+\s*(?:r|answer|réponse|correct answer)\s*\*{0,2}\s*[:\-]?\s*\*{0,2}\s*\*{0,2}\s*([A-Z])\b",
         # Question 1 : B
         r"^\s*question\s*\d+.*?([A-Z])\b",
+        # 1.A, 2.B, 3.C, 4.B, 5.A,
+        r"\b\d+\s*\*{0,2}\s*\.\s*\*{0,2}\s*([A-Z])(?=\s*(?:,|$))",
     ]
 
     for pattern in answer_patterns:
-        matches = [m.group(1).upper() for m in re.finditer(pattern, text, re.I | re.M)]
+        matches = [
+            m.group(1).upper()
+            for m in re.finditer(pattern, text, re.IGNORECASE | re.MULTILINE)
+        ]
 
         if len(matches) == len(questions):  # Verification step
             for q, letter in zip(questions, matches):
@@ -144,7 +149,7 @@ def parse_quiz(
     return title, questions
 
 
-def question_parser_standard(lines):
+def question_parser_standard(lines) -> tuple[list[dict], int | None]:
     """
     Formats:
     #Question 1: ...
@@ -281,6 +286,19 @@ def infer_title(lines, before_line):
     """
     candidates = lines if before_line is None else lines[:before_line]
 
+    bad_section_patterns = [
+        # explicit section markers
+        r"^partie\b",
+        r"^section\b",
+        r"^chapter\b",
+        r"^chapitre\b",
+        # roman/numbered section headers like "Partie A", "Section 1"
+        r"^(partie|section|chapter|chapitre)\s+[a-z0-9]+",
+        # generic labeled subsections like "A - something", "1 - something"
+        r"^[a-z]\s*-\s+",
+        r"^\d+\s*-\s+",
+    ]
+
     def is_tag_like(s):
         return bool(re.fullmatch(r"[<\[].*[>\]]", s))
 
@@ -293,26 +311,40 @@ def infer_title(lines, before_line):
         heading_match = re.match(r"^#{1,6}\s*(.+)$", s)
         if heading_match:
             heading_text = heading_match.group(1).strip(" *_")
-            if heading_text and "question" not in heading_text.lower():
+
+            if heading_text and not any(
+                re.search(p, heading_text.lower()) for p in bad_section_patterns
+            ):
                 scored.append((3, heading_text))
                 continue
 
         quote_match = re.search(r'["“]([^"”]{6,80})["”]', s)
         if quote_match:
             quoted = quote_match.group(1).strip(" *_")
-            if "question" not in quoted.lower():
+            if not any(re.search(p, quoted.lower()) for p in bad_section_patterns):
                 scored.append((2, quoted))
                 continue
 
         bold_match = re.fullmatch(r"\*\*(.+)\*\*[:.]?", s)
         if bold_match:
             bold_text = bold_match.group(1).strip(" *_")
-            if bold_text and len(bold_text) > 5 and "question" not in bold_text.lower():
+
+            if (
+                bold_text
+                and len(bold_text) > 5
+                and not any(
+                    re.search(p, bold_text.lower()) for p in bad_section_patterns
+                )
+            ):
                 scored.append((2, bold_text))
                 continue
 
         clean = re.sub(r"[#*_`>-]", "", s).strip()
-        if clean and len(clean) > 5 and "question" not in clean.lower():
+        if (
+            clean
+            and len(clean) > 5
+            and not any(re.search(p, clean.lower()) for p in bad_section_patterns)
+        ):
             scored.append((1, clean))
 
     if not scored:
