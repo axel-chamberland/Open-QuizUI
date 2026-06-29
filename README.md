@@ -2,6 +2,23 @@
 This is tool / action function for displaying multiple choice quizzes inside Open WebUI.
 As Frontend and Backend are seperate, it can easily be adapted to work outside Open WebUI.
 
+## Example
+<details open>
+<summary>Dark Mode</summary>
+<p align="center">
+  <img src="examples/dark_mode.png" width="80%" />
+</p>
+</details>
+
+<details>
+<summary>Light Mode</summary>
+
+<p align="center">
+  <img src="examples/light_mode.png" width="80%" />
+</p>
+
+</details>
+
 ## Usage
 There are two options:
 - Put the tool code in Workspace > Tools > New Tool.
