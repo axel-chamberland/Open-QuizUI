@@ -1,5 +1,5 @@
 # QuizUI
-This is tool / action function for displaying multiple choice quizzes inside Open WebUI.
+This is a tool / action function for displaying multiple choice quizzes inside Open WebUI.
 As Frontend and Backend are seperate, it can easily be adapted to work outside Open WebUI.
 
 ## Example
