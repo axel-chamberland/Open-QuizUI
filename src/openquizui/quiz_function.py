@@ -120,6 +120,8 @@ def parse_quiz(
     # Asterix could also be stripped them from lines to simplify the regex.
     answer_patterns = [
         # Numbered list: 1. B
+        r"^\s*\*{0,2}\d+\s*\*{0,2}\s*[\.\):-]\s*\*{0,2}([A-Z])\*{0,2}(?=\s*(?:,|$))",
+        # Numbered list: 1. B (less strict)
         r"^\s*\*{0,2}\d+\s*\*{0,2}\s*[\.\):-]\s*\*{0,2}([A-Z])\*{0,2}\b",
         # Réponse : B / Answer: B / Correct answer: B or even **Answer** or **R:** or R:
         r"^\s*\*{0,2}(?:réponse|answer|correct answer|r|a)\s*\*{0,2}\s*[:\-]?\s*\*{0,2}\s*([A-Z])\b",
@@ -129,7 +131,7 @@ def parse_quiz(
         r"^\s*\*{0,2}\s*q\s*\d+\s*(?:r|answer|réponse|correct answer)\s*\*{0,2}\s*[:\-]?\s*\*{0,2}\s*\*{0,2}\s*([A-Z])\b",
         # Question 1 : B
         r"^\s*question\s*\d+.*?([A-Z])\b",
-        # 1.A, 2.B, 3.C, 4.B, 5.A,
+        # Numbered bulk: 1.A, 2.B, 3.C, 4.B, 5.A,
         r"\b\d+\s*\*{0,2}\s*\.\s*\*{0,2}\s*([A-Z])(?=\s*(?:,|$))",
     ]
 

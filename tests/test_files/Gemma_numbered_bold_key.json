@@ -1,0 +1,258 @@
+{
+    "content": "<details type=\"reasoning\" done=\"true\" duration=\"30\">\n<summary>Thought for 30 seconds</summary>\n&gt; A PDF document titled &quot;Graphes I&quot; (Course notes on Graphs).\n&gt; Create a 25-question Multiple Choice Quiz (MCQ) with an answer key based *only* on the provided context.\n&gt; The response must be in the same language as the query (English), but the content is in French, so the questions/answers can be English or French. I&#x27;/ll stick to English for the prompt/questions since the user asked in English.\n&gt; \n&gt;     *   Definition of a graph: $G = (V, E)$, vertices $V$, edges $E$.\n&gt;     *   Sub-graph definition: $G&#x27; = (V&#x27;, E&#x27;)$ is a sub-graph if $V&#x27; \\subset V$ and $E&#x27; \\subset E$ and all edges in $E&#x27;$ connect vertices in $V&#x27;$.\n&gt;     *   Path: Sequence of vertices/edges. Length can be number of vertices or edges.\n&gt;     *   Cycle: Path where start vertex = end vertex. Loop is a cycle of length 1.\n&gt;     *   Acyclic graph: Contains no cycles.\n&gt;     *   Connected (non-oriented) graph: At least one path between every pair of vertices.\n&gt;     *   Connected component: Maximal connected subgraph.\n&gt;     *   Strongly connected (oriented) graph: Path from $a$ to $b$ AND $b$ to $a$ for all pairs $(a, b)$.\n&gt;     *   Edge Label/Weight: Property of an edge.\n&gt;     *   Degree in non-oriented graphs: Number of edges connected to vertex $v$.\n&gt;     *   In-degree and Out-degree (oriented): Distinction between incoming and outgoing edges.\n&gt;     *   Tree: Special case of non-oriented graph, single connected component, $|V| = |E| + 1$, acyclic, has a root.\n&gt;     *   Forest: Collection of trees.\n&gt;     *   Representations:\n&gt;         *   Adjacency list (good for sparse graphs $|E| \\ll |V|^2$).\n&gt;         *   Adjacency matrix (good for dense graphs $|E| \\approx |V|^2$, memory $\\Theta(|V|^2)$).\n&gt;         *   Implementation details (Dictionary of lists, Dictionary of dictionaries, etc.).\n&gt;     *   Traversals:\n&gt;         *   DFS (Depth-First Search): Recursive approach, time complexity $O(n+m)$. Used to find paths or cycles.\n&gt;         *   BFS (Breadle-First Search): Queue-based approach, time complexity $O(n+m)$. Finds shortest path in terms of number of edges.\n&gt; \n&gt;     1.  Definition of a graph.\n&gt;     2.  Sub-graph condition.\n&gt;     3.  Path definition.\n&gt;     4.  Cycle definition.\n&gt;     5.  Loop/Self-loop definition.\n&gt;     6.  Acyclic graph property.\n&gt;     7.  Connectedness (non-oriented).\n&gt;     8.  Connected component definition.\n&gt;     9.  Strongly connected (oriented) definition.\n&gt;     10. Edge weights/labels.\n&gt;     11. Vertex degree (non-oriented).\n&gt;     12. In-degree vs Out-degree (oriented).\n&gt;     13. Tree property ($|V|$ vs $|E|$).\n&gt;     14. Tree properties (acyclic, connected).\n&gt;     15. Forest definition.\n&gt;     16. Representation: Adjacency List usage (Sparse graphs).\n&gt;     17. Representation: Adjacency Matrix usage (Dense graphs).\n&gt;     18. Memory complexity of Adjacency Matrix.\n&gt;     19. BFS mechanism (Queue/File).\n&gt;     20. DFS mechanism (Recursion).\n&gt;     21. Time complexity of DFS.\n&gt;     22. Time complexity of BFS.\n&gt;     23. Use case for BFS (Shortest path by edges).\n&gt;     24. Use case for DFS (Finding cycles).\n&gt;     25. Tree definition (Rooted/Single component).\n&gt; \n&gt;     *   *Self-Correction during drafting*: Ensure each question has 4 options and only one correct answer.\n&gt; \n&gt;     *(Drafting questions internally...)*\n&gt;     Q1: What is the formal representation of a graph? $G=(V,E)$.\n&gt;     Q2: A sub-graph requires which conditions? $V&#x27; \\subset V$ and $E&#x27; \\subset E$.\n&gt;     Q3: What is a cycle where start = end? Cycle.\n&gt;     Q4: Length 1 cycle called? Loop.\n&gt;     ...and so on.\n&gt; \n&gt;     *   Check against the provided text to ensure no &quot;outside&quot; info is used unless it&#x27;s general knowledge (though I will stick strictly to the PDF).\n&gt;     *   Verify the answer key matches the questions.\n</details>\n\nHere is a 25-question multiple-choice quiz based on the provided lecture notes on Graphs, followed by an answer key.\n\n### **Graph Theory Quiz**\n\n**1. Formally, a graph $G$ is represented by which of the following?**\nA) $G = (V, E)$ where $V$ is edges and $E$ is vertices\nB) $G = (E, V)$ where $E$ is edges and $V$ is vertices\nC) $G = (V, E)$ where $V$ is a set of vertices (nodes) and $E$ is a set of edges (arcs)\nD) $G = (S, A)$ where $S$ is a set of paths and $A$ is a set of cycles\n\n**2. What condition must be met for a graph $G' = (V', E')$ to be considered a sub-graph of $G = (V, E)$?**\nA) $V' \\subset V$ and $E' \\subset E$, and every edge in $E'$ must connect vertices within $V'$\nB) $V' = V$ and $E' \\subset E$\nC) $V' \\subset V$ and $E' = E$\nD) $V' \\cap E' = \\emptyset$\n\n**3. In a graph, what is a \"path\" (chemin)?**\nA) A single edge connecting two vertices\nB) A sequence of vertices and/or edges\nC) A closed loop that returns to the start\nD) The total number of edges in the graph\n\n**4. What is a \"cycle\" in a graph?**\nA) Any path that contains at least one edge\nB) A path where the starting vertex is the same as the arrival vertex\nC) A path that cannot visit the same vertex twice\nD) A type of graph that has no edges\n\n**5. What is a \"loop\" (boucle)?**\nA) A cycle of length 2\nB) An edge where the start and end vertices are the same\nC) A path that visits every vertex in the graph\nD) A graph with no edges\n\n**6. A graph is \"acyclic\" if:**\nA) It contains at least one cycle\nB) Every vertex has a degree of 0\nC) It contains no cycles\nD) It is a directed graph\n\n**7. An undirected graph is considered \"connected\" (connexe) if:**\nA) There is at least one path between every pair of vertices\nB) There are no edges in the graph\nC) Every vertex has an equal number of incoming and outgoing edges\nD) The graph contains a cycle\n\n**8. What is a \"connected component\" (composante connexe)?**\nA) A sub-graph that is not connected\nB) A maximal connected sub-graph\nC) A single vertex with no edges\nD) The largest cycle in a graph\n\n**9. An oriented (directed) graph is \"strongly connected\" if:**\nA) There is a path from $a$ to $b$ for every pair of vertices $(a, b)$\nB) There is only a path from $a$ to $b$, but not necessarily from $b$ to $a$\nC) The graph has no cycles\nD) The number of edges is equal to the number of vertices\n\n**10. What does an \"edge label\" (étiquette) indicate?**\nA) The name of the vertex\nB) A property or weight of an edge\nC) The degree of a vertex\nD) The total number of paths in a graph\n\n**11. In an undirected graph, what is the \"degree\" of a vertex $v$?**\nA) The number of edges connected to $v$\nB) The number of vertices connected to $v$\nC) The number of paths passing through $v$\nD) The weight of the edges connected to $v$\n\n**12. In an oriented (directed) graph, how is degree distinguished?**\nA) Between total degree and edge weight\nB) Between incoming degree ($\\text{deg\\_in}$) and outgoing degree ($\\text{════}\\text{deg\\_out}$)\nC) Between the number of vertices and the number of edges\nD) Between cycles and paths\n\n**13. Which of the following is a specific type of undirected, acyclic graph with exactly one connected component?**\nA) Forest\nB) Cycle\nC) Tree (Arbre)\nD) Complete Graph\n\n**14. In a tree, what is the relationship between the number of vertices ($|V|$) and the number of edges ($|E|$)?**\nA) $|V| = |E|$\nB) $|V| = |E| + 1$\nC) $|V| = |E| - 1$\nD) $|V| < |E|$\n\n**15. A \"forest\" (forêt) is defined as:**\nA) A single tree with many edges\nB) A collection of trees\nC) A graph that contains cycles\nD) A directed graph with no incoming edges\n\n**1/6. Which representation is best suited for \"sparse\" graphs (where $|E| \\ll |V|^2$)?**\nA) Adjacency Matrix\nB) Adjacency List\nC) 2D Array of booleans\nD) Dictionary of Dictionaries\n\n**17. Which representation is best suited for \"dense\" graphs (where $|E| \\approx |V|^2$)?**\nA) Adjacency List\nB) Adjacency Matrix\nC) Tree structure\nD) Forest structure\n\n**18. What is the memory complexity of using an Adjacency Matrix?**\nA) $\\Theta(|V|)$\nB) $\\Theta(|E|)$\nC) $\\Theta(|V|^2)$\nD) $\\Theta(n + m)$\n\n**19. The Depth-First Search (DFS) algorithm is typically implemented using which mechanism?**\nA) A Queue (File)\nB) Recursion\nC) A Stack of edges only\nD) A Dictionary of weights\n\n**20. What is the time complexity of the Depth-First Search (DFS) algorithm?**\nA) $O(|V|)$\nB) $O(|E|)$\nC) $O(|V| + |E|)$\nD) $O(|V|^2)$\n\n**21. The Breadth-First Search (BFS) algorithm is implemented using which data structure?**\nA) A Queue (File)\nB) Recursion\nC) A Tree\nD) A List of edges\n\n**22. What is the primary use case for Breadth-First Search (BFS) mentioned in the notes?**\nA) Finding a cycle in the graph\nB) Finding the shortest path between two vertices with the minimum number of edges\nC) Calculating the weight of all edges\nD) Sorting the vertices by degree\n\n**23. What is the time complexity of the Breadth-First Search (BFS) algorithm?**\nA) $O(|V|)$\nB) $O(|E|)$\nC) $O(|V| + |E|)$\nD) $\\Theta(|V|^2)$\n\n**24. Which algorithm is specifically mentioned as being able to \"find a cycle in the graph\"?**\nA) Breadth-First Search (BFS)\nB) Depth-First Search (DFS)\nC) Adjacency Matrix construction\nD) Tree traversal only\n\n**25. In an adjacency list representation, how are outgoing edges stored for a vertex?**\nA) As a single integer value\nB) Within a list of edges (`Liste<Arete>`) associated with that vertex\nC) In a global 2D array\nD) As part of the total number of vertices\n\n***\n\n### **Answer Key**\n\n1.  **C**\n2.  **A**\n3.  **B**\n4.  **B**\n5.  **B**\n6.  **C**\n7.  **A**\n8.  **B**\n9.  **A**\n10. **B**\n11. **A**\n12. **B**\n13. **C**\n14. **B**\n15. **B**\n16. **B**\n17. **B**\n18. **C**\n19. **B**\n20. **C**\n21. **A**\n22. **B**\n23. **C**\n24. **B**\n25. **B**",
+    "expected": [
+        "Graph Theory Quiz",
+        [
+            {
+                "question": "Formally, a graph $G$ is represented by which of the following?",
+                "options": [
+                    "$G = (V, E)$ where $V$ is edges and $E$ is vertices",
+                    "$G = (E, V)$ where $E$ is edges and $V$ is vertices",
+                    "$G = (V, E)$ where $V$ is a set of vertices (nodes) and $E$ is a set of edges (arcs)",
+                    "$G = (S, A)$ where $S$ is a set of paths and $A$ is a set of cycles"
+                ],
+                "correct_index": 2
+            },
+            {
+                "question": "What condition must be met for a graph $G' = (V', E')$ to be considered a sub-graph of $G = (V, E)$?",
+                "options": [
+                    "$V' \\subset V$ and $E' \\subset E$, and every edge in $E'$ must connect vertices within $V'$",
+                    "$V' = V$ and $E' \\subset E$",
+                    "$V' \\subset V$ and $E' = E$",
+                    "$V' \\cap E' = \\emptyset$"
+                ],
+                "correct_index": 0
+            },
+            {
+                "question": "In a graph, what is a \"path\" (chemin)?",
+                "options": [
+                    "A single edge connecting two vertices",
+                    "A sequence of vertices and/or edges",
+                    "A closed loop that returns to the start",
+                    "The total number of edges in the graph"
+                ],
+                "correct_index": 1
+            },
+            {
+                "question": "What is a \"cycle\" in a graph?",
+                "options": [
+                    "Any path that contains at least one edge",
+                    "A path where the starting vertex is the same as the arrival vertex",
+                    "A path that cannot visit the same vertex twice",
+                    "A type of graph that has no edges"
+                ],
+                "correct_index": 1
+            },
+            {
+                "question": "What is a \"loop\" (boucle)?",
+                "options": [
+                    "A cycle of length 2",
+                    "An edge where the start and end vertices are the same",
+                    "A path that visits every vertex in the graph",
+                    "A graph with no edges"
+                ],
+                "correct_index": 1
+            },
+            {
+                "question": "A graph is \"acyclic\" if",
+                "options": [
+                    "It contains at least one cycle",
+                    "Every vertex has a degree of 0",
+                    "It contains no cycles",
+                    "It is a directed graph"
+                ],
+                "correct_index": 2
+            },
+            {
+                "question": "An undirected graph is considered \"connected\" (connexe) if",
+                "options": [
+                    "There is at least one path between every pair of vertices",
+                    "There are no edges in the graph",
+                    "Every vertex has an equal number of incoming and outgoing edges",
+                    "The graph contains a cycle"
+                ],
+                "correct_index": 0
+            },
+            {
+                "question": "What is a \"connected component\" (composante connexe)?",
+                "options": [
+                    "A sub-graph that is not connected",
+                    "A maximal connected sub-graph",
+                    "A single vertex with no edges",
+                    "The largest cycle in a graph"
+                ],
+                "correct_index": 1
+            },
+            {
+                "question": "An oriented (directed) graph is \"strongly connected\" if",
+                "options": [
+                    "There is a path from $a$ to $b$ for every pair of vertices $(a, b)$",
+                    "There is only a path from $a$ to $b$, but not necessarily from $b$ to $a$",
+                    "The graph has no cycles",
+                    "The number of edges is equal to the number of vertices"
+                ],
+                "correct_index": 0
+            },
+            {
+                "question": "What does an \"edge label\" (\u00e9tiquette) indicate?",
+                "options": [
+                    "The name of the vertex",
+                    "A property or weight of an edge",
+                    "The degree of a vertex",
+                    "The total number of paths in a graph"
+                ],
+                "correct_index": 1
+            },
+            {
+                "question": "In an undirected graph, what is the \"degree\" of a vertex $v$?",
+                "options": [
+                    "The number of edges connected to $v$",
+                    "The number of vertices connected to $v$",
+                    "The number of paths passing through $v$",
+                    "The weight of the edges connected to $v$"
+                ],
+                "correct_index": 0
+            },
+            {
+                "question": "In an oriented (directed) graph, how is degree distinguished?",
+                "options": [
+                    "Between total degree and edge weight",
+                    "Between incoming degree ($\\text{deg\\_in}$) and outgoing degree ($\\text{\u2550\u2550\u2550\u2550}\\text{deg\\_out}$)",
+                    "Between the number of vertices and the number of edges",
+                    "Between cycles and paths"
+                ],
+                "correct_index": 1
+            },
+            {
+                "question": "Which of the following is a specific type of undirected, acyclic graph with exactly one connected component?",
+                "options": [
+                    "Forest",
+                    "Cycle",
+                    "Tree (Arbre)",
+                    "Complete Graph"
+                ],
+                "correct_index": 2
+            },
+            {
+                "question": "In a tree, what is the relationship between the number of vertices ($|V|$) and the number of edges ($|E|$)?",
+                "options": [
+                    "$|V| = |E|$",
+                    "$|V| = |E| + 1$",
+                    "$|V| = |E| - 1$",
+                    "$|V| < |E|$"
+                ],
+                "correct_index": 1
+            },
+            {
+                "question": "A \"forest\" (for\u00eat) is defined as",
+                "options": [
+                    "A single tree with many edges",
+                    "A collection of trees",
+                    "A graph that contains cycles",
+                    "A directed graph with no incoming edges"
+                ],
+                "correct_index": 1
+            },
+            {
+                "question": "/6. Which representation is best suited for \"sparse\" graphs (where $|E| \\ll |V|^2$)?",
+                "options": [
+                    "Adjacency Matrix",
+                    "Adjacency List",
+                    "2D Array of booleans",
+                    "Dictionary of Dictionaries"
+                ],
+                "correct_index": 1
+            },
+            {
+                "question": "Which representation is best suited for \"dense\" graphs (where $|E| \\approx |V|^2$)?",
+                "options": [
+                    "Adjacency List",
+                    "Adjacency Matrix",
+                    "Tree structure",
+                    "Forest structure"
+                ],
+                "correct_index": 1
+            },
+            {
+                "question": "What is the memory complexity of using an Adjacency Matrix?",
+                "options": [
+                    "$\\Theta(|V|)$",
+                    "$\\Theta(|E|)$",
+                    "$\\Theta(|V|^2)$",
+                    "$\\Theta(n + m)$"
+                ],
+                "correct_index": 2
+            },
+            {
+                "question": "The Depth-First Search (DFS) algorithm is typically implemented using which mechanism?",
+                "options": [
+                    "A Queue (File)",
+                    "Recursion",
+                    "A Stack of edges only",
+                    "A Dictionary of weights"
+                ],
+                "correct_index": 1
+            },
+            {
+                "question": "What is the time complexity of the Depth-First Search (DFS) algorithm?",
+                "options": [
+                    "$O(|V|)$",
+                    "$O(|E|)$",
+                    "$O(|V| + |E|)$",
+                    "$O(|V|^2)$"
+                ],
+                "correct_index": 2
+            },
+            {
+                "question": "The Breadth-First Search (BFS) algorithm is implemented using which data structure?",
+                "options": [
+                    "A Queue (File)",
+                    "Recursion",
+                    "A Tree",
+                    "A List of edges"
+                ],
+                "correct_index": 0
+            },
+            {
+                "question": "What is the primary use case for Breadth-First Search (BFS) mentioned in the notes?",
+                "options": [
+                    "Finding a cycle in the graph",
+                    "Finding the shortest path between two vertices with the minimum number of edges",
+                    "Calculating the weight of all edges",
+                    "Sorting the vertices by degree"
+                ],
+                "correct_index": 1
+            },
+            {
+                "question": "What is the time complexity of the Breadth-First Search (BFS) algorithm?",
+                "options": [
+                    "$O(|V|)$",
+                    "$O(|E|)$",
+                    "$O(|V| + |E|)$",
+                    "$\\Theta(|V|^2)$"
+                ],
+                "correct_index": 2
+            },
+            {
+                "question": "Which algorithm is specifically mentioned as being able to \"find a cycle in the graph\"?",
+                "options": [
+                    "Breadth-First Search (BFS)",
+                    "Depth-First Search (DFS)",
+                    "Adjacency Matrix construction",
+                    "Tree traversal only"
+                ],
+                "correct_index": 1
+            },
+            {
+                "question": "In an adjacency list representation, how are outgoing edges stored for a vertex?",
+                "options": [
+                    "As a single integer value",
+                    "Within a list of edges (`Liste<Arete>`) associated with that vertex",
+                    "In a global 2D array",
+                    "As part of the total number of vertices"
+                ],
+                "correct_index": 1
+            }
+        ]
+    ]
+}
