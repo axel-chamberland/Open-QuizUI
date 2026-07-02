@@ -133,7 +133,8 @@ def wrap_html(quiz, enable_mathjax: bool):
   <div id="navigation">
     <button id="prevButton" onclick="prevQuestion()">< Prev</button>
     <button id="revealButton" onclick="revealAnswer()">Reveal Answer</button>
-    <button id="maximize" onclick="toggleFullscreen()">Toggle Fullscreen</button>
+    <button id="maximizeButton" onclick="toggleFullscreen()">Toggle Fullscreen</button>
+    <button id="downloadButton" onclick="downloadQuizHTML()">Save</button>
     <button id="nextButton" onclick="nextQuestion()">Next ></button>
   </div>
   <p id="question"></p>
@@ -597,7 +598,22 @@ function revealAnswer() {
         }
     });
 }
+function downloadQuizHTML(filename = "quiz.html") {
+    // Get full document HTML
+    const html = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
 
+    const blob = new Blob([html], { type: "text/html" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
 
 
 loadMathJax().then(() => {
