@@ -63,20 +63,19 @@ class Action:
             text = body["messages"][-1]["content"]
 
             if text == "":
-                # Alternative: Import correct chat from backend function
+                # Alternative: get correct chat from backend
                 from open_webui.models.chats import (
                     Chats,
                 )  # full path: open-webui/backend/open_webui/models/chats
 
                 chat_id = body["chat_id"]
                 msg_id = body["messages"][-1]["id"]
-                # raise Exception(f"{body['messages'][-1]}")
                 message = await Chats.get_message_by_id_and_message_id(chat_id, msg_id)
 
                 text = message["output"][-1]["content"][-1]["text"] if message else ""
 
-                # Remove HTML tags, reasoning blocks and other artifacts
-                text = clean_text(text)
+            # Remove HTML tags, reasoning blocks and other artifacts
+            text = clean_text(text)
 
             if not text:
                 raise ValueError("No quiz content received")
