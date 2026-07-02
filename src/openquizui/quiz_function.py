@@ -48,14 +48,35 @@ class Action:
             # the raw content with reasoning blocks included.
             # Verify with:
             # prints = []
-            # for k, v in body["messages"][0].items():
+            # for k, v in body["messages"][-1].items():
             #     prints.append((k, type(v)))
             # raise Exception(f"{prints}")
 
+            # return HTMLResponse(
+            #     content=f"<code>{json.dumps(body)}</code>",
+            #     headers={"Content-Disposition": "inline"},
+            # )
+
+            # Bugged as of 10.0:
+            #             text = body["messages"][1]["content"]
+
             text = body["messages"][-1]["content"]
 
-            # Remove HTML tags, reasoning blocks and other artifacts
-            text = clean_text(text)
+            if text == "":
+                # Alternative: Import correct chat from backend function
+                from open_webui.models.chats import (
+                    Chats,
+                )  # full path: open-webui/backend/open_webui/models/chats
+
+                chat_id = body["chat_id"]
+                msg_id = body["messages"][-1]["id"]
+                # raise Exception(f"{body['messages'][-1]}")
+                message = await Chats.get_message_by_id_and_message_id(chat_id, msg_id)
+
+                text = message["output"][-1]["content"][-1]["text"] if message else ""
+
+                # Remove HTML tags, reasoning blocks and other artifacts
+                text = clean_text(text)
 
             if not text:
                 raise ValueError("No quiz content received")
@@ -131,8 +152,8 @@ def parse_quiz(
         r"^\s*\*{0,2}\s*q\s*\d+\s*(?:r|answer|réponse|correct answer)\s*\*{0,2}\s*[:\-]?\s*\*{0,2}\s*\*{0,2}\s*([A-Z])\b",
         # Question 1 : B
         r"^\s*question\s*\d+.*?([A-Z])\b",
-        # Numbered bulk: 1.A, 2.B, 3.C, 4.B, 5.A,
-        r"\b\d+\s*\*{0,2}\s*\.\s*\*{0,2}\s*([A-Z])(?=\s*(?:,|$))",
+        # Numbered bulk: 1.A, 2.B, 3.C, 4.B, 5.A and optional pipe and ) delimiters
+        r"\b\d+\s*\*{0,2}\s*[\.\):-]\s*\*{0,2}\s*([A-Z])\s*\)?(?=\s*(?:\||,|$|\s+\d+\s*[\.\):-]))",
     ]
 
     for pattern in answer_patterns:
@@ -146,7 +167,9 @@ def parse_quiz(
                 q["correct_index"] = ord(letter) - ord("A")
             break
     else:
-        raise ValueError("Failed to parse answers")
+        raise ValueError(
+            "Failed to parse answers" + str(len(matches)) + str(len(questions))
+        )
 
     return title, questions
 
@@ -166,7 +189,7 @@ def question_parser_standard(lines) -> tuple[list[dict], int | None]:
     """
 
     question_re = re.compile(
-        r"(?:#{1,6}\s*)?"  # Optional Markdown Header (#) or bold (**)
+        r"(?:#{1,6}\s*)?"  # Optional Markdown Header (#)
         r"(?:\*\*)?"  # Optional bold question (**)
         r"(?:(?:question|q(?![a-zÀ-ÿ])|bonus)\s*([0-9]+)?|(\*\*[0-9]+))"  # The Label/Number
         r"\s*[:.\-]?\s*"  # Separator (: . -)
@@ -299,17 +322,30 @@ def infer_title(lines, before_line):
         # generic labeled subsections like "A - something", "1 - something"
         r"^[a-z]\s*-\s+",
         r"^\d+\s*-\s+",
+        # Sub heading
     ]
 
     def is_tag_like(s):
         return bool(re.fullmatch(r"[<\[].*[>\]]", s))
 
+    def is_subsection_under_title(lines, i):
+        # check previous non-empty line
+        j = i - 1
+        while j >= 0 and not lines[j].strip():
+            j -= 1
+
+        if j < 0:
+            return False
+
+        return re.match(r"^#{1,3}\s+", lines[j]) and re.match(r"^#{4,}\s+", lines[i])
+
     scored = []  # (score, title_text)
-    for line in candidates:
+    for i, line in enumerate(candidates):
         s = line.strip()
         if not s or is_tag_like(s):
             continue
-
+        if is_subsection_under_title(candidates, i):
+            continue
         heading_match = re.match(r"^#{1,6}\s*(.+)$", s)
         if heading_match:
             heading_text = heading_match.group(1).strip(" *_")
@@ -444,7 +480,8 @@ def wrap_html(quiz, enable_mathjax: bool):
   <div id="navigation">
     <button id="prevButton" onclick="prevQuestion()">< Prev</button>
     <button id="revealButton" onclick="revealAnswer()">Reveal Answer</button>
-    <button id="maximize" onclick="toggleFullscreen()">Toggle Fullscreen</button>
+    <button id="maximizeButton" onclick="toggleFullscreen()">Toggle Fullscreen</button>
+    <button id="downloadButton" onclick="downloadQuizHTML()">Save</button>
     <button id="nextButton" onclick="nextQuestion()">Next ></button>
   </div>
   <p id="question"></p>
@@ -908,7 +945,22 @@ function revealAnswer() {
         }
     });
 }
+function downloadQuizHTML(filename = "quiz.html") {
+    // Get full document HTML
+    const html = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
 
+    const blob = new Blob([html], { type: "text/html" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
 
 
 loadMathJax().then(() => {

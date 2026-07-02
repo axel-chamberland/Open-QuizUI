@@ -1,0 +1,508 @@
+{
+    "content": "Voici un quiz complet de 50 questions basé sur les documents fournis, structuré pour tester vos connaissances, des bases aux concepts les plus complexes.\n\n---\n\n### Quiz : Arbres de Recouvrement à Coût Minimal (ARM) et Tas de Fibonacci\n\n#### Niveau : Facile (Bases et Définitions)\n**Question 1: Qu'est-ce qu'un arbre de recouvrement ?**\na) Un graphe cyclique avec des arêtes de poids égal\nb) Un sous-graphe connexe et acyclique\nc) Un ensemble de sommets sans aucune arête\nd) Un graphe dont le nombre d'arêtes est supérieur au nombre de sommets\n\n**Question 2: Quelle est la relation entre le nombre de sommets (V) et le nombre d'arêtes (E) dans un arbre ?**\na) V = E\nb) V = E + 1\nc) V = E - 1\nd) V < E\n\n**Question 3: Dans un arbre de recouvrement, existe-t-il un chemin reliant toutes les paires de sommets ?**\na) Oui, par définition de la connexité\nb) Non, car il est acyclique\nc) Seulement si le graphe est complet\nd) Uniquement si l'arbre est biparti\n\n**Question 4: Que signifie \"acyclique\" pour un graphe ?**\na) Qu'il ne contient pas de sommets isolés\nb) Qu'il ne contient pas de cycles (boucles fermées)\nc) Qu'il possède un seul chemin entre deux sommets\nd) Qu'il est composé d'un seul composant connexe\n\n**Question 5: Quel est l'objectif principal d'un ARM ?**\na) Maximiser la somme des coûts des arêtes\nb) Minimiser la somme des coûts des arêtes sélectionnées\nc) Créer le plus grand nombre de cycles possible\nd) Connecter uniquement les sommets de faible degré\n\n**Question 6: La solution d'un problème ARM est-elle toujours unique ?**\na) Oui, toujours\nb) Non, elle n'est pas nécessairement unique\nc) Seulement si tous les poids sont différents\nd) Uniquement dans les graphes complets\n\n**Question 7: Dans une application de télécommunications (ARM), que représentent les arêtes ?**\na) Les sites à desservir\nb) Le coût d'installation des liens de transmission\nc) La redondance du réseau\nd) Le nombre de nœuds dans le réseau\n\n**Question 8: Quel est l'un des principes fondamentaux de l'application ARM en télécoms mentionné ?**\na) Maximiser la redondance\nb) L'absence de redondance (si on en ajoutait, ce ne serait plus un ARM)\nc) Utiliser uniquement des liens coûteux\nd) Ignorer le coût des arêtes\n\n**Question 9: Quel algorithme est utilisé pour construire l'ARM en partant d'un sommet arbitraire ?**\na) Kruskal\nb) Prim-Jarnik\nc) Dijkstra\nd) Bellman-Ford\n\n**Question 10: Quelle structure de données est nécessaire pour implémenter efficacement l'algorithme de Prim ?**\na) Une liste simple\nb) Un tableau statique\nc) Une file prioritaire (monceau/heap)\nd) Un arbre binaire de recherche\n\n#### Niveau : Moyen (Algorithmes et Complexité)\n**Question 11: Dans l'algorithme de Prim, que contient l'ensemble $V'$ au début ?**\na) Tous les sommets du graphe\nb) Un sommet choisi arbitrairement\nc) Un ensemble vide\nd) Toutes les arêtes du graphe\n\n**Question 12: Comment l'algorithme de Prim choisit-il la prochaine arête à ajouter ?**\na) En choisissant l'arête la plus longue\nb) En choisissant l'arête $(s_1, s'\\_2)$ telle que $s_1 \\in V'$ et $s_2 \\notin V'$ avec le coût minimal\nc) En choisissant une arête au hasard\nd) En suivant l'ordre alphabétique des sommets\n\n**Question 13: Quelle est la complexité de l'algorithme de Prim utilisant un tas binaire ordinaire ?**\na) $O(V + E)$\nb) $O(E \\log V)$\nc) $O(V^2)$\nd) $O(E \\cdot V)$\n\n**Question 14: Quelle est la première étape de l'algorithme de Kruskal ?**\na) Choisir un sommet arbitraire\nb) Créer des ensembles $\\{v\\}$ pour chaque sommet\nc) Trier les arêtes par poids\nd) Supprimer les cycles\n\n**Question 15: Dans l'algorithme de Kruskal, que fait la structure $Q$ (FilePrioritaire) ?**\na) Elle stocke les sommets\nb) Elle contient les arêtes classées par leur poids\nc) Elle vérune si un cycle est formé\nd) Elle calcule le coût total\n\n**Question 16: Quelle condition Kruskal vérifie-t-il avant d'ajouter une arête $(v_1, v_2)$ ?**\na) Si $v_1$ et $v_2$ sont déjà dans le même ensemble $C(v)$\nb) Si $v_1 \\neq v_2$\nc) Si $C(v_1) \\neq C(v_2)$ (les sommets ne sont pas dans le même composant)\nd) Si l'arête est la plus légère du graphe\n\n**Question(17): À quoi sert l'opération \"fusionner $C(v_1)$ et $C(v_2)$\" dans Kruskal ?**\na) À augmenter le nombre d'arêtes de l'ARM\nb) À mettre à jour les ensembles de composants pour éviter les cycles\nc) À supprimer les sommets isolés\nd) À recalculer les poids des arêtes\n\n**Question 18: Quelle est la complexité de l'algorithme de Kruskal avec un tas binaire ?**\na) $O(E \\log V)$\nb) $O(V \\log E)$\nc) $O(E + V)$\nd) $O(E^2)$\n\n**Question 19: Que se passe-t-il si l'on utilise un tas de Fibonacci avec Prim ?**\na) La complexité reste $O(E \\log V)$\nb) La complexité devient $O(E + V \\log V)$\nc) L'algorithme ne fonctionne plus\nd) La complexité devient $uniquement$ $O(V)$\n\n**Question 20: Quand l'amélioration de la complexité avec le tas de Fibonacci est-elle la plus significative ?**\na) Quand $|V|$ est très grand par rapport à $|E|$\nb) Quand $|V|$ est très inférieur à $|E|$ (graphes denses)\nc) Quand le graphe est acyclique\nd) Uniquement si tous les poids sont identiques\n\n**Question 21: Quel type de structure de données est un \"monceau\" ?**\na) Une pile (stack)\nb) Une file prioritaire (heap)\nc) Une liste chaînée\nd) Un arbre binaire de recherche équilibré\n\n**Question 22: Dans l'algorithme de Kruskal, quand s'arrête la boucle `tant que |E'| < |V|-1` ?**\na) Quand toutes les arêtes ont été testées\nb) Quand le nombre d'arêtes dans l'arbre est suffisant pour relier tous les sommets\nc) Quand un cycle est détecté\nd) Dès que le premier sommet est relié\n\n**Question 23: L'algorithme de Prim-Jarnik construit-il l'arbre arête par arête ou composante par composante ?**\na) Composante par composante\nb) En étendant une composante connexe en construction\nc) De manière totalement désordonnée\nd) Uniquement en ajoutant des sommets isolés\n\n**Question 24: Quel est le coût amorti d'une opération \"union\" dans un tas de Fibonacci ?**\na) $O(\\log n)$\nb) $O(n)$\nc) Constant ($O(1)$)\nd) $O(E \\log V)$\n\n**Question 25: Quelle est la caractéristique principale du tas de Fibonacci par rapport au tas binomial ?**\na) Il est beaucoup plus simple à implémenter\nb) Il a un meilleur temps d'exécution amorti pour certaines opérations\nc) Il ne permet pas l'opération \"diminuer une clé\"\nd) Il n'utilise pas de propriété de tas-minimum\n\n#### Niveau : Difficile (Tas de Fibonacci et Détails Avancé)\n**Question 26: Quelle opération dans un tas de Fibonacci a un coût amorti en $O(\\log n)$ ?**\na) Insertion\nb) Trouver le minimum\nc) Supprimer le minimum\nd) Union\n\n**Question 27: Pourquoi appelle-t-on \"paresseuse\" (lazy) la structure du tas de Fibonacci ?**\na) Parce qu'elle ne traite pas les arêtes\nb) Parce qu'elle reporte certains travaux sur des opérations ultérieures\nc) Parce qu'elle ignore les cycles dans le graphe\nd) Parce que son exécution est imprévisible\n\n**Question 28: Comment l'opération \"union\" est-elle réalisée dans un tas de Fibonacci ?**\na) En comparant chaque élément des deux tas\nb) Simplement en concaténant les deux listes d'arbres\nc) En reconstruisant un nouvel arbre binaire\nd) En triant à nouveau toutes les clés\n\n**Question 29: Quelle est la limite supérieure du degré d'un nœud dans un tas de Fibonacci ?**\na) $O(n)$\nb) $O(\\sqrt{n})$\nc) $O(\\log n)$\nd) $O(1)$\n\n**Question 30: Quelle est la taille minimale d'un sous-arbre de degré $k$ dans un tas de Fibonacci ?**\na) $k^2$\nb) $F_k + 2$ (où $F_k$ est le kème nombre de Fibonacci)\nc) $2^k$\nd) $log(k)$\n\n**Question 31: L'opération \"diminution de clé\" dans un tas de Fibonacci peut provoquer :**\na) La suppression d'un nœud\nb) La coupe d'un nœud de son père pour former un nouvel arbre\nc) Le tri complet du tas\nd) L'augmentation du degré de tous les nœuds\n\n**Question 32: Quel est le coût amorti des opérations \"insertion\" et \"trouver le minimum\" ?**\na) $O(\\log n)$\nb) $O(n)$\nc) Constant ($O(1)$)\nd) $O(E \\log V)$\n\n**Question 33: Dans une séquence de $a$ opérations d'insertion et $b$ opérations de suppression du minimum, quel est le temps total dans un tas binomial ?**\na) $O(a + b)$\nb) $O((a + b) \\log n)$\nc) $O(a \\cdot b \\log n)$\nd) $O(n)$\n\n**Question 34: Quelle est la différence fondamentale de performance entre le tas binomial et le tas de Fibonacci pour une séquence d'opérations ?**\na) Le tas binomial est plus rapide pour l'insertion\nb) Le tas de Fibonacci permet un temps $O(a + b \\log n)$ contre $O((a+b) \\log n)$ pour le binomial\nc) Il n'y a aucune différence de complexité\nd) Le tas binomial ne supporte pas la suppression\n\n**Question 35: Pourquoi l'algorithme de Prim est-il plus efficace que Kruskal sur un graphe très dense ?**\na) Parce qu'il utilise moins d'arêtes\nb) Grâce à la complexité $O(E + V \\log V)$ avec tas de Fibonacci, car $E$ domine $V$\nc) Parce qu'il ne nécessite pas de trier les arêtes\nd) Parce qu'il évite l'utilisation de files prioritaires\n\n**Question 36: Quel est le rôle des nombres de Fibonacci dans la structure du tas ?**\na) Ils servent à calculer le poids des arêtes\nb) Ils sont utilisés pour garantir que la taille des sous-arbres croît suffisamment vite pour limiter le degré\nc) Ils permettent de trier les sommets\nd) Ils définent le nombre maximal d'arêtes dans l'ARM\n\n**Question 37: Que se passe-t-il si on ne respecte pas un ordre dans la structure du tas ?**\na) Le temps d'exécution devient $O(1)$\nb) On n'obtient plus le temps d'exécution voulu (perte de performance)\nc) L'algorithme devient acyclique\nd) Les arêtes deviennent négatives\n\n**Question 38: La propriété \"tas-minimum\" signifie que :**\na) Le plus petit élément est à la racine de chaque arbre\nb) Chaque arête a le poids minimal possible\nc) Il n'y a qu'un seul arbre dans le tas\nd) Tous les nœuds ont le même degré\n\n**Question 39: Quelle opération est considérée comme \"lente\" (longue) par rapport aux autres dans un tas de Fibonacci ?**\na) Insertion\nb) Union\nc) Suppression du minimum (car elle doit réorganiser la structure)\nd) Trouver le minimum\n\n**Question 40: Dans l'algorithme de Kruskal, si on utilise une File Prioritaire pour les arêtes, quelle est la complexité liée à l'extraction des arêtes ?**\na) $O(E \\log E)$ ou $O(E \\log V)$\nb) $O(V)$\nc) $O(1)$\nd) $O(E^2)$\n\n#### Niveau : Expert (Synthèse et Analyse de cas)\n**Question 41: Si un graphe possède des arêtes avec des poids identiques, que peut-on dire de l'ARM ?**\na) L'ARM est obligatoirement unique\nb) Il peut y avoir plusieurs arbres de recouvrement minimaux différents\nc) L'algorithme de Kruskal échouera\nd) Le nombre d'arêtes sera supérieur à $V-1$\n\n**Question 42: Quel est l'impact précis de la \"flexibilité\" du tas de Fibonacci sur les opérations ?**\na) Elle rend le tas plus lourd en mémoire\nb) Elle permet de reporter le travail (opérations paresseuses) pour améliorer le temps amorti\nc) Elle empêche la formation de cycles\nd) Elle oblige à utiliser des arbres binaires classiques\n\n**Question 43: Quel est le coût total d'une séquence de $a$ opérations (insertion/diminution de clé) et $b$ opérations (suppression) dans un tas de Fibonacci ?**\na) $O(a + b \\log n)$\nb) $O((a+b) \\log n)$\nc) $O(n \\log n)$\nd) $O(a \\cdot b)$\n\n**Question 44: Si $|E| = V^2$ (graphe complet), quelle est la complexité de Prim avec tas de Fibonacci ?**\na) $O(V^2 \\log V)$\nb) $O(V^2 + V \\log V) \\approx O(V^2)$\nc) $elle$ $est$ $O(V)$\nd) $elle$ $est$ $O(V^3)$\n\n**Question 45: Pourquoi l'algorithme de Kruskal utilise-t-il des ensembles $C(v)$ ?**\na) Pour stocker les poids des arêtes\nb) Pour gérer la connectivité et détecter les cycles (Union-Find)\nc) Pour remplacer le tas de Fibonacci\nd) Pour compter le nombre de sommets\n\n**Question 46: Quel est l'élément qui permet à Prim d'être \"greedy\" (glouton) ?**\na) Le choix systématique de l'arête la moins coûteuse connectant $V'$ à $V \\setminus V'$\nb) Le tri préalable de toutes les arêtes du graphe\nc) L'utilisation de la file prioritaire\nd) La création d'un arbre acyclique\n\n**Question 47: Dans le contexte des arbres de Fibonacci, que signifie \"amorti\" ?**\na) Une opération qui ne coûte rien\nb) Un coût moyen sur une séquence d'opérations (certaines sont lentes, mais la moyenne est basse)\nc) Une opération qui s'arrête automatiquement\nd) Une réduction du poids des arêtes\n\n**Question 48: Si on augmente le nombre de fils d'un nœud (degré $k$), que se passe-t-il pour la taille du sous-arbre ?**\na) Elle diminue\nb) Elle reste constante\nc) Elle augmente au moins selon la suite de Fibonacci ($F_k + 2$)\nd) Elle devient égale à $k$\n\n**Question 49: Quelle est la différence majeure dans l'approche de construction entre Prim et Kruskal ?**\na) Prim travaille sur les sommets/composantes, Kruskal travaille sur le tri des arêtes\nb) Prim est plus lent que Kruskal sur tous les graphes\nc) Kruskal ne peut pas utiliser de tas de priorité\nd) Il n'y a aucune différence d'approche\n\n**Question 50: Quel est l'intérêt de l'algorithme de Prim pour un réseau de fibre optique très dense ?**\na) Utiliser Kruskal car il est plus simple\nb) Utiliser Prim avec tas de Fibonacci pour minimiser le temps de calcul grâce à la complexité $O(E + V \\log V)$\nc) Ne pas utiliser d'algorithme et choisir au hasard\nd) Augmenter le nombre de sommets\n\n---\n\n### Réponses (Corrigé)\n\n1. b) 2. b) | 3. a) | 4. b) | 5. b) | 6. b) | 7. b) | 8. b) | 9. b) | 10. c)\n11. b) | 12. b) | 13. b) | 14. b) | 15. b) | 16. c) | 17. b) | 18. a) | 19. b) | 20. b)\n21. b) | 22. b) | 23. b) | 24. c) | 25. b) | 26. c) | 27. b) | 28. b) | 29. c) | 30. b)\n31. b) | 32. c) | 33. b) | 34. b) | 35. b) | 36. b) | 37. b) | 38. a) | 39. c) | 40. a)\n41. b) | 42. b) | 43. a) | 44. b) | 45. b) | 46. a) | 47. b) | 48. c) | 49. a) | 50. b)",
+    "expected": [
+        "Quiz : Arbres de Recouvrement \u00e0 Co\u00fbt Minimal (ARM) et Tas de Fibonacci",
+        [
+            {
+                "question": "Qu'est-ce qu'un arbre de recouvrement ?",
+                "options": [
+                    "Un graphe cyclique avec des ar\u00eates de poids \u00e9gal",
+                    "Un sous-graphe connexe et acyclique",
+                    "Un ensemble de sommets sans aucune ar\u00eate",
+                    "Un graphe dont le nombre d'ar\u00eates est sup\u00e9rieur au nombre de sommets"
+                ],
+                "correct_index": 1
+            },
+            {
+                "question": "Quelle est la relation entre le nombre de sommets (V) et le nombre d'ar\u00eates (E) dans un arbre ?",
+                "options": [
+                    "V = E",
+                    "V = E + 1",
+                    "V = E - 1",
+                    "V < E"
+                ],
+                "correct_index": 1
+            },
+            {
+                "question": "Dans un arbre de recouvrement, existe-t-il un chemin reliant toutes les paires de sommets ?",
+                "options": [
+                    "Oui, par d\u00e9finition de la connexit\u00e9",
+                    "Non, car il est acyclique",
+                    "Seulement si le graphe est complet",
+                    "Uniquement si l'arbre est biparti"
+                ],
+                "correct_index": 0
+            },
+            {
+                "question": "Que signifie \"acyclique\" pour un graphe ?",
+                "options": [
+                    "Qu'il ne contient pas de sommets isol\u00e9s",
+                    "Qu'il ne contient pas de cycles (boucles ferm\u00e9es)",
+                    "Qu'il poss\u00e8de un seul chemin entre deux sommets",
+                    "Qu'il est compos\u00e9 d'un seul composant connexe"
+                ],
+                "correct_index": 1
+            },
+            {
+                "question": "Quel est l'objectif principal d'un ARM ?",
+                "options": [
+                    "Maximiser la somme des co\u00fbts des ar\u00eates",
+                    "Minimiser la somme des co\u00fbts des ar\u00eates s\u00e9lectionn\u00e9es",
+                    "Cr\u00e9er le plus grand nombre de cycles possible",
+                    "Connecter uniquement les sommets de faible degr\u00e9"
+                ],
+                "correct_index": 1
+            },
+            {
+                "question": "La solution d'un probl\u00e8me ARM est-elle toujours unique ?",
+                "options": [
+                    "Oui, toujours",
+                    "Non, elle n'est pas n\u00e9cessairement unique",
+                    "Seulement si tous les poids sont diff\u00e9rents",
+                    "Uniquement dans les graphes complets"
+                ],
+                "correct_index": 1
+            },
+            {
+                "question": "Dans une application de t\u00e9l\u00e9communications (ARM), que repr\u00e9sentent les ar\u00eates ?",
+                "options": [
+                    "Les sites \u00e0 desservir",
+                    "Le co\u00fbt d'installation des liens de transmission",
+                    "La redondance du r\u00e9seau",
+                    "Le nombre de n\u0153uds dans le r\u00e9seau"
+                ],
+                "correct_index": 1
+            },
+            {
+                "question": "Quel est l'un des principes fondamentaux de l'application ARM en t\u00e9l\u00e9coms mentionn\u00e9 ?",
+                "options": [
+                    "Maximiser la redondance",
+                    "L'absence de redondance (si on en ajoutait, ce ne serait plus un ARM)",
+                    "Utiliser uniquement des liens co\u00fbteux",
+                    "Ignorer le co\u00fbt des ar\u00eates"
+                ],
+                "correct_index": 1
+            },
+            {
+                "question": "Quel algorithme est utilis\u00e9 pour construire l'ARM en partant d'un sommet arbitraire ?",
+                "options": [
+                    "Kruskal",
+                    "Prim-Jarnik",
+                    "Dijkstra",
+                    "Bellman-Ford"
+                ],
+                "correct_index": 1
+            },
+            {
+                "question": "Quelle structure de donn\u00e9es est n\u00e9cessaire pour impl\u00e9menter efficacement l'algorithme de Prim ?",
+                "options": [
+                    "Une liste simple",
+                    "Un tableau statique",
+                    "Une file prioritaire (monceau/heap)",
+                    "Un arbre binaire de recherche"
+                ],
+                "correct_index": 2
+            },
+            {
+                "question": "Dans l'algorithme de Prim, que contient l'ensemble $V'$ au d\u00e9but ?",
+                "options": [
+                    "Tous les sommets du graphe",
+                    "Un sommet choisi arbitrairement",
+                    "Un ensemble vide",
+                    "Toutes les ar\u00eates du graphe"
+                ],
+                "correct_index": 1
+            },
+            {
+                "question": "Comment l'algorithme de Prim choisit-il la prochaine ar\u00eate \u00e0 ajouter ?",
+                "options": [
+                    "En choisissant l'ar\u00eate la plus longue",
+                    "En choisissant l'ar\u00eate $(s_1, s'\\_2)$ telle que $s_1 \\in V'$ et $s_2 \\notin V'$ avec le co\u00fbt minimal",
+                    "En choisissant une ar\u00eate au hasard",
+                    "En suivant l'ordre alphab\u00e9tique des sommets"
+                ],
+                "correct_index": 1
+            },
+            {
+                "question": "Quelle est la complexit\u00e9 de l'algorithme de Prim utilisant un tas binaire ordinaire ?",
+                "options": [
+                    "$O(V + E)$",
+                    "$O(E \\log V)$",
+                    "$O(V^2)$",
+                    "$O(E \\cdot V)$"
+                ],
+                "correct_index": 1
+            },
+            {
+                "question": "Quelle est la premi\u00e8re \u00e9tape de l'algorithme de Kruskal ?",
+                "options": [
+                    "Choisir un sommet arbitraire",
+                    "Cr\u00e9er des ensembles $\\{v\\}$ pour chaque sommet",
+                    "Trier les ar\u00eates par poids",
+                    "Supprimer les cycles"
+                ],
+                "correct_index": 1
+            },
+            {
+                "question": "Dans l'algorithme de Kruskal, que fait la structure $Q$ (FilePrioritaire) ?",
+                "options": [
+                    "Elle stocke les sommets",
+                    "Elle contient les ar\u00eates class\u00e9es par leur poids",
+                    "Elle v\u00e9rune si un cycle est form\u00e9",
+                    "Elle calcule le co\u00fbt total"
+                ],
+                "correct_index": 1
+            },
+            {
+                "question": "Quelle condition Kruskal v\u00e9rifie-t-il avant d'ajouter une ar\u00eate $(v_1, v_2)$ ?",
+                "options": [
+                    "Si $v_1$ et $v_2$ sont d\u00e9j\u00e0 dans le m\u00eame ensemble $C(v)$",
+                    "Si $v_1 \\neq v_2$",
+                    "Si $C(v_1) \\neq C(v_2)$ (les sommets ne sont pas dans le m\u00eame composant)",
+                    "Si l'ar\u00eate est la plus l\u00e9g\u00e8re du graphe"
+                ],
+                "correct_index": 2
+            },
+            {
+                "question": "(17): \u00c0 quoi sert l'op\u00e9ration \"fusionner $C(v_1)$ et $C(v_2)$\" dans Kruskal ?",
+                "options": [
+                    "\u00c0 augmenter le nombre d'ar\u00eates de l'ARM",
+                    "\u00c0 mettre \u00e0 jour les ensembles de composants pour \u00e9viter les cycles",
+                    "\u00c0 supprimer les sommets isol\u00e9s",
+                    "\u00c0 recalculer les poids des ar\u00eates"
+                ],
+                "correct_index": 1
+            },
+            {
+                "question": "Quelle est la complexit\u00e9 de l'algorithme de Kruskal avec un tas binaire ?",
+                "options": [
+                    "$O(E \\log V)$",
+                    "$O(V \\log E)$",
+                    "$O(E + V)$",
+                    "$O(E^2)$"
+                ],
+                "correct_index": 0
+            },
+            {
+                "question": "Que se passe-t-il si l'on utilise un tas de Fibonacci avec Prim ?",
+                "options": [
+                    "La complexit\u00e9 reste $O(E \\log V)$",
+                    "La complexit\u00e9 devient $O(E + V \\log V)$",
+                    "L'algorithme ne fonctionne plus",
+                    "La complexit\u00e9 devient $uniquement$ $O(V)$"
+                ],
+                "correct_index": 1
+            },
+            {
+                "question": "Quand l'am\u00e9lioration de la complexit\u00e9 avec le tas de Fibonacci est-elle la plus significative ?",
+                "options": [
+                    "Quand $|V|$ est tr\u00e8s grand par rapport \u00e0 $|E|$",
+                    "Quand $|V|$ est tr\u00e8s inf\u00e9rieur \u00e0 $|E|$ (graphes denses)",
+                    "Quand le graphe est acyclique",
+                    "Uniquement si tous les poids sont identiques"
+                ],
+                "correct_index": 1
+            },
+            {
+                "question": "Quel type de structure de donn\u00e9es est un \"monceau\" ?",
+                "options": [
+                    "Une pile (stack)",
+                    "Une file prioritaire (heap)",
+                    "Une liste cha\u00een\u00e9e",
+                    "Un arbre binaire de recherche \u00e9quilibr\u00e9"
+                ],
+                "correct_index": 1
+            },
+            {
+                "question": "Dans l'algorithme de Kruskal, quand s'arr\u00eate la boucle `tant que |E'| < |V|-1` ?",
+                "options": [
+                    "Quand toutes les ar\u00eates ont \u00e9t\u00e9 test\u00e9es",
+                    "Quand le nombre d'ar\u00eates dans l'arbre est suffisant pour relier tous les sommets",
+                    "Quand un cycle est d\u00e9tect\u00e9",
+                    "D\u00e8s que le premier sommet est reli\u00e9"
+                ],
+                "correct_index": 1
+            },
+            {
+                "question": "L'algorithme de Prim-Jarnik construit-il l'arbre ar\u00eate par ar\u00eate ou composante par composante ?",
+                "options": [
+                    "Composante par composante",
+                    "En \u00e9tendant une composante connexe en construction",
+                    "De mani\u00e8re totalement d\u00e9sordonn\u00e9e",
+                    "Uniquement en ajoutant des sommets isol\u00e9s"
+                ],
+                "correct_index": 1
+            },
+            {
+                "question": "Quel est le co\u00fbt amorti d'une op\u00e9ration \"union\" dans un tas de Fibonacci ?",
+                "options": [
+                    "$O(\\log n)$",
+                    "$O(n)$",
+                    "Constant ($O(1)$)",
+                    "$O(E \\log V)$"
+                ],
+                "correct_index": 2
+            },
+            {
+                "question": "Quelle est la caract\u00e9ristique principale du tas de Fibonacci par rapport au tas binomial ?",
+                "options": [
+                    "Il est beaucoup plus simple \u00e0 impl\u00e9menter",
+                    "Il a un meilleur temps d'ex\u00e9cution amorti pour certaines op\u00e9rations",
+                    "Il ne permet pas l'op\u00e9ration \"diminuer une cl\u00e9\"",
+                    "Il n'utilise pas de propri\u00e9t\u00e9 de tas-minimum"
+                ],
+                "correct_index": 1
+            },
+            {
+                "question": "Quelle op\u00e9ration dans un tas de Fibonacci a un co\u00fbt amorti en $O(\\log n)$ ?",
+                "options": [
+                    "Insertion",
+                    "Trouver le minimum",
+                    "Supprimer le minimum",
+                    "Union"
+                ],
+                "correct_index": 2
+            },
+            {
+                "question": "Pourquoi appelle-t-on \"paresseuse\" (lazy) la structure du tas de Fibonacci ?",
+                "options": [
+                    "Parce qu'elle ne traite pas les ar\u00eates",
+                    "Parce qu'elle reporte certains travaux sur des op\u00e9rations ult\u00e9rieures",
+                    "Parce qu'elle ignore les cycles dans le graphe",
+                    "Parce que son ex\u00e9cution est impr\u00e9visible"
+                ],
+                "correct_index": 1
+            },
+            {
+                "question": "Comment l'op\u00e9ration \"union\" est-elle r\u00e9alis\u00e9e dans un tas de Fibonacci ?",
+                "options": [
+                    "En comparant chaque \u00e9l\u00e9ment des deux tas",
+                    "Simplement en concat\u00e9nant les deux listes d'arbres",
+                    "En reconstruisant un nouvel arbre binaire",
+                    "En triant \u00e0 nouveau toutes les cl\u00e9s"
+                ],
+                "correct_index": 1
+            },
+            {
+                "question": "Quelle est la limite sup\u00e9rieure du degr\u00e9 d'un n\u0153ud dans un tas de Fibonacci ?",
+                "options": [
+                    "$O(n)$",
+                    "$O(\\sqrt{n})$",
+                    "$O(\\log n)$",
+                    "$O(1)$"
+                ],
+                "correct_index": 2
+            },
+            {
+                "question": "Quelle est la taille minimale d'un sous-arbre de degr\u00e9 $k$ dans un tas de Fibonacci ?",
+                "options": [
+                    "$k^2$",
+                    "$F_k + 2$ (o\u00f9 $F_k$ est le k\u00e8me nombre de Fibonacci)",
+                    "$2^k$",
+                    "$log(k)$"
+                ],
+                "correct_index": 1
+            },
+            {
+                "question": "L'op\u00e9ration \"diminution de cl\u00e9\" dans un tas de Fibonacci peut provoquer",
+                "options": [
+                    "La suppression d'un n\u0153ud",
+                    "La coupe d'un n\u0153ud de son p\u00e8re pour former un nouvel arbre",
+                    "Le tri complet du tas",
+                    "L'augmentation du degr\u00e9 de tous les n\u0153uds"
+                ],
+                "correct_index": 1
+            },
+            {
+                "question": "Quel est le co\u00fbt amorti des op\u00e9rations \"insertion\" et \"trouver le minimum\" ?",
+                "options": [
+                    "$O(\\log n)$",
+                    "$O(n)$",
+                    "Constant ($O(1)$)",
+                    "$O(E \\log V)$"
+                ],
+                "correct_index": 2
+            },
+            {
+                "question": "Dans une s\u00e9quence de $a$ op\u00e9rations d'insertion et $b$ op\u00e9rations de suppression du minimum, quel est le temps total dans un tas binomial ?",
+                "options": [
+                    "$O(a + b)$",
+                    "$O((a + b) \\log n)$",
+                    "$O(a \\cdot b \\log n)$",
+                    "$O(n)$"
+                ],
+                "correct_index": 1
+            },
+            {
+                "question": "Quelle est la diff\u00e9rence fondamentale de performance entre le tas binomial et le tas de Fibonacci pour une s\u00e9quence d'op\u00e9rations ?",
+                "options": [
+                    "Le tas binomial est plus rapide pour l'insertion",
+                    "Le tas de Fibonacci permet un temps $O(a + b \\log n)$ contre $O((a+b) \\log n)$ pour le binomial",
+                    "Il n'y a aucune diff\u00e9rence de complexit\u00e9",
+                    "Le tas binomial ne supporte pas la suppression"
+                ],
+                "correct_index": 1
+            },
+            {
+                "question": "Pourquoi l'algorithme de Prim est-il plus efficace que Kruskal sur un graphe tr\u00e8s dense ?",
+                "options": [
+                    "Parce qu'il utilise moins d'ar\u00eates",
+                    "Gr\u00e2ce \u00e0 la complexit\u00e9 $O(E + V \\log V)$ avec tas de Fibonacci, car $E$ domine $V$",
+                    "Parce qu'il ne n\u00e9cessite pas de trier les ar\u00eates",
+                    "Parce qu'il \u00e9vite l'utilisation de files prioritaires"
+                ],
+                "correct_index": 1
+            },
+            {
+                "question": "Quel est le r\u00f4le des nombres de Fibonacci dans la structure du tas ?",
+                "options": [
+                    "Ils servent \u00e0 calculer le poids des ar\u00eates",
+                    "Ils sont utilis\u00e9s pour garantir que la taille des sous-arbres cro\u00eet suffisamment vite pour limiter le degr\u00e9",
+                    "Ils permettent de trier les sommets",
+                    "Ils d\u00e9finent le nombre maximal d'ar\u00eates dans l'ARM"
+                ],
+                "correct_index": 1
+            },
+            {
+                "question": "Que se passe-t-il si on ne respecte pas un ordre dans la structure du tas ?",
+                "options": [
+                    "Le temps d'ex\u00e9cution devient $O(1)$",
+                    "On n'obtient plus le temps d'ex\u00e9cution voulu (perte de performance)",
+                    "L'algorithme devient acyclique",
+                    "Les ar\u00eates deviennent n\u00e9gatives"
+                ],
+                "correct_index": 1
+            },
+            {
+                "question": "La propri\u00e9t\u00e9 \"tas-minimum\" signifie que",
+                "options": [
+                    "Le plus petit \u00e9l\u00e9ment est \u00e0 la racine de chaque arbre",
+                    "Chaque ar\u00eate a le poids minimal possible",
+                    "Il n'y a qu'un seul arbre dans le tas",
+                    "Tous les n\u0153uds ont le m\u00eame degr\u00e9"
+                ],
+                "correct_index": 0
+            },
+            {
+                "question": "Quelle op\u00e9ration est consid\u00e9r\u00e9e comme \"lente\" (longue) par rapport aux autres dans un tas de Fibonacci ?",
+                "options": [
+                    "Insertion",
+                    "Union",
+                    "Suppression du minimum (car elle doit r\u00e9organiser la structure)",
+                    "Trouver le minimum"
+                ],
+                "correct_index": 2
+            },
+            {
+                "question": "Dans l'algorithme de Kruskal, si on utilise une File Prioritaire pour les ar\u00eates, quelle est la complexit\u00e9 li\u00e9e \u00e0 l'extraction des ar\u00eates ?",
+                "options": [
+                    "$O(E \\log E)$ ou $O(E \\log V)$",
+                    "$O(V)$",
+                    "$O(1)$",
+                    "$O(E^2)$"
+                ],
+                "correct_index": 0
+            },
+            {
+                "question": "Si un graphe poss\u00e8de des ar\u00eates avec des poids identiques, que peut-on dire de l'ARM ?",
+                "options": [
+                    "L'ARM est obligatoirement unique",
+                    "Il peut y avoir plusieurs arbres de recouvrement minimaux diff\u00e9rents",
+                    "L'algorithme de Kruskal \u00e9chouera",
+                    "Le nombre d'ar\u00eates sera sup\u00e9rieur \u00e0 $V-1$"
+                ],
+                "correct_index": 1
+            },
+            {
+                "question": "Quel est l'impact pr\u00e9cis de la \"flexibilit\u00e9\" du tas de Fibonacci sur les op\u00e9rations ?",
+                "options": [
+                    "Elle rend le tas plus lourd en m\u00e9moire",
+                    "Elle permet de reporter le travail (op\u00e9rations paresseuses) pour am\u00e9liorer le temps amorti",
+                    "Elle emp\u00eache la formation de cycles",
+                    "Elle oblige \u00e0 utiliser des arbres binaires classiques"
+                ],
+                "correct_index": 1
+            },
+            {
+                "question": "Quel est le co\u00fbt total d'une s\u00e9quence de $a$ op\u00e9rations (insertion/diminution de cl\u00e9) et $b$ op\u00e9rations (suppression) dans un tas de Fibonacci ?",
+                "options": [
+                    "$O(a + b \\log n)$",
+                    "$O((a+b) \\log n)$",
+                    "$O(n \\log n)$",
+                    "$O(a \\cdot b)$"
+                ],
+                "correct_index": 0
+            },
+            {
+                "question": "Si $|E| = V^2$ (graphe complet), quelle est la complexit\u00e9 de Prim avec tas de Fibonacci ?",
+                "options": [
+                    "$O(V^2 \\log V)$",
+                    "$O(V^2 + V \\log V) \\approx O(V^2)$",
+                    "$elle$ $est$ $O(V)$",
+                    "$elle$ $est$ $O(V^3)$"
+                ],
+                "correct_index": 1
+            },
+            {
+                "question": "Pourquoi l'algorithme de Kruskal utilise-t-il des ensembles $C(v)$ ?",
+                "options": [
+                    "Pour stocker les poids des ar\u00eates",
+                    "Pour g\u00e9rer la connectivit\u00e9 et d\u00e9tecter les cycles (Union-Find)",
+                    "Pour remplacer le tas de Fibonacci",
+                    "Pour compter le nombre de sommets"
+                ],
+                "correct_index": 1
+            },
+            {
+                "question": "Quel est l'\u00e9l\u00e9ment qui permet \u00e0 Prim d'\u00eatre \"greedy\" (glouton) ?",
+                "options": [
+                    "Le choix syst\u00e9matique de l'ar\u00eate la moins co\u00fbteuse connectant $V'$ \u00e0 $V \\setminus V'$",
+                    "Le tri pr\u00e9alable de toutes les ar\u00eates du graphe",
+                    "L'utilisation de la file prioritaire",
+                    "La cr\u00e9ation d'un arbre acyclique"
+                ],
+                "correct_index": 0
+            },
+            {
+                "question": "Dans le contexte des arbres de Fibonacci, que signifie \"amorti\" ?",
+                "options": [
+                    "Une op\u00e9ration qui ne co\u00fbte rien",
+                    "Un co\u00fbt moyen sur une s\u00e9quence d'op\u00e9rations (certaines sont lentes, mais la moyenne est basse)",
+                    "Une op\u00e9ration qui s'arr\u00eate automatiquement",
+                    "Une r\u00e9duction du poids des ar\u00eates"
+                ],
+                "correct_index": 1
+            },
+            {
+                "question": "Si on augmente le nombre de fils d'un n\u0153ud (degr\u00e9 $k$), que se passe-t-il pour la taille du sous-arbre ?",
+                "options": [
+                    "Elle diminue",
+                    "Elle reste constante",
+                    "Elle augmente au moins selon la suite de Fibonacci ($F_k + 2$)",
+                    "Elle devient \u00e9gale \u00e0 $k$"
+                ],
+                "correct_index": 2
+            },
+            {
+                "question": "Quelle est la diff\u00e9rence majeure dans l'approche de construction entre Prim et Kruskal ?",
+                "options": [
+                    "Prim travaille sur les sommets/composantes, Kruskal travaille sur le tri des ar\u00eates",
+                    "Prim est plus lent que Kruskal sur tous les graphes",
+                    "Kruskal ne peut pas utiliser de tas de priorit\u00e9",
+                    "Il n'y a aucune diff\u00e9rence d'approche"
+                ],
+                "correct_index": 0
+            },
+            {
+                "question": "Quel est l'int\u00e9r\u00eat de l'algorithme de Prim pour un r\u00e9seau de fibre optique tr\u00e8s dense ?",
+                "options": [
+                    "Utiliser Kruskal car il est plus simple",
+                    "Utiliser Prim avec tas de Fibonacci pour minimiser le temps de calcul gr\u00e2ce \u00e0 la complexit\u00e9 $O(E + V \\log V)$",
+                    "Ne pas utiliser d'algorithme et choisir au hasard",
+                    "Augmenter le nombre de sommets"
+                ],
+                "correct_index": 1
+            }
+        ]
+    ]
+}
