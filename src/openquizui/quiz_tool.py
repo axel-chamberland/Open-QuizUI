@@ -13,6 +13,85 @@ import json
 import random
 
 
+THEMES = {
+    "default_light": """
+--bg: oklch(100% 0 0);
+--btn: oklch(94% 0 0);
+--text: oklch(20% 0 0);
+--border: oklch(85% 0 0);
+
+--surface: color-mix(in srgb, var(--bg) 92%, var(--text) 8%);
+--surface-2: color-mix(in srgb, var(--bg) 96%, var(--text) 4%);
+
+--success: #00ff00;
+--danger: #ff0000;
+
+--correct_bg: color-mix(in srgb, var(--success) 30%, var(--surface));
+--wrong_bg: color-mix(in srgb, var(--danger) 30%, var(--danger));
+""",
+    "default_dark": """
+--bg: oklch(20% 0 0);
+--btn: oklch(32% 0 0);
+--text: oklch(94% 0 0);
+--border: oklch(85% 0 0);
+
+--surface: color-mix(in srgb, var(--bg) 92%, var(--text) 8%);
+--surface-2: color-mix(in srgb, var(--bg) 85%, var(--bg) 15%);
+
+--success: #00ff00;
+--danger: #ff0000;
+
+--correct_bg: color-mix(in srgb, var(--success) 30%, var(--surface));
+--wrong_bg: color-mix(in srgb, var(--danger) 30%, var(--surface));
+""",
+    "tokyonight": """
+--bg: #1a1b26;
+--btn: #0C0E14;
+--text: #c0caf5;
+--border: #7aa2f7;
+
+--surface: #151821;
+--surface-2: #242b42;
+
+--success: #1abc9c;
+--danger: #ff007c;
+
+--correct_bg: color-mix(in srgb, var(--success) 30%, var(--surface));
+--wrong_bg: color-mix(in srgb, var(--danger) 30%, var(--surface));
+""",
+    "high_contrast": """
+--bg: #000000;
+--btn: #111111;
+--text: #ffffff;
+--border: #ffffff;
+
+--surface: #000000;
+--surface-2: #111111;
+
+--success: #00ff00;
+--danger: #ff0000;
+
+--correct_bg: color-mix(in srgb, var(--success) 40%, var(--surface));
+--wrong_bg: color-mix(in srgb, var(--danger) 40%, var(--surface));
+""",
+    "soft_pastel": """
+--bg: #fdf6f0;
+--btn: #f2e9e4;
+--text: #4a4a4a;
+--border: #d8cfc4;
+
+--surface: #ffffff;
+--surface-2: #f7f0e8;
+
+--success: #6bbf59;
+--danger: #e07a5f;
+
+--correct_bg: color-mix(in srgb, var(--success) 25%, var(--surface));
+--wrong_bg: color-mix(in srgb, var(--danger) 25%, var(--surface));
+""",
+}
+
+
 class Tools:
     def __init__(self):
         """Initialize the Tool."""
@@ -27,6 +106,19 @@ class Tools:
         enable_mathjax: bool = Field(
             default=False,
             description="Disabled by default for privacy and performance. Enable LaTeX/math rendering with MathJax. Requires Internet access to load the MathJax library from a CDN. When disabled or offline, LaTeX expressions are displayed as plain text.",
+        )
+
+        dark_mode: int = Field(
+            default=-1,
+            description="-1: Let browser decide. 0: Light mode. 1: Dark mode",
+        )
+        light_theme: str = Field(
+            default="default_light",
+            description="change the dark mode theme to a different theme. to define a new theme, you can add a theme at the top of the code where the templates are. Defaults: default_light, soft_pastel",
+        )
+        dark_theme: str = Field(
+            default="default_dark",
+            description="change the dark mode theme to a different theme. to define a new theme, you can add a theme at the top of the code where the templates are. Defaults: default_dark. high_contrast, tokyonight",
         )
 
     async def generate_quiz(self, title, questions_and_answers: list[dict]):
@@ -64,8 +156,23 @@ class Tools:
 
         quiz = {"title": title, "questions": questions_and_answers}
 
+        # Modify Theme
+
+        option_dark = self.valves.dark_theme
+        option_light = self.valves.light_theme
+
+        if self.valves.dark_mode == 0:
+            option_dark = option_light
+        elif self.valves.dark_theme == 1:
+            option_light = option_dark
+
+        dark_theme = THEMES.get(option_dark, THEMES["default_dark"])
+        light_theme = THEMES.get(option_light, THEMES["default_light"])
+
+        # Generate quiz
+        content = wrap_html(quiz, self.valves.enable_mathjax, light_theme, dark_theme)
         return HTMLResponse(
-            content=wrap_html(quiz, self.valves.enable_mathjax),
+            content=content,
             headers={"Content-Disposition": "inline"},
         )
 
@@ -108,7 +215,7 @@ def shuffle_options(questions: list[dict]):
 # =========================
 
 
-def wrap_html(quiz, enable_mathjax: bool):
+def wrap_html(quiz, enable_mathjax: bool, light_theme, dark_theme):
     quiz_json = json.dumps(quiz)
 
     global script
@@ -123,7 +230,7 @@ def wrap_html(quiz, enable_mathjax: bool):
 <title>Quiz</title>
 
 <style>
-{style}
+{style.format(light_theme=light_theme, dark_theme=dark_theme)}
 </style>
 </head>
 
@@ -165,78 +272,16 @@ new ResizeObserver(reportHeight).observe(document.body);
 # STYLE
 # =========================
 
-"""
-OpenWebUI default color scheme:
-    --color-gray-50: oklch(98% 0 0);
-    --color-gray-100: oklch(94% 0 0);
-    --color-gray-200: oklch(92% 0 0);
-    --color-gray-300: oklch(85% 0 0);
-    --color-gray-400: oklch(77% 0 0);
-    --color-gray-500: oklch(69% 0 0);
-    --color-gray-600: oklch(51% 0 0);
-    --color-gray-700: oklch(42% 0 0);
-    --color-gray-800: oklch(32% 0 0);
-    --color-gray-900: oklch(20% 0 0);
-    --color-gray-950: oklch(16% 0 0);
-"""
 
-light_style = """
---bg: oklch(100% 0 0);
---btn: oklch(94% 0 0);
---text: oklch(20% 0 0);
---border: oklch(85% 0 0);
-
---surface: color-mix(in srgb, var(--bg) 92%, var(--text) 8%);
---surface-2: color-mix(in srgb, var(--bg) 96%, var(--text) 4%);
-
---success: #00c853;
---danger: #dc3545;
-
---correct_bg: color-mix(in srgb, var(--success) 30%, var(--surface));
---wrong_bg: color-mix(in srgb, var(--danger) 30%, var(--danger));
-"""
-dark_style = """
---bg: oklch(20% 0 0);
---btn: oklch(32% 0 0);
---text: oklch(94% 0 0);
---border: oklch(85% 0 0);
-
---surface: color-mix(in srgb, var(--bg) 92%, var(--text) 8%);
---surface-2: color-mix(in srgb, var(--bg) 85%, var(--bg) 15%);
-
---success: #00c853;
---danger: #dc3545;
-
---correct_bg: color-mix(in srgb, var(--success) 30%, var(--surface));
---wrong_bg: color-mix(in srgb, var(--danger) 30%, var(--surface));
-"""
-
-# Credit to Tokyonight.nvim
-tokyonight_dark = """
---bg: #1a1b26;
---btn: #0C0E14;
---text: #c0caf5;
---border: #7aa2f7;
-
---surface: #151821;
---surface-2: #242b42;
-
---success: #1abc9c;
---danger: #ff007c;
-
---correct_bg: color-mix(in srgb, var(--success) 30%, var(--surface));
---wrong_bg: color-mix(in srgb, var(--danger) 30%, var(--surface));
-"""
-
-style = f"""
+style = """
 :root {{
     color-scheme: light dark;
-{light_style}
+{light_theme}
 }}
 
 @media (prefers-color-scheme: dark) {{
     :root {{
-{dark_style}
+{dark_theme}
     }}
 }}
 * {{
