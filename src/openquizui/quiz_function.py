@@ -29,6 +29,17 @@ class Action:
             default=False,
             description="Disabled by default for privacy and performance. Enable LaTeX/math rendering with MathJax. Requires Internet access to load the MathJax library from a CDN. When disabled or offline, LaTeX expressions are displayed as plain text.",
         )
+
+        strip_references: bool = Field(
+            default=False,
+            description="Remove reference-style link definitions: [id]: url",
+        )
+
+        strip_ending_brackets: bool = Field(
+            default=True,
+            description="LLMs will sometimes give the answer inline in [brackets], or a hint that gives off the answer. This may interfere with some questions.",
+        )
+
         # TODO: implement this
         # dark_mode: int = Field(
         #     default=-1,
@@ -75,10 +86,12 @@ class Action:
                 text = message["output"][-1]["content"][-1]["text"] if message else ""
 
             # Remove HTML tags, reasoning blocks and other artifacts
-            text = clean_text(text)
+            text = clean_text(
+                text, self.valves.strip_references, self.valves.strip_ending_brackets
+            )
 
             if not text:
-                raise ValueError("No quiz content received")
+                raise ValueError("No content received")
 
             title, questions = parse_quiz(text)
 
@@ -151,7 +164,7 @@ def parse_quiz(
         r"^\s*\*{0,2}\s*q\s*\d+\s*(?:r|answer|réponse|correct answer)\s*\*{0,2}\s*[:\-]?\s*\*{0,2}\s*\*{0,2}\s*([A-Z])\b",
         # Question 1 : B
         r"^\s*question\s*\d+.*?([A-Z])\b",
-        # Numbered bulk: 1.A, 2.B, 3.C, 4.B, 5.A and optional pipe and ) delimiters
+        # Numbered bulk: 1.A, 2.B, 3.C, 4.B, 5.A and optional | and ) delimiters
         r"\b\d+\s*\*{0,2}\s*[\.\):-]\s*\*{0,2}\s*([A-Z])\s*\)?(?=\s*(?:\||,|$|\s+\d+\s*[\.\):-]))",
     ]
 
@@ -397,7 +410,7 @@ def infer_title(lines, before_line):
 # =========================================================
 
 
-def clean_text(text: str):
+def clean_text(text: str, strip_refs: bool, strip_end_brackets: bool):
     """
     Remove HTML tags and thinking blocks.
     """
@@ -413,6 +426,13 @@ def clean_text(text: str):
     text = re.sub(r"<summary>.*?</summary>", "", text, flags=re.DOTALL | re.IGNORECASE)
     text = re.sub(r"</?details[^<>\n]*>", "", text, flags=re.IGNORECASE)
 
+    # Remove reference-style link definitions: [id]: url
+    if strip_refs:
+        text = re.sub(r"\s*\[\d+\]\s*$", "", text, flags=re.MULTILINE)
+
+    # LLMs will sometimes give the answer inline in brackets, or a hint that gives off the answer
+    if strip_end_brackets:
+        text = re.sub(r"\s*\[[^\]]*\]\s*$", "", text, flags=re.MULTILINE)
     return text.strip().replace("\r", "")
 
 
