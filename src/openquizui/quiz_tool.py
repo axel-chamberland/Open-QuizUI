@@ -123,59 +123,187 @@ class Tools:
 
     async def generate_quiz(self, title, questions_and_answers: list[dict]):
         """
-        Generate a multiple-choice quiz.
+        Generate a multiple-choice quiz and display it to the user.
 
         Args:
             title (str):
                 The title of the quiz.
 
-            questions (list[dict]):
-                A list of question objects.
+            questions_and_answers (list[dict]):
+                A list of question objects. EVERY dictionary in this list
+                MUST contain ALL FOUR of these keys, spelled exactly as shown:
+                    - "id"            (str)  Unique question identifier, e.g. "q1".
+                    - "question"      (str)  The question text. This key is
+                                             required on every single item —
+                                             do not omit it, even if the
+                                             question seems implied by "id".
+                    - "options"       (list[str])  The list of answer choices.
+                    - "correct_index" (int)  Zero-based index into "options"
+                                             pointing to the correct answer.
 
-                Each question dictionary must contain:
-                    - "id" (str):
-                        Unique question identifier.
+                Example of one valid item:
+                    {
+                        "id": "q1",
+                        "question": "What is the capital of France?",
+                        "options": ["Berlin", "Paris", "Rome", "Madrid"],
+                        "correct_index": 1
+                    }
 
-                    - "question" (str):
-                        The question text.
-
-                    - "options" (list[str]):
-                        List of answer choices.
-
-                    - "correct_index" (int):
-                        Zero-based index of the correct answer
-                        inside the options list.
+                Do not skip the "question" key or rename any key. Every
+                item in the list must follow this exact structure or the
+                quiz will fail to generate.
 
         Returns:
             Generated quiz accessible to the user,
             or an error message.
         """
 
-        if self.valves.shuffle_options:
-            shuffle_options(questions_and_answers)
+        try:
+            validation_errors = validate_questions(questions_and_answers)
+            if validation_errors:
+                error_report = "\n".join(f"- {e}" for e in validation_errors)
+                return (
+                    "The quiz could not be generated because the "
+                    "'questions_and_answers' input is malformed:\n\n"
+                    f"{error_report}\n\n"
+                    "Please regenerate the JSON, making sure each question object "
+                    "has exactly the keys 'id', 'question', 'options' "
+                    "(a list of strings), and 'correct_index' (an int within range), "
+                    "and that every array is properly opened and closed with no "
+                    "stray brackets or unkeyed values."
+                )
 
-        quiz = {"title": title, "questions": questions_and_answers}
+            if self.valves.shuffle_options:
+                shuffle_options(questions_and_answers)
 
-        # Modify Theme
+            quiz = {"title": title, "questions": questions_and_answers}
 
-        option_dark = self.valves.dark_theme
-        option_light = self.valves.light_theme
+            # Modify Theme
 
-        if self.valves.dark_mode == 0:
-            option_dark = option_light
-        elif self.valves.dark_theme == 1:
-            option_light = option_dark
+            option_dark = self.valves.dark_theme
+            option_light = self.valves.light_theme
 
-        dark_theme = THEMES.get(option_dark, THEMES["default_dark"])
-        light_theme = THEMES.get(option_light, THEMES["default_light"])
+            if self.valves.dark_mode == 0:
+                option_dark = option_light
+            elif self.valves.dark_theme == 1:
+                option_light = option_dark
 
-        # Generate quiz
-        content = wrap_html(quiz, self.valves.enable_mathjax, light_theme, dark_theme)
-        return HTMLResponse(
-            content=content,
-            headers={"Content-Disposition": "inline"},
-        )
+            dark_theme = THEMES.get(option_dark, THEMES["default_dark"])
+            light_theme = THEMES.get(option_light, THEMES["default_light"])
 
+            # Generate quiz
+            content = wrap_html(quiz, self.valves.enable_mathjax, light_theme, dark_theme)
+            return HTMLResponse(
+                content=content,
+                headers={"Content-Disposition": "inline"},
+            )
+
+        except Exception as e:
+                    return f"An unexpected error occurred: {e}"
+
+
+# =========================
+# VALIDATION
+# =========================
+
+
+def validate_questions(questions) -> list[str]:
+    """
+    Validate the questions_and_answers input and return a list of
+    human-readable error strings (one or more per problem found).
+    An empty list means the input is valid.
+    """
+    errors = []
+
+    if not isinstance(questions, list):
+        return [
+            f"'questions_and_answers' must be a list of question objects, "
+            f"but received type '{type(questions).__name__}'."
+        ]
+
+    if len(questions) == 0:
+        return ["'questions_and_answers' is empty. Provide at least one question."]
+
+    required_keys = {
+        "id": str,
+        "question": str,
+        "options": list,
+        "correct_index": int,
+    }
+
+    for i, q in enumerate(questions):
+        label = f"Question at position {i}"
+
+        if not isinstance(q, dict):
+            errors.append(
+                f"{label} is not a valid object (got type '{type(q).__name__}' "
+                f"instead of a dict). This usually means a value in 'options' "
+                f"from a PREVIOUS question leaked outside its array due to a "
+                f"misplaced ']' or missing comma. Check the JSON brackets around "
+                f"the previous question's 'options' list."
+            )
+            continue
+
+        # Prefer the question's own id in the label, if present
+        qid = q.get("id")
+        if isinstance(qid, str) and qid:
+            label = f"Question '{qid}' (position {i})"
+
+        # Check for missing keys
+        missing = [k for k in required_keys if k not in q]
+        if missing:
+            errors.append(
+                f"{label} is missing required key(s): {', '.join(repr(k) for k in missing)}. "
+                f"Every question must have exactly these keys: "
+                f"'id', 'question', 'options', 'correct_index'."
+            )
+
+        # Check for wrong types on keys that ARE present
+        for key, expected_type in required_keys.items():
+            if key in q and not isinstance(q[key], expected_type):
+                errors.append(
+                    f"{label}: key '{key}' should be of type "
+                    f"'{expected_type.__name__}' but got "
+                    f"'{type(q[key]).__name__}' (value: {q[key]!r})."
+                )
+
+        # Options-specific checks
+        if "options" in q and isinstance(q["options"], list):
+            if len(q["options"]) < 2:
+                errors.append(
+                    f"{label}: 'options' must contain at least 2 choices, "
+                    f"found {len(q['options'])}."
+                )
+            bad_opts = [
+                (j, o) for j, o in enumerate(q["options"]) if not isinstance(o, str)
+            ]
+            if bad_opts:
+                errors.append(
+                    f"{label}: 'options' must be a list of plain strings. "
+                    f"Found non-string entries at index(es) "
+                    f"{[j for j, _ in bad_opts]} "
+                    f"(values: {[o for _, o in bad_opts]!r}). "
+                    f"This often happens when an option string got split across "
+                    f"multiple array entries, or a value leaked in from a "
+                    f"malformed bracket elsewhere in the JSON."
+                )
+
+        # correct_index range check (only if types are right)
+        if (
+            "options" in q
+            and isinstance(q["options"], list)
+            and "correct_index" in q
+            and isinstance(q["correct_index"], int)
+        ):
+            n = len(q["options"])
+            if not (0 <= q["correct_index"] < n):
+                errors.append(
+                    f"{label}: 'correct_index' is {q['correct_index']}, but must "
+                    f"be a valid zero-based index into 'options' "
+                    f"(0 to {n - 1} for {n} option(s))."
+                )
+
+    return errors
 
 # =========================
 # QUIZ LOGIC
@@ -218,8 +346,7 @@ def shuffle_options(questions: list[dict]):
 def wrap_html(quiz, enable_mathjax: bool, light_theme, dark_theme):
     quiz_json = json.dumps(quiz)
 
-    global script
-    script = script.replace("__ENABLE_MATHJAX__", "true" if enable_mathjax else "false")
+    rendered_script = script.replace("__ENABLE_MATHJAX__", "true" if enable_mathjax else "false")
 
     return f"""
 <!DOCTYPE html>
@@ -252,7 +379,7 @@ def wrap_html(quiz, enable_mathjax: bool, light_theme, dark_theme):
 
 <script>
 const quiz = {quiz_json};
-{script}
+{rendered_script}
 </script>
 <script>
 // Height reporting script
@@ -459,14 +586,6 @@ function toggleFullscreen() {
 
 // Helpers
 
-function escapeHtml(str) {
-    return str
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-}
 function renderMath(text) {
     if (!text) return "";
 
@@ -482,7 +601,7 @@ function simpleMarkdownInline(text) {
     if (!text) return "";
 
     return renderMath(
-        escapeHtml(text)
+        text
             .replace(/\*\*(.*?)\*\*/g, "<b>$1</b>")
             .replace(/\*(.*?)\*/g, "<i>$1</i>")
     );

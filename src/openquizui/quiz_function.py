@@ -590,8 +590,7 @@ def shuffle_options(questions: list[dict]):
 def wrap_html(quiz, enable_mathjax: bool, light_theme, dark_theme):
     quiz_json = json.dumps(quiz)
 
-    global script
-    script = script.replace("__ENABLE_MATHJAX__", "true" if enable_mathjax else "false")
+    rendered_script = script.replace("__ENABLE_MATHJAX__", "true" if enable_mathjax else "false")
 
     return f"""
 <!DOCTYPE html>
@@ -624,7 +623,7 @@ def wrap_html(quiz, enable_mathjax: bool, light_theme, dark_theme):
 
 <script>
 const quiz = {quiz_json};
-{script}
+{rendered_script}
 </script>
 <script>
 // Height reporting script
@@ -831,14 +830,6 @@ function toggleFullscreen() {
 
 // Helpers
 
-function escapeHtml(str) {
-    return str
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-}
 function renderMath(text) {
     if (!text) return "";
 
@@ -854,7 +845,7 @@ function simpleMarkdownInline(text) {
     if (!text) return "";
 
     return renderMath(
-        escapeHtml(text)
+        text
             .replace(/\*\*(.*?)\*\*/g, "<b>$1</b>")
             .replace(/\*(.*?)\*/g, "<i>$1</i>")
     );
