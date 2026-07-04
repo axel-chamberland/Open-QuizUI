@@ -32,7 +32,7 @@ def test_each_case(file):
     content: str = data["content"]
     expected: list[str | list[dict]] = data["expected"]
 
-    output: tuple[str, list[dict]] = parse_quiz(clean_text(content))
+    output: tuple[str, list[dict]] = parse_quiz(clean_text(content, True, True))
 
     os.makedirs("tmp", exist_ok=True)
     with open(f"tmp/{file.replace('.json', '.out')}", "w") as f:
