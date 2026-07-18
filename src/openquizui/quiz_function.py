@@ -40,11 +40,11 @@ THEMES = {
 --surface: color-mix(in srgb, var(--bg) 92%, var(--text) 8%);
 --surface-2: color-mix(in srgb, var(--bg) 96%, var(--text) 4%);
 
---success: #00ff00;
---danger: #ff0000;
+--success: #0fff93;
+--danger: #ff4545;
 
 --correct_bg: color-mix(in srgb, var(--success) 30%, var(--surface));
---wrong_bg: color-mix(in srgb, var(--danger) 30%, var(--danger));
+--wrong_bg: color-mix(in srgb, var(--danger) 30%, var(--surface));
 """,
     "default_dark": """
 --bg: oklch(20% 0 0);
@@ -279,6 +279,10 @@ def parse_quiz(
         r"^\s*question\s*\d+.*?([A-Z])\b",
         # Numbered bulk: 1.A, 2.B, 3.C, 4.B, 5.A and optional | and ) delimiters
         r"\b\d+\s*\*{0,2}\s*[\.\):-]\s*\*{0,2}\s*([A-Z])\s*\)?(?=\s*(?:\||,|$|\s+\d+\s*[\.\):-]))",
+        # Adding a space as option:
+        r"\b\d+\s*\*{0,2}\s*[-.):\s]\s*\*{0,2}\s*([A-Z])\s*\)?(?=\s*(?:\||,|$|\s+\d+\s*[-.):\s]))",
+        # In Table
+        r"^\|\s*\*{0,2}\d+\*{0,2}\s*\|\s*\*{0,2}([A-Z]).*\|\s*$",
     ]
 
     for pattern in answer_patterns:
@@ -288,12 +292,23 @@ def parse_quiz(
         ]
 
         if len(matches) == len(questions):  # Verification step
+            valid = True
             for q, letter in zip(questions, matches):
-                q["correct_index"] = ord(letter) - ord("A")
-            break
+                correct_index = ord(letter) - ord("A")
+
+                # Check that the answer exists in the question's choices
+                if correct_index < 0 or correct_index >= len(q["options"]):
+                    valid = False
+                    break
+
+                q["correct_index"] = correct_index
+
+            if valid:
+                break
     else:
         raise ValueError(
-            "Failed to parse answers" + str(len(matches)) + str(len(questions))
+            f"{matches}"
+            "Failed to parse answers" + str(len(matches)) + "/" + str(len(questions))
         )
 
     return title, questions
@@ -590,7 +605,9 @@ def shuffle_options(questions: list[dict]):
 def wrap_html(quiz, enable_mathjax: bool, light_theme, dark_theme):
     quiz_json = json.dumps(quiz)
 
-    rendered_script = script.replace("__ENABLE_MATHJAX__", "true" if enable_mathjax else "false")
+    rendered_script = script.replace(
+        "__ENABLE_MATHJAX__", "true" if enable_mathjax else "false"
+    )
 
     return f"""
 <!DOCTYPE html>
