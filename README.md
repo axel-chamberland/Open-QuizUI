@@ -6,6 +6,7 @@ Features:
 - Use any colorscheme you want, or make your own
 - Render MathJax for LaTeX expressions (optional)
 - Seperate Light/Dark themes
+- Save a quiz and share it as an HTML file
 
 ## Example
 <details open>
