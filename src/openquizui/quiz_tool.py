@@ -23,11 +23,11 @@ THEMES = {
 --surface: color-mix(in srgb, var(--bg) 92%, var(--text) 8%);
 --surface-2: color-mix(in srgb, var(--bg) 96%, var(--text) 4%);
 
---success: #00ff00;
---danger: #ff0000;
+--success: #0fff93;
+--danger: #ff4545;
 
 --correct_bg: color-mix(in srgb, var(--success) 30%, var(--surface));
---wrong_bg: color-mix(in srgb, var(--danger) 30%, var(--danger));
+--wrong_bg: color-mix(in srgb, var(--danger) 30%, var(--surface));
 """,
     "default_dark": """
 --bg: oklch(20% 0 0);
@@ -192,14 +192,16 @@ class Tools:
             light_theme = THEMES.get(option_light, THEMES["default_light"])
 
             # Generate quiz
-            content = wrap_html(quiz, self.valves.enable_mathjax, light_theme, dark_theme)
+            content = wrap_html(
+                quiz, self.valves.enable_mathjax, light_theme, dark_theme
+            )
             return HTMLResponse(
                 content=content,
                 headers={"Content-Disposition": "inline"},
             )
 
         except Exception as e:
-                    return f"An unexpected error occurred: {e}"
+            return f"An unexpected error occurred: {e}"
 
 
 # =========================
@@ -305,6 +307,7 @@ def validate_questions(questions) -> list[str]:
 
     return errors
 
+
 # =========================
 # QUIZ LOGIC
 # =========================
@@ -346,7 +349,9 @@ def shuffle_options(questions: list[dict]):
 def wrap_html(quiz, enable_mathjax: bool, light_theme, dark_theme):
     quiz_json = json.dumps(quiz)
 
-    rendered_script = script.replace("__ENABLE_MATHJAX__", "true" if enable_mathjax else "false")
+    rendered_script = script.replace(
+        "__ENABLE_MATHJAX__", "true" if enable_mathjax else "false"
+    )
 
     return f"""
 <!DOCTYPE html>
