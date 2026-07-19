@@ -36,7 +36,7 @@ While the tool will work, I recommend using the action function since it is easi
 
 The function is triggered by pressing the action button under an LLM's message. 
 
-If the function doesn't work for a particular format, most of the time it is because the LLM make an error somewhere (which it would have done with the tool either way). You can either manually fix it, or ask the LLM to convert it by itself using the tool. If it's not the case, please consider submiting a bug repport with the message's content so we can fix it.
+If the function doesn't work for a particular format, most of the time it is because the LLM made an error somewhere (which it would have done with the tool either way). You can either manually fix it, or ask the LLM to convert it by itself using the tool. If it's not the case, please consider submiting a bug repport with the message's content so we can fix it.
 
 ## Recommendations
 
