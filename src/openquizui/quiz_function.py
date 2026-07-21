@@ -956,17 +956,14 @@ document.addEventListener("keydown", (e) => {
 
     const key = e.key.toLowerCase();
 
-    // 1–9 → 0–8
+
+    // Number = choose
     let index = -1;
 
     if (/^[1-9]$/.test(key)) {
         index = Number(key) - 1;
     }
 
-    // a–z → 0–25
-    else if (/^[a-z]$/.test(key)) {
-        index = key.charCodeAt(0) - 97;
-    }
 
     if (index >= 0 && index < optionButtons.length) {
         const button = optionButtons[index];
@@ -976,19 +973,29 @@ document.addEventListener("keydown", (e) => {
         return
 
     }
-    // Enter = reveal answer
-    if (key === "enter") {
-        revealAnswer();
+
+    // Reveal answer or go to next question
+    if (key === "enter" || key == " ") {
+        console.log("handled", key);
+        e.preventDefault();
+
+        if (!answerRevealed) {
+            revealAnswer();
+        } else {
+            nextQuestion();
+        }
         return;
     }
 
-    // Arrow navigation
-    if (key === "arrowright") {
+    // Navigation
+    if (key === "arrowright" || key === "l") {
+        e.preventDefault();
         nextQuestion();
         return;
     }
 
-    if (key === "arrowleft") {
+    if (key === "arrowleft" || key === "h") {
+        e.preventDefault();
         prevQuestion();
         return;
     };
