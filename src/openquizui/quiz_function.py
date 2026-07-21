@@ -858,19 +858,19 @@ function renderMath(text) {
     });
 }
 
-function simpleMarkdownInline(text) {
+function renderInlineMarkdown(text) {
     if (!text) return "";
 
-    return renderMath(
-        text
-            .replace(/\*\*(.*?)\*\*/g, "<b>$1</b>")
-            .replace(/\*(.*?)\*/g, "<i>$1</i>")
-    );
+    text = text
+        .replace(/\*\*(.*?)\*\*/g, "<b>$1</b>")
+        .replace(/\*(.*?)\*/g, "<i>$1</i>")
+
+    return renderMath(text);
 }
 
-function simpleMarkdownBlock(text) {
+function renderMarkdown(text) {
     if (!text) return "";
-    return simpleMarkdownInline(text).replace(/\n/g, "<br>");
+    return renderInlineMarkdown(text).replace(/\n/g, "<br>");
 }
 
 let currentQuestionIndex = 0;
@@ -894,7 +894,7 @@ async function renderQuiz() {
 
     // Update question
     questionBoxTitle.textContent = `${quiz.title} (${currentQuestionIndex + 1}/${quiz.questions.length})`;
-    questionText.innerHTML = simpleMarkdownBlock(quiz.questions[currentQuestionIndex].question);
+    questionText.innerHTML = renderMarkdown(quiz.questions[currentQuestionIndex].question);
 
     // Clear and rebuild options
     optionsContainer.innerHTML = '';
@@ -904,7 +904,7 @@ async function renderQuiz() {
     currentQuestion = quiz.questions[currentQuestionIndex];
     currentQuestion.options.forEach((option, index) => {
         const button = document.createElement("button");
-        button.innerHTML = simpleMarkdownInline(option);
+        button.innerHTML = renderMarkdown(option);
         button.className = "option";
 
         optionButtons.push(button);
