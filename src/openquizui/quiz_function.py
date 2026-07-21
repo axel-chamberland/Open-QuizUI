@@ -880,6 +880,8 @@ let wrongAnswerCount = 0;
 let optionButtons = [];
 let currentQuestion = null;
 
+let answerRevealed = false;
+
 async function renderQuiz() {
     const questionBox = document.querySelector(".question-box");
     const questionBoxTitle = questionBox.querySelector("h1");
@@ -934,6 +936,7 @@ async function renderQuiz() {
 }
 
 function nextQuestion() {
+    answerRevealed = false;
     if (currentQuestionIndex + 1 < quiz.questions.length) {
         currentQuestionIndex++
         renderQuiz();
@@ -943,6 +946,7 @@ function nextQuestion() {
 }
 
 function prevQuestion() {
+    answerRevealed = false;
     currentQuestionIndex = Math.max(0, currentQuestionIndex - 1);
     renderQuiz();
 }
