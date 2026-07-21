@@ -787,6 +787,15 @@ const ENABLE_MATHJAX = __ENABLE_MATHJAX__;
 
 let mathReady = false;
 
+let currentQuestionIndex = 0;
+let wrongAnswerCount = 0;
+
+
+let optionButtons = [];
+let currentQuestion = null;
+
+let answerRevealed = false;
+
 window.MathJax = {
     tex: {
         inlineMath: [['$', '$'], ['\\(', '\\)']]
@@ -873,14 +882,6 @@ function renderMarkdown(text) {
     return renderInlineMarkdown(text).replace(/\n/g, "<br>");
 }
 
-let currentQuestionIndex = 0;
-let wrongAnswerCount = 0;
-
-
-let optionButtons = [];
-let currentQuestion = null;
-
-let answerRevealed = false;
 
 async function renderQuiz() {
     const questionBox = document.querySelector(".question-box");
