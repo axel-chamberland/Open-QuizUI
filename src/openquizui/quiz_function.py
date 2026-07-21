@@ -1009,20 +1009,16 @@ function handleAnswer(index, button) {
 }
 
 function revealAnswer() {
+    answerRevealed = true;
     const currentQuestion = quiz.questions[currentQuestionIndex];
     const optionsContainer = document.getElementById("options");
 
     // Get all buttons in the current question
     const buttons = optionsContainer.querySelectorAll("button");
 
-    // Find and highlight the correct answer
-    buttons.forEach(button => {
-        const buttonIndex = Array.from(buttons).indexOf(button);
-        if (buttonIndex === currentQuestion.correct_index) {
-            button.classList.add('correct');
-        }
-    });
-}
+    // Highlight the correct answer
+    buttons[currentQuestion.correct_index].classList.add("correct");
+};
 function downloadQuizHTML(filename = "quiz.html") {
     // Get full document HTML
     const html = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
