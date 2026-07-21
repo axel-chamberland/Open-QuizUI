@@ -531,6 +531,15 @@ const ENABLE_MATHJAX = __ENABLE_MATHJAX__;
 
 let mathReady = false;
 
+let currentQuestionIndex = 0;
+let wrongAnswerCount = 0;
+
+
+let optionButtons = [];
+let currentQuestion = null;
+
+let answerRevealed = false;
+
 window.MathJax = {
     tex: {
         inlineMath: [['$', '$'], ['\\(', '\\)']]
@@ -602,27 +611,21 @@ function renderMath(text) {
     });
 }
 
-function simpleMarkdownInline(text) {
+function renderInlineMarkdown(text) {
     if (!text) return "";
 
-    return renderMath(
-        text
-            .replace(/\*\*(.*?)\*\*/g, "<b>$1</b>")
-            .replace(/\*(.*?)\*/g, "<i>$1</i>")
-    );
+    text = text
+        .replace(/\*\*(.*?)\*\*/g, "<b>$1</b>")
+        .replace(/\*(.*?)\*/g, "<i>$1</i>")
+
+    return renderMath(text);
 }
 
-function simpleMarkdownBlock(text) {
+function renderMarkdown(text) {
     if (!text) return "";
-    return simpleMarkdownInline(text).replace(/\n/g, "<br>");
+    return renderInlineMarkdown(text).replace(/\n/g, "<br>");
 }
 
-let currentQuestionIndex = 0;
-let wrongAnswerCount = 0;
-
-
-let optionButtons = [];
-let currentQuestion = null;
 
 async function renderQuiz() {
     const questionBox = document.querySelector(".question-box");
@@ -638,7 +641,7 @@ async function renderQuiz() {
 
     // Update question
     questionBoxTitle.textContent = `${quiz.title} (${currentQuestionIndex + 1}/${quiz.questions.length})`;
-    questionText.innerHTML = simpleMarkdownBlock(quiz.questions[currentQuestionIndex].question);
+    questionText.innerHTML = renderMarkdown(quiz.questions[currentQuestionIndex].question);
 
     // Clear and rebuild options
     optionsContainer.innerHTML = '';
@@ -648,7 +651,7 @@ async function renderQuiz() {
     currentQuestion = quiz.questions[currentQuestionIndex];
     currentQuestion.options.forEach((option, index) => {
         const button = document.createElement("button");
-        button.innerHTML = simpleMarkdownInline(option);
+        button.innerHTML = renderMarkdown(option);
         button.className = "option";
 
         optionButtons.push(button);
@@ -678,6 +681,7 @@ async function renderQuiz() {
 }
 
 function nextQuestion() {
+    answerRevealed = false;
     if (currentQuestionIndex + 1 < quiz.questions.length) {
         currentQuestionIndex++
         renderQuiz();
@@ -687,6 +691,7 @@ function nextQuestion() {
 }
 
 function prevQuestion() {
+    answerRevealed = false;
     currentQuestionIndex = Math.max(0, currentQuestionIndex - 1);
     renderQuiz();
 }
@@ -696,17 +701,14 @@ document.addEventListener("keydown", (e) => {
 
     const key = e.key.toLowerCase();
 
-    // 1–9 → 0–8
+
+    // Number = choose
     let index = -1;
 
     if (/^[1-9]$/.test(key)) {
         index = Number(key) - 1;
     }
 
-    // a–z → 0–25
-    else if (/^[a-z]$/.test(key)) {
-        index = key.charCodeAt(0) - 97;
-    }
 
     if (index >= 0 && index < optionButtons.length) {
         const button = optionButtons[index];
@@ -716,19 +718,29 @@ document.addEventListener("keydown", (e) => {
         return
 
     }
-    // Enter = reveal answer
-    if (key === "enter") {
-        revealAnswer();
+
+    // Reveal answer or go to next question
+    if (key === "enter" || key == " ") {
+        console.log("handled", key);
+        e.preventDefault();
+
+        if (!answerRevealed) {
+            revealAnswer();
+        } else {
+            nextQuestion();
+        }
         return;
     }
 
-    // Arrow navigation
-    if (key === "arrowright") {
+    // Navigation
+    if (key === "arrowright" || key === "l") {
+        e.preventDefault();
         nextQuestion();
         return;
     }
 
-    if (key === "arrowleft") {
+    if (key === "arrowleft" || key === "h") {
+        e.preventDefault();
         prevQuestion();
         return;
     };
@@ -753,21 +765,20 @@ function handleAnswer(index, button) {
 }
 
 function revealAnswer() {
+    answerRevealed = true;
     const currentQuestion = quiz.questions[currentQuestionIndex];
     const optionsContainer = document.getElementById("options");
 
     // Get all buttons in the current question
     const buttons = optionsContainer.querySelectorAll("button");
 
-    // Find and highlight the correct answer
-    buttons.forEach(button => {
-        const buttonIndex = Array.from(buttons).indexOf(button);
-        if (buttonIndex === currentQuestion.correct_index) {
-            button.classList.add('correct');
-        }
-    });
-}
-function downloadQuizHTML(filename = "quiz.html") {
+    // Highlight the correct answer
+    buttons[currentQuestion.correct_index].classList.add("correct");
+};
+
+// Download as HTML
+
+function downloadQuizHTML(filename = quiz.title) {
     // Get full document HTML
     const html = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
 
