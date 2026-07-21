@@ -1031,7 +1031,10 @@ function revealAnswer() {
     // Highlight the correct answer
     buttons[currentQuestion.correct_index].classList.add("correct");
 };
-function downloadQuizHTML(filename = "quiz.html") {
+
+// Download as HTML
+
+function downloadQuizHTML(filename = quiz.title) {
     // Get full document HTML
     const html = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
 
