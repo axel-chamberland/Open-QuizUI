@@ -370,11 +370,17 @@ def wrap_html(quiz, enable_mathjax: bool, light_theme, dark_theme):
 <div class="question-box">
   <h1></h1>
   <div id="navigation">
-    <button id="prevButton" onclick="prevQuestion()">< Prev</button>
-    <button id="revealButton" onclick="revealAnswer()">Reveal Answer</button>
-    <button id="maximizeButton" onclick="toggleFullscreen()">Toggle Fullscreen</button>
-    <button id="downloadButton" onclick="downloadQuizHTML()">Save</button>
-    <button id="nextButton" onclick="nextQuestion()">Next ></button>
+    <button id="revealButton" onclick="revealAnswer()">⌕</button>
+    <button id="maximizeButton" onclick="toggleFullscreen()">⛶</button>
+    <button id="downloadButton" onclick="downloadQuizHTML()">⤓</button>
+
+    <button id="prevButton" onclick="prevQuestion()">&lt</button>
+    <div id="questionSelector">
+        <input id="questionNumber" type="text" inputmode="numeric" value="1">
+        <span class="separator">/</span>
+        <span id="questionCount">1</span>
+    </div>
+    <button id="nextButton" onclick="nextQuestion()">&gt</button>
   </div>
   <p id="question"></p>
 
@@ -418,6 +424,7 @@ style = """
 }}
 * {{
     box-sizing: border-box;
+    font-family: inherit;
 }}
 body {{
     background: var(--bg);
@@ -449,6 +456,7 @@ body {{
 
 button {{
     border: 1px solid;
+    border-radius: 0.25rem;
     border-color: var(--border);
     background: var(--surface-2);
     cursor: pointer;
@@ -457,7 +465,6 @@ button {{
     font-size: 1.1em;
 }}
 .option{{
-    border-radius: 0.25rem;
     padding: 1rem;
 }}
 button:disabled {{
@@ -482,6 +489,7 @@ button:disabled {{
 #navigation {{
 
     display: flex;
+    flex-wrap: nowrap;
     padding: 0.75rem;
     justify-content: center;
     gap: 0.5rem;
@@ -490,17 +498,34 @@ button:disabled {{
     border-bottom: 1px solid var(--border);
     margin-bottom: 20px;
 
+    user-select: none;
+    -webkit-user-select: none;
 }}
 
-#navigation.button {{
-    font-size: 1.1em;
+
+#navigation button {{
+    font-size : 2rem;
+
 
 }}
-mjx-container {{
-    max-width: 100%;
-    overflow-x: auto;
-    white-space: normal;
+
+#revealButton,
+#maximizeButton,
+#downloadButton,
+#questionSelector {{
+    flex: 0 0 auto;
+    min-width: 2rem;
 }}
+
+
+#prevButton,
+#nextButton {{
+    flex: 1;
+    font-size: clamp(1.5rem, 5vw, 2rem);
+    max-width: 4rem;
+}}
+
+
 :fullscreen #navigation {{
     position: fixed;
     bottom: 0;
@@ -511,12 +536,64 @@ mjx-container {{
 
     background: var(--bg);
     padding: 0.75rem;
-    
     border-top: 1px solid var(--border);
     border-bottom: 0;
 }}
+
 :fullscreen .question-box {{
     padding-bottom: var(--nav-height);
+}}
+
+#questionSelector {{
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+
+    background: var(--surface-2);
+    color: var(--text);
+
+    border: 1px solid var(--border);
+    border-radius: 0.25rem;
+
+    font-size : 1.1rem;
+
+    gap: 0.2rem;
+
+
+}}
+
+
+#questionNumber {{
+
+    width: 3ch;
+    text-align: center;
+    font-size: 1.1rem;
+
+    padding: 0;
+    margin: 0;
+    line-height: 1;
+
+    background: transparent;
+    color: var(--text);
+    border: none;
+    outline: none;
+
+}}
+
+
+#questionNumber:focus {{
+    outline: none;
+    border: none;
+}}
+
+#questionCount {{
+    margin-right: 0.3em;
+}}
+
+mjx-container {{
+    max-width: 100%;
+    overflow-x: auto;
+    white-space: normal;
 }}
 """
 
@@ -531,7 +608,6 @@ const ENABLE_MATHJAX = __ENABLE_MATHJAX__;
 
 let mathReady = false;
 
-let currentQuestionIndex = 0;
 let wrongAnswerCount = 0;
 
 
@@ -539,6 +615,25 @@ let optionButtons = [];
 let currentQuestion = null;
 
 let answerRevealed = false;
+
+
+const questionBox = document.querySelector(".question-box");
+const questionText = questionBox.querySelector("#question");
+const optionsContainer = document.getElementById("options");
+const navigationContainer = questionBox.querySelector("#navigation");
+const questionNumber = document.getElementById("questionNumber");
+// Update title
+questionBox.querySelector("h1").textContent = `${quiz.title}`;
+
+// Update max question count
+const questionCount = document.getElementById("questionCount");
+
+questionCount.textContent = quiz.questions.length;
+
+let currentQuestionIndex = getStoredQuestionIndex();
+questionNumber.value = currentQuestionIndex + 1;
+
+
 
 window.MathJax = {
     tex: {
@@ -629,7 +724,6 @@ function renderMarkdown(text) {
 
 async function renderQuiz() {
     const questionBox = document.querySelector(".question-box");
-    const questionBoxTitle = questionBox.querySelector("h1");
     const questionText = questionBox.querySelector("#question");
     const optionsContainer = document.getElementById("options");
     const navigationContainer = questionBox.querySelector("#navigation");
@@ -640,7 +734,6 @@ async function renderQuiz() {
     }
 
     // Update question
-    questionBoxTitle.textContent = `${quiz.title} (${currentQuestionIndex + 1}/${quiz.questions.length})`;
     questionText.innerHTML = renderMarkdown(quiz.questions[currentQuestionIndex].question);
 
     // Clear and rebuild options
@@ -681,19 +774,11 @@ async function renderQuiz() {
 }
 
 function nextQuestion() {
-    answerRevealed = false;
-    if (currentQuestionIndex + 1 < quiz.questions.length) {
-        currentQuestionIndex++
-        renderQuiz();
-    } else {
-        renderQuiz();
-    }
+    goTo(currentQuestionIndex + 1)
 }
 
 function prevQuestion() {
-    answerRevealed = false;
-    currentQuestionIndex = Math.max(0, currentQuestionIndex - 1);
-    renderQuiz();
+    goTo(currentQuestionIndex - 1);
 }
 
 document.addEventListener("keydown", (e) => {
@@ -746,6 +831,30 @@ document.addEventListener("keydown", (e) => {
     };
 });
 
+questionNumber.addEventListener("change", () => {
+    if (!questionNumber.value) return;
+
+    goTo(Number(questionNumber.value) - 1);
+});
+
+function goTo(question_index) {
+
+    // Clamp between first and last question
+    question_index = Math.max(
+        0,
+        Math.min(question_index, quiz.questions.length - 1)
+    );
+
+    currentQuestionIndex = question_index
+
+    setStoredQuestionIndex(currentQuestionIndex);
+
+    answerRevealed = false;
+
+    questionNumber.value = currentQuestionIndex + 1;
+    renderQuiz();
+}
+
 function handleAnswer(index, button) {
     if (index === currentQuestion.correct_index) {
         button.classList.add("correct");
@@ -793,6 +902,36 @@ function downloadQuizHTML(filename = quiz.title) {
 
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+}
+
+function getStorageKey() {
+    return `currentQuestionIndex_${quiz.title}`;
+}
+
+function getStoredQuestionIndex() {
+    try {
+        const index = Number(sessionStorage.getItem("currentQuestionIndex"));
+
+        if (!Number.isInteger(index)) {
+            return 0;
+        }
+
+        return Math.max(
+            0,
+            Math.min(index, quiz.questions.length - 1)
+        );
+
+    } catch {
+        return 0;
+    }
+}
+
+function setStoredQuestionIndex(value) {
+    try {
+        sessionStorage.setItem("currentQuestionIndex", value);
+    } catch (e) {
+        // Ignore if storage is unavailable
+    }
 }
 
 

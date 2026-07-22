@@ -1160,17 +1160,31 @@ function downloadQuizHTML(filename = quiz.title) {
     URL.revokeObjectURL(url);
 }
 
+function getStorageKey() {
+    return `currentQuestionIndex_${quiz.title}`;
+}
+
 function getStoredQuestionIndex() {
     try {
-        return Number(localStorage.getItem("currentQuestionIndex") ?? 0);
-    } catch (e) {
+        const index = Number(sessionStorage.getItem("currentQuestionIndex"));
+
+        if (!Number.isInteger(index)) {
+            return 0;
+        }
+
+        return Math.max(
+            0,
+            Math.min(index, quiz.questions.length - 1)
+        );
+
+    } catch {
         return 0;
     }
 }
 
 function setStoredQuestionIndex(value) {
     try {
-        localStorage.setItem("currentQuestionIndex", value);
+        sessionStorage.setItem("currentQuestionIndex", value);
     } catch (e) {
         // Ignore if storage is unavailable
     }
