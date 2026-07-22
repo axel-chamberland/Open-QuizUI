@@ -9,6 +9,7 @@ licence: MIT
 
 from pydantic import BaseModel, Field
 from fastapi.responses import HTMLResponse
+from difflib import SequenceMatcher
 import json
 import random
 
@@ -83,11 +84,6 @@ class Tools:
         self.valves = self.Valves()
 
     class Valves(BaseModel):
-        shuffle_options: bool = Field(
-            default=True,
-            description="Whether or not to use the choice order from the llm or to make it random",
-        )
-
         enable_mathjax: bool = Field(
             default=False,
             description="Disabled by default for privacy and performance. Enable LaTeX/math rendering with MathJax. Requires Internet access to load the MathJax library from a CDN. When disabled or offline, LaTeX expressions are displayed as plain text.",
@@ -106,7 +102,7 @@ class Tools:
             description="change the dark mode theme to a different theme. to define a new theme, you can add a theme at the top of the code where the templates are. Defaults: default_dark. high_contrast, tokyonight",
         )
 
-    async def generate_quiz(self, title, questions_and_answers: list[dict]):
+    async def generate_quiz(self, title, questions: list[dict]):
         """
         Generate a multiple-choice quiz and display it to the user.
 
@@ -114,52 +110,47 @@ class Tools:
             title (str):
                 The title of the quiz.
 
-            questions_and_answers (list[dict]):
-                A list of question objects. EVERY dictionary in this list
-                MUST contain ALL FOUR of these keys, spelled exactly as shown:
-                    - "id"            (str)  Unique question identifier, e.g. "q1".
-                    - "question"      (str)  The question text. This key is
-                                             required on every single item —
-                                             do not omit it, even if the
-                                             question seems implied by "id".
-                    - "options"       (list[str])  The list of answer choices.
-                    - "correct_index" (int)  Zero-based index into "options"
-                                             pointing to the correct answer.
+            questions (list[dict]):
+                A list of question objects. Each dictionary MUST contain
+                these three keys:
+                    - "question"    (str)       The question text.
+                    - "answer"      (str)       The single CORRECT answer,
+                                                 written out in full.
+                    - "distractors" (list[str]) 1 or more WRONG answers.
+                                                 Do not include the correct
+                                                 answer in this list.
 
                 Example of one valid item:
                     {
-                        "id": "q1",
                         "question": "What is the capital of France?",
-                        "options": ["Berlin", "Paris", "Rome", "Madrid"],
-                        "correct_index": 1
+                        "answer": "Paris",
+                        "distractors": ["Berlin", "Rome", "Madrid"]
                     }
 
-                Do not skip the "question" key or rename any key. Every
-                item in the list must follow this exact structure or the
-                quiz will fail to generate.
+                Write the answer only once, in "answer" — do not also
+                repeat it inside "distractors". Do not rename any key.
+                Every item must follow this exact structure or the quiz
+                will fail to generate.
 
         Returns:
             Generated quiz accessible to the user,
             or an error message.
         """
-
         try:
-            validation_errors = validate_questions(questions_and_answers)
-            if validation_errors:
-                error_report = "\n".join(f"- {e}" for e in validation_errors)
+            questions_and_answers, warnings = normalize_questions(questions)
+
+            if not questions_and_answers:
+                error_report = "\n".join(f"- {w}" for w in warnings)
                 return (
-                    "The quiz could not be generated because the "
-                    "'questions_and_answers' input is malformed:\n\n"
+                    "The quiz could not be generated because no valid "
+                    "questions could be recovered from 'questions':\n\n"
                     f"{error_report}\n\n"
-                    "Please regenerate the JSON, making sure each question object "
-                    "has exactly the keys 'id', 'question', 'options' "
-                    "(a list of strings), and 'correct_index' (an int within range), "
-                    "and that every array is properly opened and closed with no "
-                    "stray brackets or unkeyed values."
+                    "Please regenerate the JSON. Each item needs 'question' "
+                    "(string), 'answer' (string, the correct answer), and "
+                    "'distractors' (a list of at least 1 wrong answer)."
                 )
 
-            if self.valves.shuffle_options:
-                shuffle_options(questions_and_answers)
+            shuffle_options(questions_and_answers)
 
             quiz = {"title": title, "questions": questions_and_answers}
 
@@ -190,107 +181,133 @@ class Tools:
 
 
 # =========================
-# VALIDATION
+# NORMALIZATION
 # =========================
 
+# Accepted synonyms for each field, since weaker models often use a
+# slightly different key name than the one requested.
+_QUESTION_KEYS = ("question", "q", "prompt", "text")
+_ANSWER_KEYS = ("answer", "correct", "correct_answer", "correct_option")
+_DISTRACTOR_KEYS = (
+    "distractors",
+    "wrong_answers",
+    "incorrect_answers",
+    "wrong_options",
+)
+_OPTIONS_KEYS = ("options", "choices", "answers", "choices_list")
+_INDEX_KEYS = ("correct_index", "answer_index", "index", "correctIndex")
 
-def validate_questions(questions) -> list[str]:
+
+def _first_present(d: dict, keys, expected_type=None):
+    for k in keys:
+        if k in d:
+            v = d[k]
+            if expected_type is None or isinstance(v, expected_type):
+                return v
+    return None
+
+
+def _best_match_index(answer_text: str, options: list) -> int | None:
+    """Find which option the model's free-text answer refers to.
+
+    Tries exact (case-insensitive) match first, then substring match,
+    then falls back to the closest fuzzy match so small wording
+    differences ("Paris." vs "Paris") don't cause a hard failure.
     """
-    Validate the questions_and_answers input and return a list of
-    human-readable error strings (one or more per problem found).
-    An empty list means the input is valid.
+    if not isinstance(answer_text, str):
+        return None
+
+    norm_answer = answer_text.strip().lower().rstrip(".")
+    norm_options = [str(o).strip().lower().rstrip(".") for o in options]
+
+    if norm_answer in norm_options:
+        return norm_options.index(norm_answer)
+
+    for i, o in enumerate(norm_options):
+        if norm_answer in o or o in norm_answer:
+            return i
+
+    best_i, best_score = None, 0.0
+    for i, o in enumerate(norm_options):
+        score = SequenceMatcher(None, norm_answer, o).ratio()
+        if score > best_score:
+            best_i, best_score = i, score
+
+    return best_i if best_score >= 0.6 else None
+
+
+def normalize_questions(questions) -> tuple[list[dict], list[str]]:
     """
-    errors = []
+    Best-effort cleanup of whatever the model produced.
+
+    Returns (normalized_questions, warnings). Items that can't be
+    salvaged are skipped (with a warning) rather than aborting the
+    whole quiz — one bad question shouldn't sink the other nine.
+    """
+    warnings: list[str] = []
 
     if not isinstance(questions, list):
-        return [
-            f"'questions_and_answers' must be a list of question objects, "
-            f"but received type '{type(questions).__name__}'."
+        return [], [
+            f"'questions' must be a list of question objects, got "
+            f"'{type(questions).__name__}'."
         ]
 
-    if len(questions) == 0:
-        return ["'questions_and_answers' is empty. Provide at least one question."]
-
-    required_keys = {
-        "id": str,
-        "question": str,
-        "options": list,
-        "correct_index": int,
-    }
+    normalized = []
 
     for i, q in enumerate(questions):
         label = f"Question at position {i}"
 
         if not isinstance(q, dict):
-            errors.append(
-                f"{label} is not a valid object (got type '{type(q).__name__}' "
-                f"instead of a dict). This usually means a value in 'options' "
-                f"from a PREVIOUS question leaked outside its array due to a "
-                f"misplaced ']' or missing comma. Check the JSON brackets around "
-                f"the previous question's 'options' list."
+            warnings.append(f"{label} is not an object — skipped.")
+            continue
+
+        question_text = _first_present(q, _QUESTION_KEYS, str)
+
+        if not question_text:
+            warnings.append(f"{label} is missing question text — skipped.")
+            continue
+
+        options = None
+        correct_index = None
+
+        # --- Preferred path: answer + distractors -------------------
+        # No text-matching needed here: we build the option list
+        # ourselves, so the correct answer can't fail to line up with
+        # itself the way it could when the model had to repeat it
+        # verbatim inside an "options" array.
+        answer_text = _first_present(q, _ANSWER_KEYS, str)
+        distractors = _first_present(q, _DISTRACTOR_KEYS, list)
+
+        if answer_text and distractors:
+            distractors = [str(d) for d in distractors if str(d).strip()]
+            # Guard against the model accidentally repeating the
+            # answer inside distractors too (ignoring case/punctuation
+            # so "Paris." doesn't slip past "Paris").
+            norm_answer = answer_text.strip().lower().rstrip(".")
+            distractors = [
+                d for d in distractors if d.strip().lower().rstrip(".") != norm_answer
+            ]
+            if distractors:
+                options = [answer_text] + distractors
+                correct_index = 0
+
+        if options is None or correct_index is None:
+            warnings.append(
+                f"{label} ('{question_text[:40]}...') — could not determine "
+                f"a valid answer and distractors — skipped."
             )
             continue
 
-        # Prefer the question's own id in the label, if present
-        qid = q.get("id")
-        if isinstance(qid, str) and qid:
-            label = f"Question '{qid}' (position {i})"
+        normalized.append(
+            {
+                "id": q.get("id") or f"q{i + 1}",
+                "question": question_text,
+                "options": options,
+                "correct_index": correct_index,
+            }
+        )
 
-        # Check for missing keys
-        missing = [k for k in required_keys if k not in q]
-        if missing:
-            errors.append(
-                f"{label} is missing required key(s): {', '.join(repr(k) for k in missing)}. "
-                f"Every question must have exactly these keys: "
-                f"'id', 'question', 'options', 'correct_index'."
-            )
-
-        # Check for wrong types on keys that ARE present
-        for key, expected_type in required_keys.items():
-            if key in q and not isinstance(q[key], expected_type):
-                errors.append(
-                    f"{label}: key '{key}' should be of type "
-                    f"'{expected_type.__name__}' but got "
-                    f"'{type(q[key]).__name__}' (value: {q[key]!r})."
-                )
-
-        # Options-specific checks
-        if "options" in q and isinstance(q["options"], list):
-            if len(q["options"]) < 2:
-                errors.append(
-                    f"{label}: 'options' must contain at least 2 choices, "
-                    f"found {len(q['options'])}."
-                )
-            bad_opts = [
-                (j, o) for j, o in enumerate(q["options"]) if not isinstance(o, str)
-            ]
-            if bad_opts:
-                errors.append(
-                    f"{label}: 'options' must be a list of plain strings. "
-                    f"Found non-string entries at index(es) "
-                    f"{[j for j, _ in bad_opts]} "
-                    f"(values: {[o for _, o in bad_opts]!r}). "
-                    f"This often happens when an option string got split across "
-                    f"multiple array entries, or a value leaked in from a "
-                    f"malformed bracket elsewhere in the JSON."
-                )
-
-        # correct_index range check (only if types are right)
-        if (
-            "options" in q
-            and isinstance(q["options"], list)
-            and "correct_index" in q
-            and isinstance(q["correct_index"], int)
-        ):
-            n = len(q["options"])
-            if not (0 <= q["correct_index"] < n):
-                errors.append(
-                    f"{label}: 'correct_index' is {q['correct_index']}, but must "
-                    f"be a valid zero-based index into 'options' "
-                    f"(0 to {n - 1} for {n} option(s))."
-                )
-
-    return errors
+    return normalized, warnings
 
 
 # =========================
@@ -300,19 +317,10 @@ def validate_questions(questions) -> list[str]:
 
 def shuffle_options(questions: list[dict]):
 
-    if not questions:
-        return "Quiz", [
-            {
-                "question": "No valid questions detected from input",
-                "options": ["Check formatting", "Ensure Q/A structure"],
-                "correct_index": 0,
-            }
-        ]
-
     for question in questions:
         choices = question["options"]
 
-        indices = [x for x in range(len(question["options"]))]
+        indices = list(range(len(choices)))
         random.shuffle(indices)
 
         shuffled_options = []
@@ -378,19 +386,34 @@ const quiz = {quiz_json};
 {rendered_script}
 </script>
 <script>
-
-// Height reporting script
-function reportHeight() {{
-    const h = document.documentElement.scrollHeight;
-    parent.postMessage({{ type: 'iframe:height', height: h }}, '*');
-}}
-window.addEventListener('load', reportHeight);
-new ResizeObserver(reportHeight).observe(document.body);
+{reportHeight}
 </script>
 </body>
 </html>
 """
 
+
+# =========================
+# Height report script
+# =========================
+
+reportHeight = """
+function reportHeight() {
+    // Do not run when in fullscreen
+    if (document.fullscreenElement) return;
+
+    const h = Math.max(
+        document.body.scrollHeight,
+        document.body.offsetHeight,
+        document.documentElement.scrollHeight
+    );
+
+    parent.postMessage({ type: 'iframe:height', height: h }, '*');
+}
+
+window.addEventListener('load', reportHeight);
+new ResizeObserver(reportHeight).observe(document.body);
+"""
 
 # =========================
 # STYLE
