@@ -20,44 +20,35 @@ THEMES = {
 --text: oklch(20% 0 0);
 --border: oklch(85% 0 0);
 
---surface: color-mix(in srgb, var(--bg) 92%, var(--text) 8%);
---surface-2: color-mix(in srgb, var(--bg) 96%, var(--text) 4%);
-
 --success: #0fff93;
 --danger: #ff4545;
 
---correct_bg: color-mix(in srgb, var(--success) 30%, var(--surface));
---wrong_bg: color-mix(in srgb, var(--danger) 30%, var(--surface));
+--correct_bg: color-mix(in srgb, var(--success) 30%, var(--btn));
+--wrong_bg: color-mix(in srgb, var(--danger) 30%, var(--btn));
 """,
     "default_dark": """
 --bg: oklch(20% 0 0);
---btn: oklch(32% 0 0);
+--btn: oklch(24% 0 0);
 --text: oklch(94% 0 0);
 --border: oklch(85% 0 0);
-
---surface: color-mix(in srgb, var(--bg) 92%, var(--text) 8%);
---surface-2: color-mix(in srgb, var(--bg) 85%, var(--bg) 15%);
 
 --success: #00ff00;
 --danger: #ff0000;
 
---correct_bg: color-mix(in srgb, var(--success) 30%, var(--surface));
---wrong_bg: color-mix(in srgb, var(--danger) 30%, var(--surface));
+--correct_bg: color-mix(in srgb, var(--success) 30%, var(--btn));
+--wrong_bg: color-mix(in srgb, var(--danger) 30%, var(--btn));
 """,
     "tokyonight": """
 --bg: #1a1b26;
---btn: #0C0E14;
+--btn: #242b42;
 --text: #c0caf5;
 --border: #7aa2f7;
-
---surface: #151821;
---surface-2: #242b42;
 
 --success: #1abc9c;
 --danger: #ff007c;
 
---correct_bg: color-mix(in srgb, var(--success) 30%, var(--surface));
---wrong_bg: color-mix(in srgb, var(--danger) 30%, var(--surface));
+--correct_bg: color-mix(in srgb, var(--success) 30%, var(--btn));
+--wrong_bg: color-mix(in srgb, var(--danger) 30%, var(--btn));
 """,
     "high_contrast": """
 --bg: #000000;
@@ -65,14 +56,11 @@ THEMES = {
 --text: #ffffff;
 --border: #ffffff;
 
---surface: #000000;
---surface-2: #111111;
-
 --success: #00ff00;
 --danger: #ff0000;
 
---correct_bg: color-mix(in srgb, var(--success) 40%, var(--surface));
---wrong_bg: color-mix(in srgb, var(--danger) 40%, var(--surface));
+--correct_bg: color-mix(in srgb, var(--success) 40%, var(--btn));
+--wrong_bg: color-mix(in srgb, var(--danger) 40%, var(--btn));
 """,
     "soft_pastel": """
 --bg: #fdf6f0;
@@ -80,14 +68,11 @@ THEMES = {
 --text: #4a4a4a;
 --border: #d8cfc4;
 
---surface: #ffffff;
---surface-2: #f7f0e8;
-
 --success: #6bbf59;
 --danger: #e07a5f;
 
---correct_bg: color-mix(in srgb, var(--success) 25%, var(--surface));
---wrong_bg: color-mix(in srgb, var(--danger) 25%, var(--surface));
+--correct_bg: color-mix(in srgb, var(--success) 25%, var(--btn));
+--wrong_bg: color-mix(in srgb, var(--danger) 25%, var(--btn));
 """,
 }
 
@@ -393,6 +378,7 @@ const quiz = {quiz_json};
 {rendered_script}
 </script>
 <script>
+
 // Height reporting script
 function reportHeight() {{
     const h = document.documentElement.scrollHeight;
@@ -409,7 +395,6 @@ new ResizeObserver(reportHeight).observe(document.body);
 # =========================
 # STYLE
 # =========================
-
 
 style = """
 :root {{
@@ -458,7 +443,7 @@ button {{
     border: 1px solid;
     border-radius: 0.25rem;
     border-color: var(--border);
-    background: var(--surface-2);
+    background: var(--btn);
     cursor: pointer;
     text-align: center;
     color: var(--text);
@@ -471,7 +456,7 @@ button:disabled {{
     opacity: 0.4;
 }}
 .option:hover {{
-    filter: brightness(1.5);
+    filter: contrast(1.1);
 }}
 
 .option.correct {{
@@ -549,7 +534,7 @@ button:disabled {{
     align-items: center;
     white-space: nowrap;
 
-    background: var(--surface-2);
+    background: var(--btn);
     color: var(--text);
 
     border: 1px solid var(--border);
