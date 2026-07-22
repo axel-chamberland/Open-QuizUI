@@ -646,19 +646,34 @@ const quiz = {quiz_json};
 {rendered_script}
 </script>
 <script>
-
-// Height reporting script
-function reportHeight() {{
-    const h = document.documentElement.scrollHeight;
-    parent.postMessage({{ type: 'iframe:height', height: h }}, '*');
-}}
-window.addEventListener('load', reportHeight);
-new ResizeObserver(reportHeight).observe(document.body);
+{reportHeight}
 </script>
 </body>
 </html>
 """
 
+
+# =========================
+# Height report script
+# =========================
+
+reportHeight = """
+function reportHeight() {
+    // Do not run when in fullscreen
+    if (document.fullscreenElement) return;
+
+    const h = Math.max(
+        document.body.scrollHeight,
+        document.body.offsetHeight,
+        document.documentElement.scrollHeight
+    );
+
+    parent.postMessage({ type: 'iframe:height', height: h }, '*');
+}
+
+window.addEventListener('load', reportHeight);
+new ResizeObserver(reportHeight).observe(document.body);
+"""
 
 # =========================
 # STYLE
