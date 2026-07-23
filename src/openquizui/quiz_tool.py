@@ -161,7 +161,7 @@ class Tools:
 
             if self.valves.dark_mode == 0:
                 option_dark = option_light
-            elif self.valves.dark_theme == 1:
+            elif self.valves.dark_mode == 1:
                 option_light = option_dark
 
             dark_theme = THEMES.get(option_dark, THEMES["default_dark"])

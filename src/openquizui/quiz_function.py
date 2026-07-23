@@ -95,7 +95,17 @@ THEMES = {
 }
 
 
+# Icon for the action function
+# char = "🃍"
+# svg = f"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+# <text x="12" y="18" text-anchor="middle" font-size="20" fill="currentColor" stroke="currentColor" stroke-width="0.5">{char}</text>
+# </svg>"""
+
+
 class Action:
+    #    icon_url = "data:image/svg+xml;base64," + base64.b64encode(
+    #        svg.encode("utf-8")
+    #    ).decode("ascii")
 
     class Valves(BaseModel):
         shuffle_choices: bool = Field(
@@ -191,7 +201,7 @@ class Action:
 
             if self.valves.dark_mode == 0:
                 option_dark = option_light
-            elif self.valves.dark_theme == 1:
+            elif self.valves.dark_mode == 1:
                 option_light = option_dark
 
             dark_theme = THEMES.get(option_dark, THEMES["default_dark"])
