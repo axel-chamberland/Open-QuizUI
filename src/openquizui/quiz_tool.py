@@ -913,12 +913,21 @@ function downloadQuizHTML(filename = quiz.title) {
 }
 
 function getStorageKey() {
-    return `currentQuestionIndex_${quiz.title}`;
+    // Hash derived from the quiz's content to avoid overlap
+    const data = JSON.stringify(quiz);
+
+    let hash = 0;
+    for (let i = 0; i < data.length; i++) {
+        hash = ((hash << 5) - hash) + data.charCodeAt(i);
+        hash |= 0;
+    }
+
+    return `currentQuestionIndex_${hash >>> 0}`;
 }
 
 function getStoredQuestionIndex() {
     try {
-        const index = Number(sessionStorage.getItem("currentQuestionIndex"));
+        const index = Number(localStorage.getItem(getStorageKey()));
 
         if (!Number.isInteger(index)) {
             return 0;
@@ -936,7 +945,7 @@ function getStoredQuestionIndex() {
 
 function setStoredQuestionIndex(value) {
     try {
-        sessionStorage.setItem("currentQuestionIndex", value);
+        localStorage.setItem(getStorageKey(), String(value));
     } catch (e) {
         // Ignore if storage is unavailable
     }
