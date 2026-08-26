@@ -1064,10 +1064,12 @@ async function renderQuiz() {
 }
 
 function nextQuestion() {
+    if (currentQuestionIndex >= quiz.questions.length - 1) return;
     goTo(currentQuestionIndex + 1)
 }
 
 function prevQuestion() {
+    if (currentQuestionIndex <= 0) return;
     goTo(currentQuestionIndex - 1);
 }
 
