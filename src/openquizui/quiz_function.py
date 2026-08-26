@@ -621,11 +621,15 @@ def wrap_html(quiz, enable_mathjax: bool, light_theme, dark_theme):
 
 <body>
 <div class="question-box">
-  <h1></h1>
+  <div id="titleBar">
+      <h1 id="title"></h1>
+      <span id="timer">00:00</span>
+  </div>
   <div id="navigation">
     <button id="revealButton" onclick="revealAnswer()">⌕</button>
     <button id="maximizeButton" onclick="toggleFullscreen()">⛶</button>
     <button id="downloadButton" onclick="downloadQuizHTML()">⤓</button>
+    <button id="timerToggle" onclick="toggleTimer()">◷</button>
 
     <button id="prevButton" onclick="prevQuestion()">&lt</button>
     <div id="questionSelector">
@@ -634,6 +638,7 @@ def wrap_html(quiz, enable_mathjax: bool, light_theme, dark_theme):
         <span id="questionCount">1</span>
     </div>
     <button id="nextButton" onclick="nextQuestion()">&gt</button>
+
   </div>
   <p id="question"></p>
 
@@ -702,6 +707,16 @@ body {{
     align-items: center;
 }}
 
+#titleBar {{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}}
+
+#title {{
+    margin: 0;
+}}
 .question-box {{
     display: flex;
     flex-direction: column;
@@ -885,6 +900,18 @@ mjx-container {{
     overflow-x: auto;
     white-space: normal;
 }}
+
+/* Hide timer by default */
+#timer {{
+    display: none;
+    min-width: 4rem;
+    font-size: 1.1rem;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+}}
+#timer.visible {{
+    display: inline-block;
+}}
 """
 
 
@@ -906,14 +933,21 @@ let currentQuestion = null;
 
 let answerRevealed = false;
 
+let timerVisible = false;
+let timerStart = null;
+let timerElapsed = 0;
+let timerInterval = null;
+
+const timer = document.getElementById("timer");
 
 const questionBox = document.querySelector(".question-box");
 const questionText = questionBox.querySelector("#question");
 const optionsContainer = document.getElementById("options");
 const navigationContainer = questionBox.querySelector("#navigation");
 const questionNumber = document.getElementById("questionNumber");
+
 // Update title
-questionBox.querySelector("h1").textContent = `${quiz.title}`;
+document.getElementById("title").textContent = quiz.title;
 
 // Update max question count
 const questionCount = document.getElementById("questionCount");
@@ -1223,6 +1257,85 @@ function downloadQuizHTML(filename = quiz.title) {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
 }
+
+// Timer
+
+
+
+function getTimerKey() {
+    return `quizTimer_${getStorageKey()}`;
+}
+
+function loadTimer() {
+    try {
+        const data = JSON.parse(
+            localStorage.getItem(getTimerKey())
+        );
+
+        timerElapsed = data?.elapsed || 0;
+        timerStart = data?.start || null;
+    } catch {
+        timerElapsed = 0;
+        timerStart = null;
+    }
+}
+
+function saveTimer() {
+    try {
+        localStorage.setItem(
+            getTimerKey(),
+            JSON.stringify({
+                elapsed: timerElapsed,
+                start: timerStart
+            })
+        );
+    } catch { }
+}
+
+function updateTimer() {
+    if (!timerStart) return;
+
+    const elapsed =
+        timerElapsed + Math.floor((Date.now() - timerStart) / 1000);
+
+    const minutes = Math.floor(elapsed / 60);
+    const seconds = elapsed % 60;
+
+    timer.textContent =
+        `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+}
+
+function toggleTimer() {
+    timerVisible = !timerVisible;
+    timer.classList.toggle("visible", timerVisible);
+
+    if (timerVisible) {
+        loadTimer();
+
+        // Start
+        if (!timerStart) {
+            timerStart = Date.now();
+            saveTimer();
+        }
+
+        updateTimer();
+        timerInterval = setInterval(updateTimer, 1000);
+
+    } else {
+        // Pause
+        if (timerStart) {
+            timerElapsed +=
+                Math.floor((Date.now() - timerStart) / 1000);
+
+            timerStart = null;
+            saveTimer();
+        }
+
+        clearInterval(timerInterval);
+        timerInterval = null;
+    }
+}
+
 
 function getStorageKey() {
     // Hash derived from the quiz's content to avoid overlap
