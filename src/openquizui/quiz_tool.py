@@ -261,9 +261,15 @@ def normalize_questions(questions) -> tuple[list[dict], list[str]]:
             warnings.append(f"{label} is not an object — skipped.")
             continue
 
-        question_text = _first_present(q, _QUESTION_KEYS, str)
+        question_text = _first_present(q, _QUESTION_KEYS)
 
-        if not question_text:
+        if question_text is None:
+            warnings.append(f"{label} is missing question text — skipped.")
+            continue
+
+        question_text = str(question_text)
+
+        if not question_text.strip():
             warnings.append(f"{label} is missing question text — skipped.")
             continue
 
@@ -275,7 +281,11 @@ def normalize_questions(questions) -> tuple[list[dict], list[str]]:
         # ourselves, so the correct answer can't fail to line up with
         # itself the way it could when the model had to repeat it
         # verbatim inside an "options" array.
-        answer_text = _first_present(q, _ANSWER_KEYS, str)
+        answer_text = _first_present(q, _ANSWER_KEYS)
+
+        if answer_text is not None:
+            answer_text = str(answer_text)
+
         distractors = _first_present(q, _DISTRACTOR_KEYS, list)
 
         if answer_text and distractors:
