@@ -1123,6 +1123,34 @@ document.addEventListener("keydown", (e) => {
     };
 });
 
+// Tap or click to change question (touch control)
+
+questionBox.addEventListener("click", (e) => {
+    if (e.target.closest("button, input")) return;
+
+    const rect = questionBox.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+
+    if (x > rect.width * 0.7) {
+        if (!answerRevealed) {
+            revealAnswer();
+        } else {
+            nextQuestion();
+        }
+    } else if (x < rect.width * 0.3) {
+        prevQuestion();
+    }
+});
+
+
+// Change question directly
+const questionSelector = document.getElementById("questionSelector");
+
+questionSelector.addEventListener("click", () => {
+    questionNumber.focus();
+    questionNumber.select();
+});
+
 questionNumber.addEventListener("change", () => {
     if (!questionNumber.value) return;
 
