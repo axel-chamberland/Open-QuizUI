@@ -733,7 +733,9 @@ button {{
     font-size: 1.1em;
 }}
 .option{{
-    padding: 1rem;
+    padding: 1rem 3rem 1rem 3rem;
+    position: relative;
+    text-align: center;
 }}
 button:disabled {{
     opacity: 0.4;
@@ -752,6 +754,26 @@ button:disabled {{
     background: var(--wrong_bg);
     border-color: var(--danger);
     opacity: 1;
+}}
+
+
+.option::after{{
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 1rem;
+    text-align: center;
+}}
+
+.option.correct::after {{
+    content: " ✓";
+    font-weight: bold;
+}}
+
+.option.wrong::after {{
+    content: " ✗";
+    font-weight: bold;
 }}
 
 #navigation {{
