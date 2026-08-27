@@ -659,7 +659,7 @@ def wrap_html(quiz, enable_mathjax: bool, light_theme, dark_theme):
         <!-- TODO
         <button onclick="reviewQuiz()">Review Quiz</button>
         -->
-        <button onclick="prevQuestion()">↩</button>
+        <button onclick="prevQuestion()">&lt</button>
         <button onclick="toggleFullscreen()">⛶</button>
         <button id="downloadButton" onclick="downloadQuizHTML()">⤓</button>
     </div>
@@ -668,14 +668,13 @@ def wrap_html(quiz, enable_mathjax: bool, light_theme, dark_theme):
         <div id="time"></div>
         <div id="averageTime"></div>
 
-        <div id="statsChart"></div>
         <div class="stat-row">
             <div id="correct"></div>
             <div id="wrong"></div>
         </div>
         <div class="stat-row">
-            <div id="unanswered"></div>
             <div id="skipped"></div>
+            <div id="unanswered"></div>
         </div>
 
         <div class="stat-row">
@@ -683,12 +682,21 @@ def wrap_html(quiz, enable_mathjax: bool, light_theme, dark_theme):
             <div id="accuracy"></div>
         </div>
 
+
+        <div id="statsChart"></div>
+
         <button onclick="confirmRestart()">Restart</button>
         <div id="restart-confirm" style="display: none;">
             <span>Restart quiz?</span>
             <button onclick="restartQuiz()">Yes</button>
             <button onclick="cancelRestart()">No</button>
         </div>
+
+    <section class="correction-sheet">
+        <h2>Correction</h2>
+
+        <div id="question-corrections"></div>
+    </section>
     </div>
 
 
@@ -1036,6 +1044,28 @@ mjx-container {{
     justify-content: center;
     margin: 8px;
 }}
+
+.correction-sheet {{
+    border-top: 1px solid var(--border);
+    text-align: left;
+}}
+
+.correction-sheet article {{
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--border);
+}}
+
+.correction-sheet h2 {{
+    margin-bottom: 1rem;
+}}
+
+.correction-sheet h3 {{
+    margin-top: 0;
+}}
+
+.correction-sheet p {{
+    margin: 0.5rem 0;
+}}
 """
 
 
@@ -1069,6 +1099,7 @@ const CORRECT = 1;
 const WRONG = 2;
 const SKIPPED = 3;
 let questionResults = new Array(quiz.questions.length).fill(UNANSWERED);
+let questionAnswers = new Array(quiz.questions.length).fill(null);
 let defaultStartDate = Date.now() // Default start date used if timer was never started
 loadStats();
 
@@ -1359,6 +1390,8 @@ function goTo(question_index) {
 }
 
 function handleAnswer(index, button) {
+    questionAnswers[currentQuestionIndex] = index
+    saveStats();
     if (index === currentQuestion.correct_index) {
 
         button.classList.add("correct");
@@ -1563,6 +1596,7 @@ function renderResults() {
         )}`;
 
     createDonutChart(document.getElementById("statsChart"), chartData);
+    showCorrectionSheet();
 }
 
 function createDonutChart(container, data) {
@@ -1629,11 +1663,16 @@ function loadStats() {
             questionResults = data.results;
         }
 
+        if (Array.isArray(data?.answers)) {
+            questionAnswers = data.answers;
+        }
+
         if (data?.startDate) {
             defaultStartDate = data.startDate;
         }
     } catch {
         questionResults = new Array(quiz.questions.length).fill(UNANSWERED);
+        questionAnswers = new Array(quiz.questions.length).fill(null);
         defaultStartDate = Date.now();
     }
 }
@@ -1644,6 +1683,7 @@ function saveStats() {
             getStatsKey(),
             JSON.stringify({
                 results: questionResults,
+                answers: questionAnswers,
                 startDate: defaultStartDate
             })
         );
@@ -1660,6 +1700,8 @@ function restartQuiz() {
 
     // Reset stats
     questionResults = new Array(quiz.questions.length).fill(UNANSWERED);
+    questionAnswers = new Array(quiz.questions.length).fill(null);
+    document.getElementById("question-corrections").innerHTML = "";
 
     // Reset timer
     clearInterval(timerInterval);
@@ -1685,6 +1727,8 @@ function restartQuiz() {
     results.style.display = "none";
     questionBox.style.display = "";
 
+    document.getElementById("restart-confirm").style.display = "none";
+
     renderQuiz();
 }
 
@@ -1694,6 +1738,49 @@ function confirmRestart() {
 
 function cancelRestart() {
     document.getElementById("restart-confirm").style.display = "none";
+}
+
+function showCorrectionSheet() {
+    const container = document.getElementById("question-corrections");
+    const questions = quiz.questions;
+
+    container.innerHTML = "";
+
+    for (let index = 0; index < questions.length; index++) {
+        const question = questions[index];
+
+        const correctAnswer =
+            question.options[question.correct_index];
+
+        const userIndex = questionAnswers[index];
+
+        const userAnswer =
+            questionResults[index] === SKIPPED
+                ? "Skipped"
+                : userIndex !== null
+                    ? question.options[userIndex]
+                    : "Unanswered";
+
+        const article = document.createElement("article");
+
+        article.innerHTML = `
+            <h3>Question ${index + 1}</h3>
+
+            <p>${renderMarkdown(question.question)}</p>
+
+            <p>
+                <strong>Your answer:</strong>
+                ${renderMarkdown(userAnswer)}
+            </p>
+
+            <p>
+                <strong>Correct answer:</strong>
+                ${renderMarkdown(correctAnswer)}
+            </p>
+        `;
+
+        container.appendChild(article);
+    }
 }
 
 function getStorageKey() {
