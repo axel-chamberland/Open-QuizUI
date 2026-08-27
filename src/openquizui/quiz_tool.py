@@ -407,7 +407,7 @@ def wrap_html(quiz, enable_mathjax: bool, light_theme, dark_theme):
     <!-- TODO
     <button onclick="reviewQuiz()">Review Quiz</button>
     -->
-    <button onclick="prevQuestion()">Back</button>
+    <button onclick="prevQuestion()">Undo</button>
     <button onclick="restartQuiz()">Restart Quiz</button>
 </div>
 
@@ -712,6 +712,7 @@ const WRONG = 2;
 const SKIPPED = 3;
 let questionResults = new Array(quiz.questions.length).fill(UNANSWERED);
 let defaultStartDate = Date.now() // Default start date used if timer was never started
+loadStats();
 
 const timer = document.getElementById("timer");
 const questionBox = document.querySelector(".question-box");
@@ -1008,6 +1009,7 @@ function handleAnswer(index, button) {
 
         if (wrongAnswerCount === 0) {
             questionResults[currentQuestionIndex] = CORRECT;
+            saveStats();
         }
 
         optionButtons.forEach(btn => btn.disabled = true);
@@ -1016,6 +1018,7 @@ function handleAnswer(index, button) {
         button.disabled = true;
 
         questionResults[currentQuestionIndex] = WRONG;
+        saveStats();
 
         wrongAnswerCount++;
 
@@ -1030,6 +1033,7 @@ function revealAnswer() {
 
     if (questionResults[currentQuestionIndex] === UNANSWERED) {
         questionResults[currentQuestionIndex] = SKIPPED;
+        saveStats();
     }
     const currentQuestion = quiz.questions[currentQuestionIndex];
     const optionsContainer = document.getElementById("options");
@@ -1190,6 +1194,39 @@ function formatTime(seconds) {
     const remainingSeconds = seconds % 60;
 
     return `${String(minutes).padStart(2, "0")}:${String(remainingSeconds).padStart(2, "0")}`;
+}
+
+function getStatsKey() {
+    return `quizStats_${getStorageKey()}`;
+}
+
+function loadStats() {
+    try {
+        const data = JSON.parse(localStorage.getItem(getStatsKey()));
+
+        if (Array.isArray(data?.results)) {
+            questionResults = data.results;
+        }
+
+        if (data?.startDate) {
+            defaultStartDate = data.startDate;
+        }
+    } catch {
+        questionResults = new Array(quiz.questions.length).fill(UNANSWERED);
+        defaultStartDate = Date.now();
+    }
+}
+
+function saveStats() {
+    try {
+        localStorage.setItem(
+            getStatsKey(),
+            JSON.stringify({
+                results: questionResults,
+                startDate: defaultStartDate
+            })
+        );
+    } catch { }
 }
 
 function restartQuiz() {
