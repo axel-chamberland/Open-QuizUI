@@ -371,30 +371,46 @@ def wrap_html(quiz, enable_mathjax: bool, light_theme, dark_theme):
 
 <body>
 <div class="question-box">
-  <div id="titleBar">
-      <h1 id="title"></h1>
-      <span id="timer">00:00</span>
-  </div>
-  <div id="navigation">
-    <button id="revealButton" onclick="revealAnswer()">⌕</button>
-    <button id="maximizeButton" onclick="toggleFullscreen()">⛶</button>
-    <button id="downloadButton" onclick="downloadQuizHTML()">⤓</button>
-    <button id="timerToggle" onclick="toggleTimer()">◷</button>
-
-    <button id="prevButton" onclick="prevQuestion()">&lt</button>
-    <div id="questionSelector">
-        <input id="questionNumber" type="text" inputmode="numeric" value="1">
-        <span class="separator">/</span>
-        <span id="questionCount">1</span>
+    <div id="titleBar">
+        <h1 id="title"></h1>
+        <span id="timer">00:00</span>
     </div>
-    <button id="nextButton" onclick="nextQuestion()">&gt</button>
+    <div id="navigation">
+        <button id="revealButton" onclick="revealAnswer()">⌕</button>
+        <button id="maximizeButton" onclick="toggleFullscreen()">⛶</button>
+        <button id="downloadButton" onclick="downloadQuizHTML()">⤓</button>
+        <button id="timerToggle" onclick="toggleTimer()">◷</button>
 
-  </div>
-  <p id="question"></p>
-
-  <div id="options"></div>
-
+        <button id="prevButton" onclick="prevQuestion()">&lt</button>
+        <div id="questionSelector">
+            <input id="questionNumber" type="text" inputmode="numeric" value="1">
+            <span class="separator">/</span>
+            <span id="questionCount">1</span>
+        </div>
+        <button id="nextButton" onclick="nextQuestion()">&gt</button>
+    </div>
+    <p id="question"></p>
+    <div id="options"></div>
 </div>
+<div id="results" style="display: none;">
+    <h2>Quiz Completed</h2>
+
+    <div id="score"></div>
+    <div id="accuracy"></div>
+    <div id="correct"></div>
+    <div id="wrong"></div>
+    <div id="unanswered"></div>
+    <div id="skipped"></div>
+    <div id="time"></div>
+    <div id="averageTime"></div>
+
+    <!-- TODO
+    <button onclick="reviewQuiz()">Review Quiz</button>
+    -->
+    <button onclick="prevQuestion()">Back</button>
+    <button onclick="restartQuiz()">Restart Quiz</button>
+</div>
+
 
 <script>
 const quiz = {quiz_json};
@@ -683,18 +699,28 @@ let currentQuestion = null;
 
 let answerRevealed = false;
 
+// Timer
 let timerVisible = false;
 let timerStart = null;
 let timerElapsed = 0;
 let timerInterval = null;
 
-const timer = document.getElementById("timer");
+// Stats
+const UNANSWERED = 0;
+const CORRECT = 1;
+const WRONG = 2;
+const SKIPPED = 3;
+let questionResults = new Array(quiz.questions.length).fill(UNANSWERED);
+let defaultStartDate = Date.now() // Default start date used if timer was never started
 
+const timer = document.getElementById("timer");
 const questionBox = document.querySelector(".question-box");
 const questionText = questionBox.querySelector("#question");
 const optionsContainer = document.getElementById("options");
 const navigationContainer = questionBox.querySelector("#navigation");
 const questionNumber = document.getElementById("questionNumber");
+const results = document.getElementById("results");
+
 
 // Update title
 document.getElementById("title").textContent = quiz.title;
@@ -831,10 +857,11 @@ async function renderQuiz() {
     });
     // Update button states
     const prevButton = navigationContainer.querySelector("#prevButton");
-    const nextButton = navigationContainer.querySelector("#nextButton");
-
     prevButton.disabled = currentQuestionIndex === 0;
-    nextButton.disabled = currentQuestionIndex === quiz.questions.length - 1;
+
+    // Next button is not disabled as it goes to the result screen after last question
+    // const nextButton = navigationContainer.querySelector("#nextButton");
+    // nextButton.disabled = currentQuestionIndex === quiz.questions.length - 1;
 
 
     try {
@@ -848,11 +875,24 @@ async function renderQuiz() {
 }
 
 function nextQuestion() {
-    if (currentQuestionIndex >= quiz.questions.length - 1) return;
+    if (currentQuestionIndex >= quiz.questions.length - 1 &&
+        results.style.display === "none") {
+        renderResults();
+        return
+    };
     goTo(currentQuestionIndex + 1)
 }
 
 function prevQuestion() {
+    const results = document.getElementById("results");
+
+    if (results.style.display !== "none") {
+        results.style.display = "none";
+        document.querySelector(".question-box").style.display = "";
+        renderQuiz();
+        return;
+    }
+
     if (currentQuestionIndex <= 0) return;
     goTo(currentQuestionIndex - 1);
 }
@@ -961,13 +1001,21 @@ function goTo(question_index) {
 
 function handleAnswer(index, button) {
     if (index === currentQuestion.correct_index) {
+
         button.classList.add("correct");
         button.disabled = true;
+
+
+        if (wrongAnswerCount === 0) {
+            questionResults[currentQuestionIndex] = CORRECT;
+        }
 
         optionButtons.forEach(btn => btn.disabled = true);
     } else {
         button.classList.add("wrong");
         button.disabled = true;
+
+        questionResults[currentQuestionIndex] = WRONG;
 
         wrongAnswerCount++;
 
@@ -979,6 +1027,10 @@ function handleAnswer(index, button) {
 
 function revealAnswer() {
     answerRevealed = true;
+
+    if (questionResults[currentQuestionIndex] === UNANSWERED) {
+        questionResults[currentQuestionIndex] = SKIPPED;
+    }
     const currentQuestion = quiz.questions[currentQuestionIndex];
     const optionsContainer = document.getElementById("options");
 
@@ -1048,11 +1100,7 @@ function updateTimer() {
     const elapsed =
         timerElapsed + Math.floor((Date.now() - timerStart) / 1000);
 
-    const minutes = Math.floor(elapsed / 60);
-    const seconds = elapsed % 60;
-
-    timer.textContent =
-        `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+    timer.textContent = formatTime(elapsed);
 }
 
 function toggleTimer() {
@@ -1086,6 +1134,101 @@ function toggleTimer() {
     }
 }
 
+// Render results page
+
+function renderResults() {
+    const questionBox = document.querySelector(".question-box");
+    const results = document.getElementById("results");
+
+    questionBox.style.display = "none";
+    results.style.display = "";
+
+    const correct = questionResults.filter(x => x === CORRECT).length;
+    const wrong = questionResults.filter(x => x === WRONG).length;
+    const unanswered = questionResults.filter(x => x === UNANSWERED).length;
+    const skipped = questionResults.filter(x => x === SKIPPED).length;
+
+    const total = quiz.questions.length;
+    const answered = correct + wrong;
+
+    const accuracy = answered > 0
+        ? (correct / answered) * 100
+        : 0;
+
+    const elapsed = timerVisible
+        ? timerElapsed + Math.floor((Date.now() - timerStart) / 1000)
+        : Math.floor((Date.now() - defaultStartDate) / 1000);
+    document.getElementById("score").textContent =
+        `Score: ${correct}/${wrong + correct}`;
+
+    document.getElementById("accuracy").textContent =
+        `Accuracy: ${accuracy.toFixed(1)}%`;
+
+    document.getElementById("correct").textContent =
+        `Correct: ${correct}`;
+
+    document.getElementById("wrong").textContent =
+        `Wrong: ${wrong}`;
+
+    document.getElementById("unanswered").textContent =
+        `Unanswered: ${unanswered}`;
+
+    document.getElementById("skipped").textContent =
+        `Skipped: ${skipped}`;
+
+    document.getElementById("time").textContent =
+        `Time: ${formatTime(elapsed)}`;
+
+    document.getElementById("averageTime").textContent =
+        `Average time per question: ${formatTime(
+            Math.floor(elapsed / total)
+        )}`;
+}
+
+function formatTime(seconds) {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+
+    return `${String(minutes).padStart(2, "0")}:${String(remainingSeconds).padStart(2, "0")}`;
+}
+
+function restartQuiz() {
+
+    // Reset question state
+    currentQuestionIndex = 0;
+    questionNumber.value = 1;
+    answerRevealed = false;
+    wrongAnswerCount = 0;
+
+    // Reset stats
+    questionResults = new Array(quiz.questions.length).fill(UNANSWERED);
+
+    // Reset timer
+    clearInterval(timerInterval);
+    timerInterval = null;
+
+    timerElapsed = 0;
+    timerStart = timerVisible ? Date.now() : null;
+    defaultStartDate = Date.now();
+
+
+    if (timerVisible) {
+        updateTimer();
+        timerInterval = setInterval(updateTimer, 1000);
+    } else {
+        timer.textContent = formatTime(0);
+    }
+    saveTimer();
+
+    // Reset stored question
+    setStoredQuestionIndex(0);
+
+    // Return to quiz
+    results.style.display = "none";
+    questionBox.style.display = "";
+
+    renderQuiz();
+}
 
 function getStorageKey() {
     // Hash derived from the quiz's content to avoid overlap
