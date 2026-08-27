@@ -393,22 +393,47 @@ def wrap_html(quiz, enable_mathjax: bool, light_theme, dark_theme):
     <div id="options"></div>
 </div>
 <div id="results" style="display: none;">
-    <h2>Quiz Completed</h2>
 
-    <div id="score"></div>
-    <div id="accuracy"></div>
-    <div id="correct"></div>
-    <div id="wrong"></div>
-    <div id="unanswered"></div>
-    <div id="skipped"></div>
-    <div id="time"></div>
-    <div id="averageTime"></div>
 
-    <!-- TODO
-    <button onclick="reviewQuiz()">Review Quiz</button>
-    -->
-    <button onclick="prevQuestion()">Undo</button>
-    <button onclick="restartQuiz()">Restart Quiz</button>
+    <div id="results-navigation">
+        <!-- TODO
+        <button onclick="reviewQuiz()">Review Quiz</button>
+        -->
+        <button onclick="prevQuestion()">↩</button>
+        <button onclick="toggleFullscreen()">⛶</button>
+        <button id="downloadButton" onclick="downloadQuizHTML()">⤓</button>
+    </div>
+    <div id="results-scroll">
+
+        <div id="time"></div>
+        <div id="averageTime"></div>
+
+        <div id="statsChart"></div>
+        <div class="stat-row">
+            <div id="correct"></div>
+            <div id="wrong"></div>
+        </div>
+        <div class="stat-row">
+            <div id="unanswered"></div>
+            <div id="skipped"></div>
+        </div>
+
+        <div class="stat-row">
+            <div id="score"></div>
+            <div id="accuracy"></div>
+        </div>
+
+        <button onclick="confirmRestart()">Restart</button>
+        <div id="restart-confirm" style="display: none;">
+            <span>Restart quiz?</span>
+            <button onclick="restartQuiz()">Yes</button>
+            <button onclick="cancelRestart()">No</button>
+        </div>
+    </div>
+
+
+
+
 </div>
 
 
@@ -433,16 +458,21 @@ function reportHeight() {
     // Do not run when in fullscreen
     if (document.fullscreenElement) return;
 
-    const h = Math.max(
-        document.body.scrollHeight,
-        document.body.offsetHeight,
-        document.documentElement.scrollHeight
-    );
 
-    parent.postMessage({ type: 'iframe:height', height: h }, '*');
+    const questionBox = document.querySelector(".question-box");
+    const results = document.getElementById("results");
+
+    const visible = results.style.display !== "none"
+        ? results
+        : questionBox;
+
+    const h = visible.scrollHeight;
+
+    parent.postMessage({ type: "iframe:height", height: h }, "*");
 }
 
 window.addEventListener('load', reportHeight);
+
 new ResizeObserver(reportHeight).observe(document.body);
 """
 
@@ -469,8 +499,9 @@ body {{
     background: var(--bg);
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: flex-start;
     align-items: center;
+    margin: 0;
 }}
 
 #titleBar {{
@@ -488,6 +519,7 @@ body {{
     flex-direction: column;
     color: var(--text);
     width: min(800px, 100%);
+    padding: 8px
 }}
 
 #question {{
@@ -557,7 +589,7 @@ button:disabled {{
     font-weight: bold;
 }}
 
-#navigation {{
+#navigation, #results-navigation {{
 
     display: flex;
     flex-wrap: nowrap;
@@ -574,7 +606,7 @@ button:disabled {{
 }}
 
 
-#navigation button {{
+#navigation button, #results-navigation button {{
     font-size : 2rem;
 
 
@@ -597,7 +629,8 @@ button:disabled {{
 }}
 
 
-:fullscreen #navigation {{
+:fullscreen #navigation,
+:fullscreen #results-navigation {{
     position: fixed;
     bottom: 0;
     left: 0;
@@ -677,6 +710,71 @@ mjx-container {{
 }}
 #timer.visible {{
     display: inline-block;
+}}
+
+#correct {{
+    color: var(--success);
+}}
+
+#wrong {{
+    color: var(--danger);
+}}
+
+#unanswered {{
+    color: var(--unanswered);
+}}
+
+#skipped {{
+    color: var(--skipped);
+}}
+
+.chart-correct   {{ stroke: var(--success); }}
+.chart-wrong     {{ stroke: var(--danger); }}
+.chart-unanswered{{ stroke: var(--unanswered); }}
+.chart-skipped   {{ stroke: var(--skipped); }}
+
+#results {{
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100vh;
+}}
+
+#results-scroll {{
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    width: 100%;
+    max-width: min(90vw, 700px);
+    max-height: 150vh;
+    margin: 0 auto;
+    padding: clamp(1rem, 4vw, 3rem);
+    text-align: center;
+    overflow-y: auto;
+}}
+
+.stat-row {{
+    display: flex;
+    gap: 1rem;
+}}
+
+.stat-row > div {{
+    flex: 1;
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+    background: var(--btn);
+}}
+
+#statsChart {{
+    height: min(50vh, 500px);
+    align-self: center;
+}}
+
+#results-navigation {{
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin: 8px;
 }}
 """
 
@@ -1162,6 +1260,22 @@ function renderResults() {
     const elapsed = timerVisible
         ? timerElapsed + Math.floor((Date.now() - timerStart) / 1000)
         : Math.floor((Date.now() - defaultStartDate) / 1000);
+
+
+    const styles = getComputedStyle(document.documentElement);
+    const chartData = {
+        labels: [
+            "Correct",
+            "Wrong",
+            "Unanswered",
+            "Skipped"
+        ],
+        datasets: [{
+            label: "Score Chart",
+            data: [correct, wrong, unanswered, skipped],
+            classNames: ["chart-correct", "chart-wrong", "chart-unanswered", "chart-skipped"]
+        }]
+    };
     document.getElementById("score").textContent =
         `Score: ${correct}/${wrong + correct}`;
 
@@ -1187,6 +1301,53 @@ function renderResults() {
         `Average time per question: ${formatTime(
             Math.floor(elapsed / total)
         )}`;
+
+    createDonutChart(document.getElementById("statsChart"), chartData);
+}
+
+function createDonutChart(container, data) {
+    const viewSize = 100;
+    const center = viewSize / 2;
+
+    const outerRadius = 37.5;
+    const innerRadius = 20;
+    const midRadius = (outerRadius + innerRadius) / 2;
+    const strokeWidth = outerRadius - innerRadius;
+
+    const circumference = 2 * Math.PI * midRadius;
+
+    const values = data.datasets[0].data;
+    const classNames = data.datasets[0].classNames;
+    const total = values.reduce((sum, v) => sum + v, 0);
+
+    let offset = 0;
+
+    const arcs = values.map((value, i) => {
+        if (value === 0 || total === 0) return "";
+
+        const fraction = value / total;
+        const dash = fraction * circumference;
+        const gap = circumference - dash;
+
+        const circle = `<circle
+            class="${classNames[i]}"
+            cx="${center}" cy="${center}" r="${midRadius}"
+            fill="none"
+            stroke-width="${strokeWidth}"
+            stroke-dasharray="${dash} ${gap}"
+            stroke-dashoffset="${-offset}"
+            transform="rotate(-90 ${center} ${center})"
+        />`;
+
+        offset += dash;
+        return circle;
+    }).join("");
+
+    container.innerHTML = `
+        <svg viewBox="0 0 ${viewSize} ${viewSize}" preserveAspectRatio="xMidYMid meet" style="width: 100%; height: 100%; display: block;">
+            ${arcs}
+        </svg>
+    `;
 }
 
 function formatTime(seconds) {
@@ -1265,6 +1426,14 @@ function restartQuiz() {
     questionBox.style.display = "";
 
     renderQuiz();
+}
+
+function confirmRestart() {
+    document.getElementById("restart-confirm").style.display = "flex";
+}
+
+function cancelRestart() {
+    document.getElementById("restart-confirm").style.display = "none";
 }
 
 function getStorageKey() {
