@@ -640,6 +640,7 @@ def wrap_html(quiz, enable_mathjax: bool, light_theme, dark_theme):
         <button id="maximizeButton" onclick="toggleFullscreen()">⛶</button>
         <button id="downloadButton" onclick="downloadQuizHTML()">⤓</button>
         <button id="timerToggle" onclick="toggleTimer()">◷</button>
+        <button id="timerToggle" onclick="openEditor()">⚙</button>
 
         <button id="prevButton" onclick="prevQuestion()">&lt</button>
         <div id="questionSelector">
@@ -656,9 +657,6 @@ def wrap_html(quiz, enable_mathjax: bool, light_theme, dark_theme):
 
 
     <div id="results-navigation">
-        <!-- TODO
-        <button onclick="reviewQuiz()">Review Quiz</button>
-        -->
         <button onclick="prevQuestion()">&lt</button>
         <button onclick="toggleFullscreen()">⛶</button>
         <button id="downloadButton" onclick="downloadQuizHTML()">⤓</button>
@@ -694,15 +692,31 @@ def wrap_html(quiz, enable_mathjax: bool, light_theme, dark_theme):
 
     <section class="correction-sheet">
         <h2>Correction</h2>
-
         <div id="question-corrections"></div>
     </section>
     </div>
 
-
-
-
 </div>
+
+<div id="editor" style="display: none;">
+    <div id="editor-buttons">
+        <button onclick="saveEdit()">save</button>
+        <button onclick="closeEditorConfirm()">close</button>
+    </div>
+    <div id="editor-close" style="display: none;">
+        <span>Exit without saving?</span>
+        <button onclick="closeEditor()">yes</button>
+        <button onclick="cancelCloseEditor()">no</button>
+    </div>
+    <div>
+        <h2 id="editor-question"></h2>
+        <p><strong>Answer:</strong></p>
+        <div id="editor-answer"></div>
+        <p><strong>Distractors:</strong></p>
+        <div id="editor-distractors"></div>
+    </div>
+</div>
+
 
 
 <script>
@@ -1555,7 +1569,6 @@ function renderResults() {
         : Math.floor((Date.now() - defaultStartDate) / 1000);
 
 
-    const styles = getComputedStyle(document.documentElement);
     const chartData = {
         labels: [
             "Correct",
@@ -1624,24 +1637,24 @@ function createDonutChart(container, data) {
         const gap = circumference - dash;
 
         const circle = `<circle
-            class="${classNames[i]}"
-            cx="${center}" cy="${center}" r="${midRadius}"
-            fill="none"
-            stroke-width="${strokeWidth}"
-            stroke-dasharray="${dash} ${gap}"
-            stroke-dashoffset="${-offset}"
-            transform="rotate(-90 ${center} ${center})"
-        />`;
+class="${classNames[i]}"
+cx="${center}" cy="${center}" r="${midRadius}"
+fill="none"
+stroke-width="${strokeWidth}"
+stroke-dasharray="${dash} ${gap}"
+stroke-dashoffset="${-offset}"
+transform="rotate(-90 ${center} ${center})"
+/>`;
 
         offset += dash;
         return circle;
     }).join("");
 
     container.innerHTML = `
-        <svg viewBox="0 0 ${viewSize} ${viewSize}" preserveAspectRatio="xMidYMid meet" style="width: 100%; height: 100%; display: block;">
-            ${arcs}
-        </svg>
-    `;
+<svg viewBox="0 0 ${viewSize} ${viewSize}" preserveAspectRatio="xMidYMid meet" style="width: 100%; height: 100%; display: block;">
+    ${arcs}
+</svg>
+`;
 }
 
 function formatTime(seconds) {
@@ -1764,23 +1777,83 @@ function showCorrectionSheet() {
         const article = document.createElement("article");
 
         article.innerHTML = `
-            <h3>Question ${index + 1}</h3>
+<h3>Question ${index + 1}</h3>
 
-            <p>${renderMarkdown(question.question)}</p>
+<p>${renderMarkdown(question.question)}</p>
 
-            <p>
-                <strong>Your answer:</strong>
-                ${renderMarkdown(userAnswer)}
-            </p>
+<p>
+    <strong>Your answer:</strong>
+    ${renderMarkdown(userAnswer)}
+</p>
 
-            <p>
-                <strong>Correct answer:</strong>
-                ${renderMarkdown(correctAnswer)}
-            </p>
-        `;
+<p>
+    <strong>Correct answer:</strong>
+    ${renderMarkdown(correctAnswer)}
+</p>
+`;
 
         container.appendChild(article);
     }
+}
+
+
+// Question Editor
+function openEditor() {
+
+    const questionBox = document.querySelector(".question-box");
+    const editor = document.getElementById("editor");
+
+    questionBox.style.display = "none";
+    editor.style.display = "";
+    const questionField = document.getElementById("editor-question");
+    const editorAnswer = document.getElementById("editor-answer");
+
+    const options = document.getElementById("editor-distractors");
+    questionField.innerHTML = `
+<textarea>${quiz.questions[currentQuestionIndex].question}</textarea>
+`;
+
+
+    const question = quiz.questions[currentQuestionIndex];
+
+    editorAnswer.innerHTML = `
+<input type="text" value="${question.correct_index}"></input>
+`;
+    for (let index = 0; index < question.options.length; index++) {
+
+        const article = document.createElement("article");
+
+        article.innerHTML = `<textarea>${question.options[index]}</textarea>`;
+
+        options.append(article);
+    }
+}
+
+function closeEditorConfirm() {
+    document.getElementById("editor-close").style.display = "flex";
+}
+
+function cancelCloseEditor() {
+    document.getElementById("editor-close").style.display = "none";
+
+}
+
+function closeEditor() {
+
+    const questionBox = document.querySelector(".question-box");
+    const editor = document.getElementById("editor");
+
+    editor.style.display = "none";
+
+    document.getElementById("editor-close").style.display = "none";
+    const options = document.getElementById("editor-distractors");
+    options.innerHTML = "";
+
+    questionBox.style.display = "";
+
+
+
+
 }
 
 function getStorageKey() {
