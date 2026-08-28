@@ -370,25 +370,47 @@ def wrap_html(quiz, enable_mathjax: bool, light_theme, dark_theme):
 </head>
 
 <body>
+{svg_icons}
 <div class="question-box">
     <div id="titleBar">
         <h1 id="title"></h1>
         <span id="timer">00:00</span>
     </div>
-    <div id="navigation">
-        <button id="revealButton" onclick="revealAnswer()">⌕</button>
-        <button id="maximizeButton" onclick="toggleFullscreen()">⛶</button>
-        <button id="downloadButton" onclick="downloadQuizHTML()">⤓</button>
-        <button id="timerToggle" onclick="toggleTimer()">◷</button>
-        <button id="timerToggle" onclick="openEditor()">⚙</button>
+    <div class="navigation-scroll">
 
-        <button id="prevButton" onclick="prevQuestion()">&lt</button>
-        <div id="questionSelector">
-            <input id="questionNumber" type="text" inputmode="numeric" value="1">
-            <span class="separator">/</span>
-            <span id="questionCount">1</span>
+        <div id="navigation">
+
+            <button id="prevButton" onclick="prevQuestion()">&lt;</button>
+
+            <div id="questionSelector">
+                <input id="questionNumber" type="text" inputmode="numeric" value="1">
+                <span class="separator">/</span>
+                <span id="questionCount">1</span>
+            </div>
+
+            <button id="nextButton" onclick="nextQuestion()">&gt;</button>
+
+            <button id="revealButton" onclick="revealAnswer()" aria-label="Reveal answer">
+                <svg><use href="#icon-reveal"></use></svg>
+            </button>
+
+            <button id="maximizeButton" onclick="toggleFullscreen()" aria-label="Fullscreen">
+                <svg><use href="#icon-fullscreen"></use></svg>
+            </button>
+
+            <button id="downloadButton" onclick="downloadQuizHTML()" aria-label="Download">
+                <svg><use href="#icon-download"></use></svg>
+            </button>
+
+            <button id="timerToggle" onclick="toggleTimer()" aria-label="Timer">
+                <svg><use href="#icon-timer"></use></svg>
+            </button>
+
+            <button id="editorButton" onclick="openEditor()" aria-label="Editor">
+                <svg><use href="#icon-editor"></use></svg>
+            </button>
+
         </div>
-        <button id="nextButton" onclick="nextQuestion()">&gt</button>
     </div>
     <p id="question"></p>
     <div id="options"></div>
@@ -396,10 +418,18 @@ def wrap_html(quiz, enable_mathjax: bool, light_theme, dark_theme):
 <div id="results" style="display: none;">
 
 
-    <div id="results-navigation">
-        <button onclick="prevQuestion()">&lt</button>
-        <button onclick="toggleFullscreen()">⛶</button>
-        <button id="downloadButton" onclick="downloadQuizHTML()">⤓</button>
+    <div class=navigation-scroll>
+        <div id="results-navigation">
+            <button onclick="prevQuestion()">&lt</button>
+
+            <button onclick="toggleFullscreen()" aria-label="Fullscreen">
+                <svg><use href="#icon-fullscreen"></use></svg>
+            </button>
+
+            <button id="resultsDownloadButton" onclick="downloadQuizHTML()" aria-label="Download">
+                <svg><use href="#icon-download"></use></svg>
+            </button>
+        </div>
     </div>
     <div id="results-scroll">
 
@@ -439,20 +469,31 @@ def wrap_html(quiz, enable_mathjax: bool, light_theme, dark_theme):
 </div>
 
 <div id="editor" style="display: none;">
-    <div id="editor-buttons">
+
+    <div class=navigation-scroll>
         <button onclick="saveEdit()">save</button>
+        <button onclick="toggleFullscreen()" aria-label="Fullscreen">
+            <svg><use href="#icon-fullscreen"></use></svg>
+        </button>
         <button onclick="closeEditorConfirm()">close</button>
     </div>
+    <p>
+        <strong>Limitation:</strong>
+        Changes are stored in your browser.<br>
+        Download the modified quiz as a new HTML file to keep your changes permanently.
+    </p>
     <div id="editor-close" style="display: none;">
-        <span>Exit without saving?</span>
+        <span>Exit (unsaved changes will be lost)?</span>
         <button onclick="closeEditor()">yes</button>
         <button onclick="cancelCloseEditor()">no</button>
     </div>
     <div>
         <h2 id="editor-question"></h2>
-        <p><strong>Answer:</strong></p>
-        <div id="editor-answer"></div>
-        <p><strong>Distractors:</strong></p>
+        <div>
+            <p><strong>Answer Position :</strong></p>
+            <input type="number" id="editor-answer-number" inputmode="numeric"></input>
+        </div>
+        <p><strong>Choices:</strong></p>
         <div id="editor-distractors"></div>
     </div>
 </div>
@@ -483,10 +524,14 @@ function reportHeight() {
 
     const questionBox = document.querySelector(".question-box");
     const results = document.getElementById("results");
+    const editor = document.getElementById("editor");
 
-    const visible = results.style.display !== "none"
-        ? results
-        : questionBox;
+    const visible =
+        questionBox.style.display !== "none"
+            ? questionBox
+            : results.style.display !== "none"
+                ? results
+                : editor;
 
     const h = visible.scrollHeight;
 
@@ -498,6 +543,38 @@ window.addEventListener('load', reportHeight);
 new ResizeObserver(reportHeight).observe(document.body);
 """
 
+# =========================
+# SVG icons
+# =========================
+
+svg_icons = """
+<svg style="display: none;">
+    <symbol id="icon-reveal" viewBox="0 0 24 24">
+        <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z"/>
+        <circle cx="12" cy="12" r="2.5"/>
+    </symbol>
+
+    <symbol id="icon-fullscreen" viewBox="0 0 24 24">
+        <path d="M8 3H3v5M16 3h5v5M8 21H3v-5M16 21h5v-5"/>
+    </symbol>
+
+    <symbol id="icon-download" viewBox="0 0 24 24">
+        <path d="M12 3v12m0 0 5-5m-5 5-5-5M4 21h16"/>
+    </symbol>
+
+    <symbol id="icon-timer" viewBox="0 0 24 24">
+        <circle cx="12" cy="13" r="8"/>
+        <path d="M12 9v4l3 2M9 3h6"/>
+    </symbol>
+
+    <symbol id="icon-editor" viewBox="0 0 24 24">
+        <path d="M12 3l1.5 2.5 3 .5-.5 3 2 2-2 2 .5 3-3 .5L12 19l-1.5-2.5-3-.5.5-3-2-2 2-2-.5-3 3-.5L12 3z"/>
+        <circle cx="12" cy="11" r="2.5"/>
+    </symbol>
+</svg>
+"""
+
+#
 # =========================
 # STYLE
 # =========================
@@ -524,6 +601,7 @@ body {{
     justify-content: flex-start;
     align-items: center;
     margin: 0;
+    overflow: hidden;
 }}
 
 #titleBar {{
@@ -542,6 +620,7 @@ body {{
     color: var(--text);
     width: min(800px, 100%);
     padding: 8px
+    height: auto;
 }}
 
 #question {{
@@ -567,6 +646,17 @@ button {{
     color: var(--text);
     font-size: 1.1em;
 }}
+
+button svg {{
+    width: 1em;
+    height: 1em;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}}
+
 .option{{
     padding: 1rem 3rem 1rem 3rem;
     position: relative;
@@ -610,6 +700,10 @@ button:disabled {{
     content: " ✗";
     font-weight: bold;
 }}
+.navigation-scroll {{
+    overflow-x: auto;
+    overflow-y: hidden;
+}}
 
 #navigation, #results-navigation {{
 
@@ -619,6 +713,8 @@ button:disabled {{
     justify-content: center;
     gap: 0.5rem;
 
+    width: max-content;
+    min-width: 100%;
     z-index: 1000;
     border-bottom: 1px solid var(--border);
     margin-bottom: 20px;
@@ -651,8 +747,7 @@ button:disabled {{
 }}
 
 
-:fullscreen #navigation,
-:fullscreen #results-navigation {{
+:fullscreen .navigation-scroll {{
     position: fixed;
     bottom: 0;
     left: 0;
@@ -664,6 +759,14 @@ button:disabled {{
     padding: 0.75rem;
     border-top: 1px solid var(--border);
     border-bottom: 0;
+
+    overflow-x: auto;
+}}
+
+:fullscreen #navigation,
+:fullscreen #results-navigation {{
+    margin: 0;
+    border: 0;
 }}
 
 :fullscreen .question-box {{
@@ -759,20 +862,29 @@ mjx-container {{
     display: flex;
     flex-direction: column;
     width: 100%;
-    height: 100vh;
+    height: auto;
+}}
+
+:fullscreen #results {{
+    min-height: 100vh;
 }}
 
 #results-scroll {{
+    min-height: 0;
     display: flex;
     flex-direction: column;
     gap: 1rem;
     width: 100%;
-    max-width: min(90vw, 700px);
-    max-height: 150vh;
+    max-height: 600px;
+    max-width: 700px;
     margin: 0 auto;
-    padding: clamp(1rem, 4vw, 3rem);
     text-align: center;
     overflow-y: auto;
+}}
+
+:fullscreen #results-scroll {{
+    flex: 1;
+    max-height: none;
 }}
 
 .stat-row {{
@@ -790,13 +902,6 @@ mjx-container {{
 #statsChart {{
     height: min(50vh, 500px);
     align-self: center;
-}}
-
-#results-navigation {{
-    display: flex;
-    gap: 1rem;
-    justify-content: center;
-    margin: 8px;
 }}
 
 .correction-sheet {{
@@ -819,6 +924,21 @@ mjx-container {{
 
 .correction-sheet p {{
     margin: 0.5rem 0;
+}}
+
+#editor-distractors article {{
+    display: flex;
+    align-items: center;
+    margin-bottom: 16px;
+}}
+
+#editor-distractors textarea {{
+    width: 80%;
+    height: 50px;
+}}
+
+#editor-distractors .delete-prompt {{
+    display: none;
 }}
 """
 
@@ -847,6 +967,9 @@ let timerStart = null;
 let timerElapsed = 0;
 let timerInterval = null;
 
+// Key for local storage
+const quizStorageKey = hashQuiz(quiz);
+
 // Stats
 const UNANSWERED = 0;
 const CORRECT = 1;
@@ -856,6 +979,9 @@ let questionResults = new Array(quiz.questions.length).fill(UNANSWERED);
 let questionAnswers = new Array(quiz.questions.length).fill(null);
 let defaultStartDate = Date.now() // Default start date used if timer was never started
 loadStats();
+
+// Question editing
+loadQuizEdits();
 
 const timer = document.getElementById("timer");
 const questionBox = document.querySelector(".question-box");
@@ -1190,11 +1316,20 @@ function revealAnswer() {
     buttons[currentQuestion.correct_index].classList.add("correct");
 };
 
-// Download as HTML
-
+// Download as HTML.
 function downloadQuizHTML(filename = quiz.title) {
+
     // Get full document HTML
-    const html = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
+    let html = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
+
+    // Replace the quiz content with the local edits
+    const quizJSON = JSON.stringify(quiz)
+        .replace(/</g, "\\u003c");
+
+    html = html.replace(
+        /const quiz = .*?;/s,
+        `const quiz = ${quizJSON};`
+    );
 
     const blob = new Blob([html], { type: "text/html" });
     const url = URL.createObjectURL(blob);
@@ -1214,7 +1349,7 @@ function downloadQuizHTML(filename = quiz.title) {
 
 
 function getTimerKey() {
-    return `quizTimer_${getStorageKey()}`;
+    return `quizTimer_${quizStorageKey}`;
 }
 
 function loadTimer() {
@@ -1405,7 +1540,7 @@ function formatTime(seconds) {
 }
 
 function getStatsKey() {
-    return `quizStats_${getStorageKey()}`;
+    return `quizStats_${quizStorageKey}`;
 }
 
 function loadStats() {
@@ -1536,37 +1671,168 @@ function showCorrectionSheet() {
     }
 }
 
+// Editor UI Functions
 
-// Question Editor
 function openEditor() {
-
     const questionBox = document.querySelector(".question-box");
     const editor = document.getElementById("editor");
 
     questionBox.style.display = "none";
     editor.style.display = "";
+
     const questionField = document.getElementById("editor-question");
-    const editorAnswer = document.getElementById("editor-answer");
-
-    const options = document.getElementById("editor-distractors");
-    questionField.innerHTML = `
-<textarea>${quiz.questions[currentQuestionIndex].question}</textarea>
-`;
-
+    const editorAnswer = document.getElementById("editor-answer-number");
+    const optionsContainer = document.getElementById("editor-distractors");
 
     const question = quiz.questions[currentQuestionIndex];
 
-    editorAnswer.innerHTML = `
-<input type="text" value="${question.correct_index}"></input>
-`;
-    for (let index = 0; index < question.options.length; index++) {
+    // Set initial values
+    questionField.innerHTML = `<textarea>${question.question}</textarea>`;
+    editorAnswer.value = question.correct_index + 1;
 
-        const article = document.createElement("article");
+    question.options.forEach(option => {
+        optionsContainer.appendChild(addEditorOption(option));
+    });
 
-        article.innerHTML = `<textarea>${question.options[index]}</textarea>`;
+}
 
-        options.append(article);
+function addEditorOption(value) {
+    const article = document.createElement("article");
+
+    const textarea = document.createElement("textarea");
+    textarea.value = value;
+
+    const insertBtn = document.createElement("button");
+    insertBtn.textContent = "+";
+    insertBtn.onclick = () => {
+        article.after(addEditorOption(""));
+
+    };
+
+    const deleteBtn = document.createElement("button");
+    deleteBtn.textContent = "⌦";
+
+    const promptDiv = document.createElement("div");
+    promptDiv.className = "delete-prompt";
+
+    const confirmBtn = document.createElement("button");
+    confirmBtn.textContent = "Confirm";
+    confirmBtn.onclick = () => article.remove();
+
+    const cancelBtn = document.createElement("button");
+    cancelBtn.textContent = "Cancel";
+    cancelBtn.onclick = () => {
+        promptDiv.style.display = "none";
+    };
+
+    deleteBtn.onclick = () => {
+        promptDiv.style.display = "flex";
+    };
+
+    promptDiv.appendChild(confirmBtn);
+    promptDiv.appendChild(cancelBtn);
+
+    article.appendChild(insertBtn);
+    article.appendChild(deleteBtn);
+    article.appendChild(promptDiv);
+    article.appendChild(textarea);
+
+    return article;
+}
+
+function showOptionDeletePrompt(index) {
+    const prompt = document.getElementById(`delete-prompt-${index}`);
+    if (prompt) prompt.style.display = "flex";
+}
+
+function hideOptionDeletePrompt(index) {
+    const prompt = document.getElementById(`delete-prompt-${index}`);
+    if (prompt) prompt.style.display = "none";
+}
+
+// Core function to handle the deletion and answer index logic
+function deleteOptionConfirmed(index) {
+    const answerInput = document.querySelector('#editor-answer-number');
+    const currentCorrectIndex = parseInt(answerInput.value);
+
+    if (index === currentCorrectIndex) {
+        answerInput.value = "";
+        answerInput.focus();
+        alert("Warning: You deleted the correct option. Please update the answer index.");
     }
+
+    const articleToRemove = document.getElementById(`option_${index}`).parentElement;
+    if (articleToRemove) {
+        articleToRemove.remove();
+    }
+}
+
+// Returns false if the selected answer index does not exist in the DOM anymore
+function validateAnswerIndex() {
+    const answerInput = document.querySelector('#editor-answer-number');
+
+    const val = parseInt(answerInput.value) - 1;
+
+    const optionsContainer = document.getElementById("editor-distractors");
+    const options = optionsContainer.querySelectorAll("article");
+
+    if (val < 0 || val >= options.length) {
+        answerInput.classList.add('input-error');
+        alert("Invalid Index: The selected option no longer exists.");
+        return false;
+    }
+
+    return true;
+}
+
+function closeEditorConfirm() {
+    // Validate before showing the "Are you sure?" modal
+    if (!validateAnswerIndex()) {
+        return; // Prevent exit
+    }
+
+    document.getElementById("editor-close").style.display = "flex";
+}
+
+function cancelCloseEditor() {
+    document.getElementById("editor-close").style.display = "none";
+}
+
+function saveEdit() {
+
+    if (!validateAnswerIndex()) {
+        return;
+    };
+
+    // Extract data from DOM
+    const newQuestionText = document.querySelector("#editor-question textarea").value;
+    const newIndex = parseInt(document.querySelector('#editor-answer-number').value) - 1;
+    const optionsContainer = document.getElementById("editor-distractors");
+    const updatedOptions = Array.from(optionsContainer.querySelectorAll('textarea')).map(ta => ta.value);
+
+    // Update global state
+    quiz.questions[currentQuestionIndex].question = newQuestionText;
+    quiz.questions[currentQuestionIndex].correct_index = newIndex;
+    quiz.questions[currentQuestionIndex].options = updatedOptions;
+
+    // Persist the actual changes (locally)
+    saveLocalEdit(currentQuestionIndex);
+}
+
+function closeEditor() {
+    const questionBox = document.querySelector(".question-box");
+    const editor = document.getElementById("editor");
+
+    editor.style.display = "none";
+    document.getElementById("editor-close").style.display = "none";
+
+    // Reset UI state
+    const options = document.getElementById("editor-distractors");
+    options.innerHTML = "";
+
+    questionBox.style.display = "";
+
+    renderQuiz();
 }
 
 function closeEditorConfirm() {
@@ -1578,25 +1844,56 @@ function cancelCloseEditor() {
 
 }
 
-function closeEditor() {
 
-    const questionBox = document.querySelector(".question-box");
-    const editor = document.getElementById("editor");
-
-    editor.style.display = "none";
-
-    document.getElementById("editor-close").style.display = "none";
-    const options = document.getElementById("editor-distractors");
-    options.innerHTML = "";
-
-    questionBox.style.display = "";
-
-
-
-
+function getQuizEditsKey() {
+    return `quizEdits_${quizStorageKey}`;
 }
 
-function getStorageKey() {
+function saveLocalEdit(index) {
+    const key = getQuizEditsKey();
+
+    let edits = {};
+
+    try {
+        edits = JSON.parse(localStorage.getItem(key)) || {};
+    } catch {
+        edits = {};
+    }
+
+    edits[index] = quiz.questions[index];
+
+    try {
+        localStorage.setItem(key, JSON.stringify(edits));
+        console.log("Saved edit:", key, edits);
+    } catch (e) {
+        console.error("Failed to save edit:", e);
+    }
+}
+
+function loadQuizEdits() {
+    const key = getQuizEditsKey();
+
+    try {
+        const edits = JSON.parse(localStorage.getItem(key));
+
+        if (!edits) {
+            return;
+        }
+
+        for (const [index, question] of Object.entries(edits)) {
+            const i = Number(index);
+
+            if (i >= 0 && i < quiz.questions.length) {
+                quiz.questions[i] = question;
+            }
+        }
+    } catch (e) {
+        console.error("Failed to load quiz edits:", e);
+    }
+}
+
+function hashQuiz(quiz) {
+
     // Hash derived from the quiz's content to avoid overlap
     const data = JSON.stringify(quiz);
 
@@ -1611,7 +1908,9 @@ function getStorageKey() {
 
 function getStoredQuestionIndex() {
     try {
-        const index = Number(localStorage.getItem(getStorageKey()));
+        const index = Number(
+            localStorage.getItem(`currentQuestionIndex_${quizStorageKey}`)
+        );
 
         if (!Number.isInteger(index)) {
             return 0;
@@ -1629,7 +1928,10 @@ function getStoredQuestionIndex() {
 
 function setStoredQuestionIndex(value) {
     try {
-        localStorage.setItem(getStorageKey(), String(value));
+        localStorage.setItem(
+            `currentQuestionIndex_${quizStorageKey}`,
+            String(value)
+        );
     } catch (e) {
         // Ignore if storage is unavailable
     }
