@@ -672,8 +672,10 @@ def wrap_html(quiz, enable_mathjax: bool, light_theme, dark_theme):
 
         </div>
     </div>
-    <p id="question"></p>
-    <div id="options"></div>
+    <div id="questionScroll">
+        <p id="question"></p>
+        <div id="options"></div>
+    </div>
 </div>
 <div id="results" style="display: none;">
 
@@ -729,29 +731,32 @@ def wrap_html(quiz, enable_mathjax: bool, light_theme, dark_theme):
 </div>
 
 <div id="editor" style="display: none;">
-
-    <div class=navigation-scroll>
+    <h1 id="editor-title">Question Editor</h1>
+    <div class=navigation-scroll id="editor-navigation">
         <button onclick="saveEdit()">save</button>
         <button onclick="toggleFullscreen()" aria-label="Fullscreen">
             <svg><use href="#icon-fullscreen"></use></svg>
         </button>
         <button onclick="closeEditorConfirm()">close</button>
     </div>
+    <div id="editor-close" class="editor-prompt">
+        <p id="editor-prompt-message"></p>
+        <div class="button-row">
+            <button id="editor-prompt-yes">yes</button>
+            <button id="editor-prompt-no">no</button>
+        </div>
+    </div>
     <p>
         <strong>Limitation:</strong>
         Changes are stored in your browser.<br>
         Download the modified quiz as a new HTML file to keep your changes permanently.
     </p>
-    <div id="editor-close" style="display: none;">
-        <span>Exit (unsaved changes will be lost)?</span>
-        <button onclick="closeEditor()">yes</button>
-        <button onclick="cancelCloseEditor()">no</button>
-    </div>
-    <div>
-        <h2 id="editor-question"></h2>
-        <div>
-            <p><strong>Answer Position :</strong></p>
-            <input type="number" id="editor-answer-number" inputmode="numeric"></input>
+    <div id="editorScroll">
+        <p><strong>Question:</strong></p>
+        <div id="editor-question"></div>
+        <div class="answer-position">
+            <p><strong>Answer Position:</strong></p>
+            <input type="text" id="editor-answer-number" inputmode="numeric"></input>
         </div>
         <p><strong>Choices:</strong></p>
         <div id="editor-distractors"></div>
@@ -828,8 +833,9 @@ svg_icons = """
     </symbol>
 
     <symbol id="icon-editor" viewBox="0 0 24 24">
-        <path d="M12 3l1.5 2.5 3 .5-.5 3 2 2-2 2 .5 3-3 .5L12 19l-1.5-2.5-3-.5.5-3-2-2 2-2-.5-3 3-.5L12 3z"/>
-        <circle cx="12" cy="11" r="2.5"/>
+        <rect x="5" y="4" width="14" height="17" rx="2"/>
+        <path d="M9 3h6v3H9z"/>
+        <path d="M8 11h8M8 15h5"/>
     </symbol>
 </svg>
 """
@@ -864,6 +870,25 @@ body {{
     overflow: hidden;
 }}
 
+:fullscreen body {{
+    position: fixed;
+    inset: 0;
+}}
+
+:fullscreen .question-box,
+:fullscreen #results,
+:fullscreen #editor {{
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}}
+
+:fullscreen .navigation-scroll {{
+    flex: 0 0 auto;
+    order: 1;
+}}
+
 #titleBar {{
     display: flex;
     align-items: center;
@@ -879,7 +904,7 @@ body {{
     flex-direction: column;
     color: var(--text);
     width: min(800px, 100%);
-    padding: 8px
+    padding: 8px;
     height: auto;
 }}
 
@@ -888,12 +913,28 @@ body {{
     font-size: 1.1rem;
 }}
 
+#questionScroll {{
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    min-height: 0;
+}}
+
+:fullscreen #questionScroll {{
+    flex: 1;
+    order: 0;
+}}
+
 #options {{
     display: grid;
     grid-template-columns: 1;
     max-width: 100%;
     gap: 0.75rem;
-    overflow-y: auto;
+}}
+
+:fullscreen #options {{
+    flex: 1;
+    min-height: 0;
 }}
 
 button {{
@@ -965,7 +1006,7 @@ button:disabled {{
     overflow-y: hidden;
 }}
 
-#navigation, #results-navigation {{
+#navigation, #results-navigation, #editor-navigation {{
 
     display: flex;
     flex-wrap: nowrap;
@@ -983,8 +1024,14 @@ button:disabled {{
     -webkit-user-select: none;
 }}
 
+:fullscreen #navigation,
+:fullscreen #results-navigation,
+:fullscreen #editor-navigation {{
+    margin: 0;
+    border: 0;
+}}
 
-#navigation button, #results-navigation button {{
+#navigation button, #results-navigation button, #editor-navigation button {{
     font-size : 2rem;
 
 
@@ -1004,33 +1051,6 @@ button:disabled {{
     flex: 1;
     font-size: clamp(1.5rem, 5vw, 2rem);
     max-width: 4rem;
-}}
-
-
-:fullscreen .navigation-scroll {{
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-
-    margin-bottom: 0px;
-
-    background: var(--bg);
-    padding: 0.75rem;
-    border-top: 1px solid var(--border);
-    border-bottom: 0;
-
-    overflow-x: auto;
-}}
-
-:fullscreen #navigation,
-:fullscreen #results-navigation {{
-    margin: 0;
-    border: 0;
-}}
-
-:fullscreen .question-box {{
-    padding-bottom: var(--nav-height);
 }}
 
 #questionSelector {{
@@ -1123,10 +1143,7 @@ mjx-container {{
     flex-direction: column;
     width: 100%;
     height: auto;
-}}
-
-:fullscreen #results {{
-    min-height: 100vh;
+    color: var(--text);
 }}
 
 #results-scroll {{
@@ -1144,7 +1161,10 @@ mjx-container {{
 
 :fullscreen #results-scroll {{
     flex: 1;
+    min-height: 0;
     max-height: none;
+    padding: 1rem;
+    box-sizing: border-box;
 }}
 
 .stat-row {{
@@ -1186,6 +1206,50 @@ mjx-container {{
     margin: 0.5rem 0;
 }}
 
+#editor {{
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 800px;
+    height: auto;
+    color: var(--text);
+}}
+
+
+:fullscreen #editor {{
+    flex: 1;
+    min-height: 0;
+}}
+
+
+#editorScroll {{
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    min-height: 0;
+}}
+
+:fullscreen #editorScroll {{
+    flex: 1;
+    min-height: 0;
+    order: 0;
+    padding: 1rem;
+    box-sizing: border-box;
+}}
+
+textarea {{
+    color: var(--text);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    font-size: 1em;
+    field-sizing: content;
+}}
+
+textarea:focus {{
+    outline: none;
+    border-color: var(--success);
+}}
+
 #editor-distractors article {{
     display: flex;
     align-items: center;
@@ -1194,11 +1258,45 @@ mjx-container {{
 
 #editor-distractors textarea {{
     width: 80%;
-    height: 50px;
+    height: auto;
 }}
 
 #editor-distractors .delete-prompt {{
     display: none;
+}}
+
+
+.editor-prompt {{
+    display: none;
+}}
+
+.editor-prompt.visible {{
+    display: block;
+}}
+
+.editor-prompt .button-row {{
+    display: flex;
+    gap: 0.5rem;
+}}
+.answer-position {{
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}}
+
+.answer-position p {{
+    margin: 0.5rem 0;
+}}
+
+.answer-position input {{
+    width: 3ch;
+    field-sizing: content;
+
+    color: var(--text);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    font-size: 1em;
+    text-align: center;
 }}
 """
 
@@ -1214,7 +1312,6 @@ const ENABLE_MATHJAX = __ENABLE_MATHJAX__;
 let mathReady = false;
 
 let wrongAnswerCount = 0;
-
 
 let optionButtons = [];
 let currentQuestion = null;
@@ -1237,7 +1334,7 @@ const WRONG = 2;
 const SKIPPED = 3;
 let questionResults = new Array(quiz.questions.length).fill(UNANSWERED);
 let questionAnswers = new Array(quiz.questions.length).fill(null);
-let defaultStartDate = Date.now() // Default start date used if timer was never started
+let defaultStartDate = Date.now(); // Default start date used if timer was never started
 loadStats();
 
 // Question editing
@@ -1251,7 +1348,6 @@ const navigationContainer = questionBox.querySelector("#navigation");
 const questionNumber = document.getElementById("questionNumber");
 const results = document.getElementById("results");
 
-
 // Update title
 document.getElementById("title").textContent = quiz.title;
 
@@ -1263,12 +1359,13 @@ questionCount.textContent = quiz.questions.length;
 let currentQuestionIndex = getStoredQuestionIndex();
 questionNumber.value = currentQuestionIndex + 1;
 
-
-
 window.MathJax = {
     tex: {
-        inlineMath: [['$', '$'], ['\\(', '\\)']]
-    }
+        inlineMath: [
+            ["$", "$"],
+            ["\\(", "\\)"],
+        ],
+    },
 };
 
 function loadMathJax() {
@@ -1280,7 +1377,8 @@ function loadMathJax() {
         }
 
         const script = document.createElement("script");
-        script.src = "https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js";
+        script.src =
+            "https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js";
 
         script.onload = () => {
             mathReady = true;
@@ -1304,14 +1402,13 @@ const nav = document.getElementById("navigation");
 function updateNavHeight() {
     document.documentElement.style.setProperty(
         "--nav-height",
-        `${nav.offsetHeight}px`
+        `${nav.offsetHeight}px`,
     );
 }
 
 updateNavHeight();
 new ResizeObserver(updateNavHeight).observe(nav);
 window.addEventListener("resize", updateNavHeight);
-
 
 function toggleFullscreen() {
     const el = document.documentElement;
@@ -1341,7 +1438,7 @@ function renderInlineMarkdown(text) {
 
     text = text
         .replace(/\*\*(.*?)\*\*/g, "<b>$1</b>")
-        .replace(/\*(.*?)\*/g, "<i>$1</i>")
+        .replace(/\*(.*?)\*/g, "<i>$1</i>");
 
     return renderMath(text);
 }
@@ -1351,7 +1448,6 @@ function renderMarkdown(text) {
     return renderInlineMarkdown(text).replace(/\n/g, "<br>");
 }
 
-
 async function renderQuiz() {
     const questionBox = document.querySelector(".question-box");
     const questionText = questionBox.querySelector("#question");
@@ -1359,15 +1455,18 @@ async function renderQuiz() {
     const navigationContainer = questionBox.querySelector("#navigation");
 
     if (!quiz.questions || quiz.questions.length === 0) {
-        document.getElementById("question").textContent = "No valid questions parsed";
+        document.getElementById("question").textContent =
+            "No valid questions parsed";
         return;
     }
 
     // Update question
-    questionText.innerHTML = renderMarkdown(quiz.questions[currentQuestionIndex].question);
+    questionText.innerHTML = renderMarkdown(
+        quiz.questions[currentQuestionIndex].question,
+    );
 
     // Clear and rebuild options
-    optionsContainer.innerHTML = '';
+    optionsContainer.innerHTML = "";
     wrongAnswerCount = 0; // Answer button is revealed when user exhausted all options
     optionButtons = [];
 
@@ -1393,24 +1492,24 @@ async function renderQuiz() {
     // const nextButton = navigationContainer.querySelector("#nextButton");
     // nextButton.disabled = currentQuestionIndex === quiz.questions.length - 1;
 
+    document.getElementById("questionScroll").scrollTop = 0; // reset scroll
 
     try {
         await MathJax.typesetPromise();
     } catch (err) {
         console.error(err);
     }
-
-
-
 }
 
 function nextQuestion() {
-    if (currentQuestionIndex >= quiz.questions.length - 1 &&
-        results.style.display === "none") {
+    if (
+        currentQuestionIndex >= quiz.questions.length - 1 &&
+        results.style.display === "none"
+    ) {
         renderResults();
-        return
-    };
-    goTo(currentQuestionIndex + 1)
+        return;
+    }
+    goTo(currentQuestionIndex + 1);
 }
 
 function prevQuestion() {
@@ -1432,7 +1531,6 @@ document.addEventListener("keydown", (e) => {
 
     const key = e.key.toLowerCase();
 
-
     // Number = choose
     let index = -1;
 
@@ -1440,14 +1538,12 @@ document.addEventListener("keydown", (e) => {
         index = Number(key) - 1;
     }
 
-
     if (index >= 0 && index < optionButtons.length) {
         const button = optionButtons[index];
         if (!button.disabled) {
             handleAnswer(index, button);
-        };
-        return
-
+        }
+        return;
     }
 
     // Reveal answer or go to next question
@@ -1474,7 +1570,7 @@ document.addEventListener("keydown", (e) => {
         e.preventDefault();
         prevQuestion();
         return;
-    };
+    }
 });
 
 // Tap or click to change question (touch control)
@@ -1496,7 +1592,6 @@ questionBox.addEventListener("click", (e) => {
     }
 });
 
-
 // Change question directly
 const questionSelector = document.getElementById("questionSelector");
 
@@ -1505,6 +1600,9 @@ questionSelector.addEventListener("click", () => {
     questionNumber.select();
 });
 
+questionNumber.addEventListener("input", () => {
+    questionNumber.value = questionNumber.value.replace(/\D/g, "");
+});
 questionNumber.addEventListener("change", () => {
     if (!questionNumber.value) return;
 
@@ -1512,14 +1610,13 @@ questionNumber.addEventListener("change", () => {
 });
 
 function goTo(question_index) {
-
     // Clamp between first and last question
     question_index = Math.max(
         0,
-        Math.min(question_index, quiz.questions.length - 1)
+        Math.min(question_index, quiz.questions.length - 1),
     );
 
-    currentQuestionIndex = question_index
+    currentQuestionIndex = question_index;
 
     setStoredQuestionIndex(currentQuestionIndex);
 
@@ -1530,20 +1627,18 @@ function goTo(question_index) {
 }
 
 function handleAnswer(index, button) {
-    questionAnswers[currentQuestionIndex] = index
+    questionAnswers[currentQuestionIndex] = index;
     saveStats();
     if (index === currentQuestion.correct_index) {
-
         button.classList.add("correct");
         button.disabled = true;
-
 
         if (wrongAnswerCount === 0) {
             questionResults[currentQuestionIndex] = CORRECT;
             saveStats();
         }
 
-        optionButtons.forEach(btn => btn.disabled = true);
+        optionButtons.forEach((btn) => (btn.disabled = true));
     } else {
         button.classList.add("wrong");
         button.disabled = true;
@@ -1574,22 +1669,17 @@ function revealAnswer() {
 
     // Highlight the correct answer
     buttons[currentQuestion.correct_index].classList.add("correct");
-};
+}
 
 // Download as HTML.
 function downloadQuizHTML(filename = quiz.title) {
-
     // Get full document HTML
     let html = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
 
     // Replace the quiz content with the local edits
-    const quizJSON = JSON.stringify(quiz)
-        .replace(/</g, "\\u003c");
+    const quizJSON = JSON.stringify(quiz).replace(/</g, "\\u003c");
 
-    html = html.replace(
-        /const quiz = .*?;/s,
-        `const quiz = ${quizJSON};`
-    );
+    html = html.replace(/const quiz = .*?;/s, `const quiz = ${quizJSON};`);
 
     const blob = new Blob([html], { type: "text/html" });
     const url = URL.createObjectURL(blob);
@@ -1606,17 +1696,13 @@ function downloadQuizHTML(filename = quiz.title) {
 
 // Timer
 
-
-
 function getTimerKey() {
     return `quizTimer_${quizStorageKey}`;
 }
 
 function loadTimer() {
     try {
-        const data = JSON.parse(
-            localStorage.getItem(getTimerKey())
-        );
+        const data = JSON.parse(localStorage.getItem(getTimerKey()));
 
         timerElapsed = data?.elapsed || 0;
         timerStart = data?.start || null;
@@ -1632,17 +1718,16 @@ function saveTimer() {
             getTimerKey(),
             JSON.stringify({
                 elapsed: timerElapsed,
-                start: timerStart
-            })
+                start: timerStart,
+            }),
         );
-    } catch { }
+    } catch {}
 }
 
 function updateTimer() {
     if (!timerStart) return;
 
-    const elapsed =
-        timerElapsed + Math.floor((Date.now() - timerStart) / 1000);
+    const elapsed = timerElapsed + Math.floor((Date.now() - timerStart) / 1000);
 
     timer.textContent = formatTime(elapsed);
 }
@@ -1662,12 +1747,10 @@ function toggleTimer() {
 
         updateTimer();
         timerInterval = setInterval(updateTimer, 1000);
-
     } else {
         // Pause
         if (timerStart) {
-            timerElapsed +=
-                Math.floor((Date.now() - timerStart) / 1000);
+            timerElapsed += Math.floor((Date.now() - timerStart) / 1000);
 
             timerStart = null;
             saveTimer();
@@ -1687,35 +1770,34 @@ function renderResults() {
     questionBox.style.display = "none";
     results.style.display = "";
 
-    const correct = questionResults.filter(x => x === CORRECT).length;
-    const wrong = questionResults.filter(x => x === WRONG).length;
-    const unanswered = questionResults.filter(x => x === UNANSWERED).length;
-    const skipped = questionResults.filter(x => x === SKIPPED).length;
+    const correct = questionResults.filter((x) => x === CORRECT).length;
+    const wrong = questionResults.filter((x) => x === WRONG).length;
+    const unanswered = questionResults.filter((x) => x === UNANSWERED).length;
+    const skipped = questionResults.filter((x) => x === SKIPPED).length;
 
     const total = quiz.questions.length;
     const answered = correct + wrong;
 
-    const accuracy = answered > 0
-        ? (correct / answered) * 100
-        : 0;
+    const accuracy = answered > 0 ? (correct / answered) * 100 : 0;
 
     const elapsed = timerVisible
         ? timerElapsed + Math.floor((Date.now() - timerStart) / 1000)
         : Math.floor((Date.now() - defaultStartDate) / 1000);
 
-
     const chartData = {
-        labels: [
-            "Correct",
-            "Wrong",
-            "Unanswered",
-            "Skipped"
+        labels: ["Correct", "Wrong", "Unanswered", "Skipped"],
+        datasets: [
+            {
+                label: "Score Chart",
+                data: [correct, wrong, unanswered, skipped],
+                classNames: [
+                    "chart-correct",
+                    "chart-wrong",
+                    "chart-unanswered",
+                    "chart-skipped",
+                ],
+            },
         ],
-        datasets: [{
-            label: "Score Chart",
-            data: [correct, wrong, unanswered, skipped],
-            classNames: ["chart-correct", "chart-wrong", "chart-unanswered", "chart-skipped"]
-        }]
     };
     document.getElementById("score").textContent =
         `Score: ${correct}/${wrong + correct}`;
@@ -1723,25 +1805,20 @@ function renderResults() {
     document.getElementById("accuracy").textContent =
         `Accuracy: ${accuracy.toFixed(1)}%`;
 
-    document.getElementById("correct").textContent =
-        `Correct: ${correct}`;
+    document.getElementById("correct").textContent = `Correct: ${correct}`;
 
-    document.getElementById("wrong").textContent =
-        `Wrong: ${wrong}`;
+    document.getElementById("wrong").textContent = `Wrong: ${wrong}`;
 
     document.getElementById("unanswered").textContent =
         `Unanswered: ${unanswered}`;
 
-    document.getElementById("skipped").textContent =
-        `Skipped: ${skipped}`;
+    document.getElementById("skipped").textContent = `Skipped: ${skipped}`;
 
     document.getElementById("time").textContent =
         `Time: ${formatTime(elapsed)}`;
 
     document.getElementById("averageTime").textContent =
-        `Average time per question: ${formatTime(
-            Math.floor(elapsed / total)
-        )}`;
+        `Average time per question: ${formatTime(Math.floor(elapsed / total))}`;
 
     createDonutChart(document.getElementById("statsChart"), chartData);
     showCorrectionSheet();
@@ -1764,14 +1841,15 @@ function createDonutChart(container, data) {
 
     let offset = 0;
 
-    const arcs = values.map((value, i) => {
-        if (value === 0 || total === 0) return "";
+    const arcs = values
+        .map((value, i) => {
+            if (value === 0 || total === 0) return "";
 
-        const fraction = value / total;
-        const dash = fraction * circumference;
-        const gap = circumference - dash;
+            const fraction = value / total;
+            const dash = fraction * circumference;
+            const gap = circumference - dash;
 
-        const circle = `<circle
+            const circle = `<circle
 class="${classNames[i]}"
 cx="${center}" cy="${center}" r="${midRadius}"
 fill="none"
@@ -1781,9 +1859,10 @@ stroke-dashoffset="${-offset}"
 transform="rotate(-90 ${center} ${center})"
 />`;
 
-        offset += dash;
-        return circle;
-    }).join("");
+            offset += dash;
+            return circle;
+        })
+        .join("");
 
     container.innerHTML = `
 <svg viewBox="0 0 ${viewSize} ${viewSize}" preserveAspectRatio="xMidYMid meet" style="width: 100%; height: 100%; display: block;">
@@ -1832,14 +1911,13 @@ function saveStats() {
             JSON.stringify({
                 results: questionResults,
                 answers: questionAnswers,
-                startDate: defaultStartDate
-            })
+                startDate: defaultStartDate,
+            }),
         );
-    } catch { }
+    } catch {}
 }
 
 function restartQuiz() {
-
     // Reset question state
     currentQuestionIndex = 0;
     questionNumber.value = 1;
@@ -1858,7 +1936,6 @@ function restartQuiz() {
     timerElapsed = 0;
     timerStart = timerVisible ? Date.now() : null;
     defaultStartDate = Date.now();
-
 
     if (timerVisible) {
         updateTimer();
@@ -1897,8 +1974,7 @@ function showCorrectionSheet() {
     for (let index = 0; index < questions.length; index++) {
         const question = questions[index];
 
-        const correctAnswer =
-            question.options[question.correct_index];
+        const correctAnswer = question.options[question.correct_index];
 
         const userIndex = questionAnswers[index];
 
@@ -1906,8 +1982,8 @@ function showCorrectionSheet() {
             questionResults[index] === SKIPPED
                 ? "Skipped"
                 : userIndex !== null
-                    ? question.options[userIndex]
-                    : "Unanswered";
+                  ? question.options[userIndex]
+                  : "Unanswered";
 
         const article = document.createElement("article");
 
@@ -1933,9 +2009,18 @@ function showCorrectionSheet() {
 
 // Editor UI Functions
 
+document
+    .getElementById("editor-answer-number")
+    .addEventListener("input", (e) => {
+        e.target.value = e.target.value.replace(/\D/g, "");
+    });
+
 function openEditor() {
     const questionBox = document.querySelector(".question-box");
     const editor = document.getElementById("editor");
+    const prompt = document.getElementById("editor-close");
+
+    prompt.classList.remove("visible");
 
     questionBox.style.display = "none";
     editor.style.display = "";
@@ -1950,10 +2035,11 @@ function openEditor() {
     questionField.innerHTML = `<textarea>${question.question}</textarea>`;
     editorAnswer.value = question.correct_index + 1;
 
-    question.options.forEach(option => {
+    optionsContainer.innerHTML = "";
+
+    question.options.forEach((option) => {
         optionsContainer.appendChild(addEditorOption(option));
     });
-
 }
 
 function addEditorOption(value) {
@@ -1966,7 +2052,6 @@ function addEditorOption(value) {
     insertBtn.textContent = "+";
     insertBtn.onclick = () => {
         article.after(addEditorOption(""));
-
     };
 
     const deleteBtn = document.createElement("button");
@@ -2000,36 +2085,51 @@ function addEditorOption(value) {
     return article;
 }
 
-function showOptionDeletePrompt(index) {
-    const prompt = document.getElementById(`delete-prompt-${index}`);
-    if (prompt) prompt.style.display = "flex";
+function showEditorPrompt(
+    message,
+    onYes = null,
+    onNo = null,
+    yesText = "yes",
+    noText = "no",
+) {
+    const prompt = document.getElementById("editor-close");
+    const messageElement = document.getElementById("editor-prompt-message");
+    const yesButton = document.getElementById("editor-prompt-yes");
+    const noButton = document.getElementById("editor-prompt-no");
+    messageElement.textContent = message;
+    yesButton.textContent = yesText;
+    noButton.textContent = noText;
+    yesButton.style.display = "";
+    noButton.style.display = "";
+    yesButton.onclick = () => {
+        prompt.classList.remove("visible");
+        if (onYes) onYes();
+    };
+    noButton.onclick = () => {
+        prompt.classList.remove("visible");
+        if (onNo) onNo();
+    };
+    prompt.classList.add("visible");
 }
 
-function hideOptionDeletePrompt(index) {
-    const prompt = document.getElementById(`delete-prompt-${index}`);
-    if (prompt) prompt.style.display = "none";
-}
-
-// Core function to handle the deletion and answer index logic
-function deleteOptionConfirmed(index) {
-    const answerInput = document.querySelector('#editor-answer-number');
-    const currentCorrectIndex = parseInt(answerInput.value);
-
-    if (index === currentCorrectIndex) {
-        answerInput.value = "";
-        answerInput.focus();
-        alert("Warning: You deleted the correct option. Please update the answer index.");
-    }
-
-    const articleToRemove = document.getElementById(`option_${index}`).parentElement;
-    if (articleToRemove) {
-        articleToRemove.remove();
-    }
+function showEditorAlert(message) {
+    const prompt = document.getElementById("editor-close");
+    const messageElement = document.getElementById("editor-prompt-message");
+    const yesButton = document.getElementById("editor-prompt-yes");
+    const noButton = document.getElementById("editor-prompt-no");
+    messageElement.textContent = message;
+    yesButton.textContent = "OK";
+    yesButton.style.display = "";
+    noButton.style.display = "none";
+    yesButton.onclick = () => {
+        prompt.classList.remove("visible");
+    };
+    prompt.classList.add("visible");
 }
 
 // Returns false if the selected answer index does not exist in the DOM anymore
 function validateAnswerIndex() {
-    const answerInput = document.querySelector('#editor-answer-number');
+    const answerInput = document.querySelector("#editor-answer-number");
 
     const val = parseInt(answerInput.value) - 1;
 
@@ -2037,8 +2137,8 @@ function validateAnswerIndex() {
     const options = optionsContainer.querySelectorAll("article");
 
     if (val < 0 || val >= options.length) {
-        answerInput.classList.add('input-error');
-        alert("Invalid Index: The selected option no longer exists.");
+        answerInput.classList.add("input-error");
+        showEditorAlert("Invalid Index: The selected option no longer exists.");
         return false;
     }
 
@@ -2046,29 +2146,30 @@ function validateAnswerIndex() {
 }
 
 function closeEditorConfirm() {
-    // Validate before showing the "Are you sure?" modal
-    if (!validateAnswerIndex()) {
-        return; // Prevent exit
-    }
-
-    document.getElementById("editor-close").style.display = "flex";
-}
-
-function cancelCloseEditor() {
-    document.getElementById("editor-close").style.display = "none";
+    showEditorPrompt(
+        "Exit? Unsaved changes will be lost.",
+        closeEditor,
+        null,
+        "yes",
+        "no",
+    );
 }
 
 function saveEdit() {
-
     if (!validateAnswerIndex()) {
         return;
-    };
+    }
 
     // Extract data from DOM
-    const newQuestionText = document.querySelector("#editor-question textarea").value;
-    const newIndex = parseInt(document.querySelector('#editor-answer-number').value) - 1;
+    const newQuestionText = document.querySelector(
+        "#editor-question textarea",
+    ).value;
+    const newIndex =
+        parseInt(document.querySelector("#editor-answer-number").value) - 1;
     const optionsContainer = document.getElementById("editor-distractors");
-    const updatedOptions = Array.from(optionsContainer.querySelectorAll('textarea')).map(ta => ta.value);
+    const updatedOptions = Array.from(
+        optionsContainer.querySelectorAll("textarea"),
+    ).map((ta) => ta.value);
 
     // Update global state
     quiz.questions[currentQuestionIndex].question = newQuestionText;
@@ -2076,15 +2177,19 @@ function saveEdit() {
     quiz.questions[currentQuestionIndex].options = updatedOptions;
 
     // Persist the actual changes (locally)
-    saveLocalEdit(currentQuestionIndex);
+    if (saveLocalEdit(currentQuestionIndex)) {
+        showEditorAlert("Changes saved.");
+    }
 }
 
 function closeEditor() {
     const questionBox = document.querySelector(".question-box");
     const editor = document.getElementById("editor");
+    const prompt = document.getElementById("editor-close");
+
+    prompt.classList.remove("visible");
 
     editor.style.display = "none";
-    document.getElementById("editor-close").style.display = "none";
 
     // Reset UI state
     const options = document.getElementById("editor-distractors");
@@ -2094,16 +2199,6 @@ function closeEditor() {
 
     renderQuiz();
 }
-
-function closeEditorConfirm() {
-    document.getElementById("editor-close").style.display = "flex";
-}
-
-function cancelCloseEditor() {
-    document.getElementById("editor-close").style.display = "none";
-
-}
-
 
 function getQuizEditsKey() {
     return `quizEdits_${quizStorageKey}`;
@@ -2125,8 +2220,10 @@ function saveLocalEdit(index) {
     try {
         localStorage.setItem(key, JSON.stringify(edits));
         console.log("Saved edit:", key, edits);
+        return true;
     } catch (e) {
         console.error("Failed to save edit:", e);
+        return false;
     }
 }
 
@@ -2153,13 +2250,12 @@ function loadQuizEdits() {
 }
 
 function hashQuiz(quiz) {
-
     // Hash derived from the quiz's content to avoid overlap
     const data = JSON.stringify(quiz);
 
     let hash = 0;
     for (let i = 0; i < data.length; i++) {
-        hash = ((hash << 5) - hash) + data.charCodeAt(i);
+        hash = (hash << 5) - hash + data.charCodeAt(i);
         hash |= 0;
     }
 
@@ -2169,18 +2265,14 @@ function hashQuiz(quiz) {
 function getStoredQuestionIndex() {
     try {
         const index = Number(
-            localStorage.getItem(`currentQuestionIndex_${quizStorageKey}`)
+            localStorage.getItem(`currentQuestionIndex_${quizStorageKey}`),
         );
 
         if (!Number.isInteger(index)) {
             return 0;
         }
 
-        return Math.max(
-            0,
-            Math.min(index, quiz.questions.length - 1)
-        );
-
+        return Math.max(0, Math.min(index, quiz.questions.length - 1));
     } catch {
         return 0;
     }
@@ -2190,13 +2282,12 @@ function setStoredQuestionIndex(value) {
     try {
         localStorage.setItem(
             `currentQuestionIndex_${quizStorageKey}`,
-            String(value)
+            String(value),
         );
     } catch (e) {
         // Ignore if storage is unavailable
     }
 }
-
 
 loadMathJax().then(() => {
     if (window.MathJax?.startup?.promise) {
