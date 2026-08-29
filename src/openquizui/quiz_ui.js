@@ -37,14 +37,14 @@ const questionBox = document.querySelector(".question-box");
 const questionText = questionBox.querySelector("#question");
 const optionsContainer = document.getElementById("options");
 const navigationContainer = questionBox.querySelector("#navigation");
-const questionNumber = document.getElementById("questionNumber");
+const questionNumber = document.getElementById("question-number");
 const results = document.getElementById("results");
 
 // Update title
 document.getElementById("title").textContent = quiz.title;
 
 // Update max question count
-const questionCount = document.getElementById("questionCount");
+const questionCount = document.getElementById("question-count");
 
 questionCount.textContent = quiz.questions.length;
 
@@ -177,14 +177,14 @@ async function renderQuiz() {
         optionsContainer.appendChild(button);
     });
     // Update button states
-    const prevButton = navigationContainer.querySelector("#prevButton");
+    const prevButton = navigationContainer.querySelector("#prev-button");
     prevButton.disabled = currentQuestionIndex === 0;
 
     // Next button is not disabled as it goes to the result screen after last question
-    // const nextButton = navigationContainer.querySelector("#nextButton");
+    // const nextButton = navigationContainer.querySelector("#next-button");
     // nextButton.disabled = currentQuestionIndex === quiz.questions.length - 1;
 
-    document.getElementById("questionScroll").scrollTop = 0; // reset scroll
+    document.getElementById("question-scroll").scrollTop = 0; // reset scroll
 
     try {
         await MathJax.typesetPromise();
@@ -285,7 +285,7 @@ questionBox.addEventListener("click", (e) => {
 });
 
 // Change question directly
-const questionSelector = document.getElementById("questionSelector");
+const questionSelector = document.getElementById("question-selector");
 
 questionSelector.addEventListener("click", () => {
     questionNumber.focus();
