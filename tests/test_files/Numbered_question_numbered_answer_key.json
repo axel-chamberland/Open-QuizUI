@@ -4,7 +4,7 @@
         "Graph Theory Quiz",
         [
             {
-                "question": "A formal graph $G = (V, E)$ is composed of which two sets? [1]",
+                "question": "A formal graph $G = (V, E)$ is composed of which two sets?",
                 "options": [
                     "Vertices and paths",
                     "Vertices and edges",
@@ -14,7 +14,7 @@
                 "correct_index": 1
             },
             {
-                "question": "In graph theory, what is a \"loop\" (boucle)? [1]",
+                "question": "In graph theory, what is a \"loop\" (boucle)?",
                 "options": [
                     "A path that visits every vertex exactly once",
                     "A cycle with a length of 1, where the start and end vertices are the same",
@@ -24,7 +24,7 @@
                 "correct_index": 1
             },
             {
-                "question": "Which of the following is a defining characteristic of a \"Tree\" (Arbre)? [1]",
+                "question": "Which of the following is a defining characteristic of a \"Tree\" (Arbre)?",
                 "options": [
                     "It is a graph where $|V| = |E|$",
                     "It is a graph that must contain at least one cycle",
@@ -34,7 +34,7 @@
                 "correct_index": 2
             },
             {
-                "question": "If you are working with a \"sparse\" graph (where the number of edges $|E|$ is much smaller than $|V|^2$), which representation is recommended? [1]",
+                "question": "If you are working with a \"sparse\" graph (where the number of edges $|E|$ is much smaller than $|V|^2$), which representation is recommended?",
                 "options": [
                     "Adjacency Matrix",
                     "Adjacency List",
@@ -44,7 +44,7 @@
                 "correct_index": 1
             },
             {
-                "question": "Which traversal algorithm is specifically noted for its ability to find the shortest path between two vertices using the minimum number of edges? [1]",
+                "question": "Which traversal algorithm is specifically noted for its ability to find the shortest path between two vertices using the minimum number of edges?",
                 "options": [
                     "Depth-First Search (DFS)",
                     "Breadth-First Search (BFS)",
