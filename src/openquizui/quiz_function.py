@@ -574,7 +574,7 @@ def clean_text(text: str, strip_refs: bool, strip_end_brackets: bool):
 
     # Remove reference-style link definitions: [id]: url
     if strip_refs:
-        text = re.sub(r"\s*\[\d+\]\s*$", "", text, flags=re.MULTILINE)
+        text = re.sub(r"\s*\[\d+\](?=\s*\*{0,2}\s*$)", "", text, flags=re.MULTILINE)
 
     # LLMs will sometimes give the answer inline in brackets, or a hint that gives off the answer
     if strip_end_brackets:
