@@ -16,14 +16,13 @@
 --text: oklch(20% 0 0);
 --border: oklch(85% 0 0);
 
---surface: color-mix(in srgb, var(--bg) 92%, var(--text) 8%);
---surface-2: color-mix(in srgb, var(--bg) 96%, var(--text) 4%);
-
 --success: #0fff93;
 --danger: #ff4545;
+--skipped: #ffb800;
+--unanswered: #8a8a8a;
 
---correct_bg: color-mix(in srgb, var(--success) 30%, var(--surface));
---wrong_bg: color-mix(in srgb, var(--danger) 30%, var(--surface));
+--correct_bg: color-mix(in srgb, var(--success) 30%, var(--btn));
+--wrong_bg: color-mix(in srgb, var(--danger) 30%, var(--btn));
 
 }
 
@@ -31,18 +30,17 @@
     :root {
 
 --bg: oklch(20% 0 0);
---btn: oklch(32% 0 0);
+--btn: oklch(24% 0 0);
 --text: oklch(94% 0 0);
 --border: oklch(85% 0 0);
 
---surface: color-mix(in srgb, var(--bg) 92%, var(--text) 8%);
---surface-2: color-mix(in srgb, var(--bg) 85%, var(--bg) 15%);
-
 --success: #00ff00;
 --danger: #ff0000;
+--skipped: #ffcc00;
+--unanswered: #999999;
 
---correct_bg: color-mix(in srgb, var(--success) 30%, var(--surface));
---wrong_bg: color-mix(in srgb, var(--danger) 30%, var(--surface));
+--correct_bg: color-mix(in srgb, var(--success) 30%, var(--btn));
+--wrong_bg: color-mix(in srgb, var(--danger) 30%, var(--btn));
 
     }
 }
@@ -54,15 +52,48 @@ body {
     background: var(--bg);
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: flex-start;
     align-items: center;
+    margin: 0;
+    overflow: hidden;
 }
 
+:fullscreen body {
+    position: fixed;
+    inset: 0;
+}
+
+:fullscreen .question-box,
+:fullscreen #results,
+:fullscreen #editor {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+:fullscreen .navigation-scroll {
+    flex: 0 0 auto;
+    order: 1;
+}
+
+#title-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+#title {
+    margin: 0;
+}
 .question-box {
     display: flex;
     flex-direction: column;
     color: var(--text);
     width: min(800px, 100%);
+    padding: 8px;
+    height: auto;
 }
 
 #question {
@@ -70,32 +101,61 @@ body {
     font-size: 1.1rem;
 }
 
+#question-scroll {
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    min-height: 0;
+}
+
+:fullscreen #question-scroll {
+    flex: 1;
+    order: 0;
+}
+
 #options {
     display: grid;
     grid-template-columns: 1;
     max-width: 100%;
     gap: 0.75rem;
-    overflow-y: auto;
+}
+
+:fullscreen #options {
+    flex: 1;
+    min-height: 0;
 }
 
 button {
     border: 1px solid;
     border-radius: 0.25rem;
     border-color: var(--border);
-    background: var(--surface-2);
+    background: var(--btn);
     cursor: pointer;
     text-align: center;
     color: var(--text);
     font-size: 1.1em;
 }
+
+button svg {
+    width: 1em;
+    height: 1em;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
 .option{
-    padding: 1rem;
+    padding: 1rem 3rem 1rem 3rem;
+    position: relative;
+    text-align: center;
 }
 button:disabled {
     opacity: 0.4;
 }
 .option:hover {
-    filter: brightness(1.5);
+    filter: contrast(1.1);
 }
 
 .option.correct {
@@ -110,7 +170,31 @@ button:disabled {
     opacity: 1;
 }
 
-#navigation {
+
+.option::after{
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 1rem;
+    text-align: center;
+}
+
+.option.correct::after {
+    content: " ✓";
+    font-weight: bold;
+}
+
+.option.wrong::after {
+    content: " ✗";
+    font-weight: bold;
+}
+.navigation-scroll {
+    overflow-x: auto;
+    overflow-y: hidden;
+}
+
+#navigation, #results-navigation, #editor-navigation {
 
     display: flex;
     flex-wrap: nowrap;
@@ -118,6 +202,8 @@ button:disabled {
     justify-content: center;
     gap: 0.5rem;
 
+    width: max-content;
+    min-width: 100%;
     z-index: 1000;
     border-bottom: 1px solid var(--border);
     margin-bottom: 20px;
@@ -126,54 +212,41 @@ button:disabled {
     -webkit-user-select: none;
 }
 
+:fullscreen #navigation,
+:fullscreen #results-navigation,
+:fullscreen #editor-navigation {
+    margin: 0;
+    border: 0;
+}
 
-#navigation button {
+#navigation button, #results-navigation button, #editor-navigation button {
     font-size : 2rem;
 
 
 }
 
-#revealButton,
-#maximizeButton,
-#downloadButton,
-#questionSelector {
+#reveal-button,
+#maximize-button,
+#download-button,
+#question-selector {
     flex: 0 0 auto;
     min-width: 2rem;
 }
 
 
-#prevButton,
-#nextButton {
+#prev-button,
+#next-button {
     flex: 1;
     font-size: clamp(1.5rem, 5vw, 2rem);
     max-width: 4rem;
 }
 
-
-:fullscreen #navigation {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-
-    margin-bottom: 0px;
-
-    background: var(--bg);
-    padding: 0.75rem;
-    border-top: 1px solid var(--border);
-    border-bottom: 0;
-}
-
-:fullscreen .question-box {
-    padding-bottom: var(--nav-height);
-}
-
-#questionSelector {
+#question-selector {
     display: flex;
     align-items: center;
     white-space: nowrap;
 
-    background: var(--surface-2);
+    background: var(--btn);
     color: var(--text);
 
     border: 1px solid var(--border);
@@ -187,7 +260,7 @@ button:disabled {
 }
 
 
-#questionNumber {
+#question-number {
 
     width: 3ch;
     text-align: center;
@@ -205,12 +278,12 @@ button:disabled {
 }
 
 
-#questionNumber:focus {
+#question-number:focus {
     outline: none;
     border: none;
 }
 
-#questionCount {
+#question-count {
     margin-right: 0.3em;
 }
 
@@ -220,30 +293,364 @@ mjx-container {
     white-space: normal;
 }
 
+/* Hide timer by default */
+#timer {
+    display: none;
+    min-width: 4rem;
+    font-size: 1.1rem;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+}
+#timer.visible {
+    display: inline-block;
+}
+
+#correct {
+    color: var(--success);
+}
+
+#wrong {
+    color: var(--danger);
+}
+
+#unanswered {
+    color: var(--unanswered);
+}
+
+#skipped {
+    color: var(--skipped);
+}
+
+.chart-correct   { stroke: var(--success); }
+.chart-wrong     { stroke: var(--danger); }
+.chart-unanswered{ stroke: var(--unanswered); }
+.chart-skipped   { stroke: var(--skipped); }
+
+#results {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: auto;
+    color: var(--text);
+}
+
+#results-scroll {
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    width: 100%;
+    max-height: 600px;
+    max-width: 700px;
+    margin: 0 auto;
+    text-align: center;
+    overflow-y: auto;
+}
+
+:fullscreen #results-scroll {
+    flex: 1;
+    min-height: 0;
+    max-height: none;
+    padding: 1rem;
+    box-sizing: border-box;
+}
+
+.stat-row {
+    display: flex;
+    gap: 1rem;
+}
+
+.stat-row > div {
+    flex: 1;
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+    background: var(--btn);
+}
+
+#statsChart {
+    height: min(50vh, 500px);
+    align-self: center;
+}
+
+.correction-sheet {
+    border-top: 1px solid var(--border);
+    text-align: left;
+}
+
+.correction-sheet article {
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.correction-sheet h2 {
+    margin-bottom: 1rem;
+}
+
+.correction-sheet h3 {
+    margin-top: 0;
+}
+
+.correction-sheet p {
+    margin: 0.5rem 0;
+}
+
+#editor {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 800px;
+    height: auto;
+    color: var(--text);
+}
+
+
+:fullscreen #editor {
+    flex: 1;
+    min-height: 0;
+}
+
+
+#editor-scroll {
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    min-height: 0;
+}
+
+:fullscreen #editor-scroll {
+    flex: 1;
+    min-height: 0;
+    order: 0;
+    padding: 1rem;
+    box-sizing: border-box;
+}
+
+textarea {
+    color: var(--text);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    font-size: 1em;
+    field-sizing: content;
+}
+
+textarea:focus {
+    outline: none;
+    border-color: var(--success);
+}
+
+#editor-distractors article {
+    display: flex;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+#editor-distractors textarea {
+    width: 80%;
+    height: auto;
+}
+
+#editor-distractors .delete-prompt {
+    display: none;
+}
+
+
+.editor-prompt {
+    display: none;
+}
+
+.editor-prompt.visible {
+    display: block;
+}
+
+.editor-prompt .button-row {
+    display: flex;
+    gap: 0.5rem;
+}
+.answer-position {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.answer-position p {
+    margin: 0.5rem 0;
+}
+
+.answer-position input {
+    width: 3ch;
+    field-sizing: content;
+
+    color: var(--text);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    font-size: 1em;
+    text-align: center;
+}
+
 </style>
 </head>
 
 <body>
+
+<svg style="display: none;">
+    <symbol id="icon-reveal" viewBox="0 0 24 24">
+        <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z"/>
+        <circle cx="12" cy="12" r="2.5"/>
+    </symbol>
+
+    <symbol id="icon-fullscreen" viewBox="0 0 24 24">
+        <path d="M8 3H3v5M16 3h5v5M8 21H3v-5M16 21h5v-5"/>
+    </symbol>
+
+    <symbol id="icon-download" viewBox="0 0 24 24">
+        <path d="M12 3v12m0 0 5-5m-5 5-5-5M4 21h16"/>
+    </symbol>
+
+    <symbol id="icon-timer" viewBox="0 0 24 24">
+        <circle cx="12" cy="13" r="8"/>
+        <path d="M12 9v4l3 2M9 3h6"/>
+    </symbol>
+
+    <symbol id="icon-editor" viewBox="0 0 24 24">
+        <rect x="5" y="4" width="14" height="17" rx="2"/>
+        <path d="M9 3h6v3H9z"/>
+        <path d="M8 11h8M8 15h5"/>
+    </symbol>
+</svg>
+
 <div class="question-box">
-  <h1></h1>
-  <div id="navigation">
-    <button id="revealButton" onclick="revealAnswer()">⌕</button>
-    <button id="maximizeButton" onclick="toggleFullscreen()">⛶</button>
-    <button id="downloadButton" onclick="downloadQuizHTML()">⤓</button>
-
-    <button id="prevButton" onclick="prevQuestion()">&lt</button>
-    <div id="questionSelector">
-        <input id="questionNumber" type="text" inputmode="numeric" value="1">
-        <span class="separator">/</span>
-        <span id="questionCount">1</span>
+    <div id="title-bar">
+        <h1 id="title"></h1>
+        <span id="timer">00:00</span>
     </div>
-    <button id="nextButton" onclick="nextQuestion()">&gt</button>
-  </div>
-  <p id="question"></p>
+    <div class="navigation-scroll">
 
-  <div id="options"></div>
+        <div id="navigation">
+
+            <button id="prev-button" onclick="prevQuestion()">&lt;</button>
+
+            <div id="question-selector">
+                <input id="question-number" type="text" inputmode="numeric" value="1">
+                <span class="separator">/</span>
+                <span id="question-count">1</span>
+            </div>
+
+            <button id="next-button" onclick="nextQuestion()">&gt;</button>
+
+            <button id="reveal-button" onclick="revealAnswer()" aria-label="Reveal answer">
+                <svg><use href="#icon-reveal"></use></svg>
+            </button>
+
+            <button id="maximize-button" onclick="toggleFullscreen()" aria-label="Fullscreen">
+                <svg><use href="#icon-fullscreen"></use></svg>
+            </button>
+
+            <button id="download-button" onclick="downloadQuizHTML()" aria-label="Download">
+                <svg><use href="#icon-download"></use></svg>
+            </button>
+
+            <button id="timer-toggle" onclick="toggleTimer()" aria-label="Timer">
+                <svg><use href="#icon-timer"></use></svg>
+            </button>
+
+            <button id="editor-button" onclick="openEditor()" aria-label="Editor">
+                <svg><use href="#icon-editor"></use></svg>
+            </button>
+
+        </div>
+    </div>
+    <div id="question-scroll">
+        <p id="question"></p>
+        <div id="options"></div>
+    </div>
+</div>
+<div id="results" style="display: none;">
+
+
+    <div class=navigation-scroll>
+        <div id="results-navigation">
+            <button onclick="prevQuestion()">&lt</button>
+
+            <button onclick="toggleFullscreen()" aria-label="Fullscreen">
+                <svg><use href="#icon-fullscreen"></use></svg>
+            </button>
+
+            <button id="resultsDownloadButton" onclick="downloadQuizHTML()" aria-label="Download">
+                <svg><use href="#icon-download"></use></svg>
+            </button>
+        </div>
+    </div>
+    <div id="results-scroll">
+
+        <div id="time"></div>
+        <div id="averageTime"></div>
+
+        <div class="stat-row">
+            <div id="correct"></div>
+            <div id="wrong"></div>
+        </div>
+        <div class="stat-row">
+            <div id="skipped"></div>
+            <div id="unanswered"></div>
+        </div>
+
+        <div class="stat-row">
+            <div id="score"></div>
+            <div id="accuracy"></div>
+        </div>
+
+
+        <div id="statsChart"></div>
+
+        <button onclick="confirmRestart()">Restart</button>
+        <div id="restart-confirm" style="display: none;">
+            <span>Restart quiz?</span>
+            <button onclick="restartQuiz()">Yes</button>
+            <button onclick="cancelRestart()">No</button>
+        </div>
+
+    <section class="correction-sheet">
+        <h2>Correction</h2>
+        <div id="question-corrections"></div>
+    </section>
+    </div>
 
 </div>
+
+<div id="editor" style="display: none;">
+    <h1 id="editor-title">Question Editor</h1>
+    <div class=navigation-scroll id="editor-navigation">
+        <button onclick="saveEdit()">save</button>
+        <button onclick="toggleFullscreen()" aria-label="Fullscreen">
+            <svg><use href="#icon-fullscreen"></use></svg>
+        </button>
+        <button onclick="closeEditorConfirm()">close</button>
+    </div>
+    <div id="editor-close" class="editor-prompt">
+        <p id="editor-prompt-message"></p>
+        <div class="button-row">
+            <button id="editor-prompt-yes">yes</button>
+            <button id="editor-prompt-no">no</button>
+        </div>
+    </div>
+    <p>
+        <strong>Limitation:</strong>
+        Changes are stored in your browser.<br>
+        Download the modified quiz as a new HTML file to keep your changes permanently.
+    </p>
+    <div id="editor-scroll">
+        <p><strong>Question:</strong></p>
+        <div id="editor-question"></div>
+        <div class="answer-position">
+            <p><strong>Answer Position:</strong></p>
+            <input type="text" id="editor-answer-number" inputmode="numeric"></input>
+        </div>
+        <p><strong>Choices:</strong></p>
+        <div id="editor-distractors"></div>
+    </div>
+</div>
+
+
 
 <script>
 const quiz = {"title": "MATHEMATICS QUIZ (50 QUESTIONS)", "questions": [{"question": "Theory Question: Is every continuous function differentiable?", "options": ["False", "True"], "correct_index": 0}, {"question": "Evaluate the sum: $\\sum_{n=0}^{\\infty} \\frac{1}{n!}$", "options": ["2", "$e$", "66", "94"], "correct_index": 1}, {"question": "Calculate the limit: $\\lim_{x \\to 0} \\frac{\\cos(x) - 1}{x^2}$", "options": ["5.27150509115801", "2.39150034171842", "-0.5", "9.73689218047478"], "correct_index": 2}, {"question": "Theory Question: Is the integral of $f'(x)$ from $a$ to $b$ always $f(b)-f(a)$?", "options": ["False", "True"], "correct_index": 1}, {"question": "Theory Question: Every convergent sequence is bounded.", "options": ["True", "False"], "correct_index": 0}, {"question": "Evaluate the definite integral: $\\int_{0}^{0.5} \\frac{1}{\\sqrt{1-x^2}} \\, dx$", "options": ["1.17684468395999", "2.57420490199626", "0.523598775598299", "-0.825659630779296"], "correct_index": 2}, {"question": "Evaluate the sum: $\\sum_{k=1}^{\\infty} \\frac{1}{k(k+1)}$", "options": ["11", "12", "1", "72"], "correct_index": 2}, {"question": "Theory Question: A function is Riemann integrable if it is continuous.", "options": ["True", "False"], "correct_index": 0}, {"question": "Calculate the limit: $\\lim_{x \\to 2} \\frac{x^2 - 4}{x - 2}$", "options": ["4", "6.60944494983734", "-1.05739566487719", "9.06351342084535"], "correct_index": 0}, {"question": "Evaluate the definite integral: $\\int_{0}^{\\pi/2} \\cos(x) \\, dx$", "options": ["4.99153802794773", "0.0505016054619183", "3.07703044538571", "1"], "correct_index": 3}, {"question": "Evaluate the sum: $\\sum_{k=1}^{5} k$", "options": ["64", "59", "15", "98"], "correct_index": 2}, {"question": "Theory Question: Is the function $|x|$ differentiable at $x=0$?", "options": ["False", "True"], "correct_index": 0}, {"question": "Evaluate the definite integral: $\\int_{0}^{1} x \\, dx$", "options": ["0.5", "3.80559117843956", "1.16222720713763", "1.662480343CA"], "correct_index": 0}, {"question": "Evaluate the sum: $\\sum_{n=0}^{\\infty} r^n$ (where $|r|<1$)", "options": ["3", "$-1/(r - 1)$", "81", "1"], "correct_index": 1}, {"question": "Evaluate the definite integral: $\\int_{0}^{1} e^x \\, dx$", "options": ["0.445288139206369", "1.40331550321233", "$e - 1$", "-0.352206778026156"], "correct_index": 2}, {"question": "Theory Question: Are all polynomials continuous everywhere?", "options": ["True", "False"], "correct_index": 0}, {"question": "Evaluate the sum: $\\sum_{n=1}^{\\infty} \\frac{1}{n^2}$", "options": ["19", "65", "77", "$\\pi^2/6$"], "correct_index": 3}, {"question": "Evaluate the sum: $\\sum_{i=1}^{4} i^2$", "options": ["81", "49", "30", "5"], "correct_index": 2}, {"question": "Calculate the limit: $\\lim_{x \\to \\infty} \\frac{\\ln(x)}{x}$", "options": ["2.43275683354404", "-0.196345097636976", "0", "5.50219536952165"], "correct_index": 2}, {"question": "Evaluate the definite integral: $\\int_{0}^{\\pi} \\sin^2(x) \\, dx$", "options": ["$\\pi/2$", "-0.652074615228089", "-0.555800664594067", "1.28954431132067"], "correct_index": 0}, {"question": "Evaluate the sum: $\\sum_{k=0}^{\\infty} (\\frac{1}{3})^k$", "options": ["1.5", "68", "52", "13"], "correct_index": 0}, {"question": "Evaluate the definite integral: $\\int_{0}^{\\infty} x e^{-x} \\, dx$", "options": ["1", "2.94338984233233", "3.75740297772419", "3.04321396215996"], "correct_index": 0}, {"question": "Evaluate the sum: $\\sum_{n=0}^{\\infty} \\frac{1}{2^n}$", "options": ["31", "39", "2", "97"], "correct_index": 2}, {"question": "Calculate the limit: $\\lim_{x \\to 3} \\frac{x - 3}{x^2 - 9}$", "options": ["$1/6$", "1.63338106095942", "9.87501664536870", "6.82466279766463"], "correct_index": 0}, {"question": "Theory Question: Does every continuous function on $[a, b]$ attain a maximum value? (Extreme Value Theorem)", "options": ["True", "False"], "correct_index": 0}, {"question": "Evaluate the sum: $\\sum_{n=0}^{\\infty} \\frac{(-1)^n}{n!}$", "options": ["100", "96", "28", "$e^{-1}$"], "correct_index": 3}, {"question": "Calculate the limit: $\\lim_{x \\to 0} \\frac{e^{x^2} - 1}{x}$", "options": ["0", "7.12000651198586", "-1.61486543870820", "2.04317317480548"], "correct_index": 0}, {"question": "Evaluate the definite integral: $\\int_{0}^{1} \\frac{1}{1+x^2} \\, dx$", "options": ["3.30294641227346", "$\\pi/4$", "1.99593289709151", "3.18577288874530"], "correct_index": 1}, {"question": "Calculate the limit: $\\lim_{x \\to \\infty} \\frac{3x + 1}{2x - 5}$", "options": ["-1.16517018800158", "1.5", "2.49549828063947", "7.79136670761914"], "correct_index": 1}, {"question": "Evaluate the sum: $\\sum_{i=1}^{10} i$", "options": ["84", "72", "52", "55"], "correct_index": 3}, {"question": "Evaluate the definite integral: $\\int_{0}^{2} x^3 \\, dx$", "options": ["1.33789622525276", "0.327951488257591", "1.57768210468730", "4"], "correct_index": 3}, {"question": "Calculate the limit: $\\lim_{x \\to \\infty} \\frac{1}{x}$", "options": ["3.99866822257642", "1.83238796524311", "0", "1.27592644391327"], "correct_index": 2}, {"question": "Calculate the limit: $\\lim_{x \\to 0} \\frac{\\sin(x)}{x}$", "options": ["4.98446202659103", "1.18668726010850", "1", "-0.653429367063457"], "correct_index": 2}, {"question": "Calculate the limit: $\\lim_{x \\to \\infty} \\frac{x}{e^x}$", "options": ["8.52304457924425", "0", "8.85376137531296", "-1.57423146736000"], "correct_index": 1}, {"question": "Theory Question: Is the limit of a sum equal to the sum of limits (if they exist)?", "options": ["True", "False"], "correct_index": 0}, {"question": "Theory Question: Is the set of rational numbers closed under addition?", "options": ["True", "False"], "correct_index": 0}, {"question": "Evaluate the sum: $\\sum_{k=1}^{100} (2k-1)$", "options": ["10000", "67", "52", "11"], "correct_index": 0}, {"question": "Evaluate the definite integral: $\\int_{0}^{\\pi} \\sin(x) \\, dx$", "options": ["-0.353702767204830", "3.72818292702966", "2", "0.00140656543258988"], "correct_index": 2}, {"question": "Evaluate the definite integral: $\\int_{2}^{4} \\frac{1}{x} \\, dx$", "options": ["$\\ln(2)$", "-0.323507617941232", "1.81905124791582", "-0.110793339305879"], "correct_index": 0}, {"question": "Evaluate the definite integral: $\\int_{1}^{e} \\frac{1}{x} \\, dx$", "options": ["2.73177162936634", "2.46193546945084", "1", "-0.784249095755332"], "correct_index": 2}, {"question": "Evaluate the sum: $\\sum_{i=1}^{\\infty} (\\frac{1}{2})^i$", "options": ["16", "29", "22", "1"], "correct_index": 3}, {"question": "Theory Question: Is every differentiable function continuous?", "options": ["True", "False"], "correct_index": 0}, {"question": "Calculate the limit: $\\lim_{x \\to 0} \\frac{e^x - 1}{x}$", "options": ["1", "3.66043886649442", "4.63545097236370", "6.45873382213185"], "correct_index": 0}, {"question": "Theory Question: Does the Mean Value Theorem apply to all functions on any interval?", "options": ["True", "False"], "correct_index": 1}, {"question": "Calculate the limit: $\\lim_{x \\to 0} \\frac{\\sin(2x)}{x}$", "options": ["2", "5.10058556300603", "-0.421768069321947", "1.46629438177467"], "correct_index": 0}, {"question": "Theory Question: The derivative of a constant is always zero.", "options": ["False", "True"], "correct_index": 1}, {"question": "Evaluate the definite integral: $\\int_{0}^{3} x^2 \\, dx$", "options": ["4.80571469790741", "3.75726076793001", "3.40954409450572", "9"], "correct_index": 3}, {"question": "Evaluate the definite integral: $\\int_{0}^{\\infty} e^{-x} \\, dx$", "options": ["-0.676606658159417", "1", "4.10650783541386", "0.517675556484594"], "correct_index": 1}, {"question": "Theory Question: Does every bounded sequence have a convergent subsequence? (Bolzano-Weierstrass)", "options": ["True", "False"], "correct_index": 0}, {"question": "Calculate the limit: $\\lim_{x \\to \\pi/2} \\frac{\\cos(x)}{\\pi/2 - x}$", "options": ["2.22355142726994", "8.31995914230270", "-0.947721168920804", "-1"], "correct_index": 3}]};
@@ -255,35 +662,59 @@ let mathReady = false;
 
 let wrongAnswerCount = 0;
 
-
 let optionButtons = [];
 let currentQuestion = null;
 
 let answerRevealed = false;
 
+// Timer
+let timerVisible = false;
+let timerStart = null;
+let timerElapsed = 0;
+let timerInterval = null;
 
+// Key for local storage
+const quizStorageKey = hashQuiz(quiz);
+
+// Stats
+const UNANSWERED = 0;
+const CORRECT = 1;
+const WRONG = 2;
+const SKIPPED = 3;
+let questionResults = new Array(quiz.questions.length).fill(UNANSWERED);
+let questionAnswers = new Array(quiz.questions.length).fill(null);
+let defaultStartDate = Date.now(); // Default start date used if timer was never started
+loadStats();
+
+// Question editing
+loadQuizEdits();
+
+const timer = document.getElementById("timer");
 const questionBox = document.querySelector(".question-box");
 const questionText = questionBox.querySelector("#question");
 const optionsContainer = document.getElementById("options");
 const navigationContainer = questionBox.querySelector("#navigation");
-const questionNumber = document.getElementById("questionNumber");
+const questionNumber = document.getElementById("question-number");
+const results = document.getElementById("results");
+
 // Update title
-questionBox.querySelector("h1").textContent = `${quiz.title}`;
+document.getElementById("title").textContent = quiz.title;
 
 // Update max question count
-const questionCount = document.getElementById("questionCount");
+const questionCount = document.getElementById("question-count");
 
 questionCount.textContent = quiz.questions.length;
 
 let currentQuestionIndex = getStoredQuestionIndex();
 questionNumber.value = currentQuestionIndex + 1;
 
-
-
 window.MathJax = {
     tex: {
-        inlineMath: [['$', '$'], ['\\(', '\\)']]
-    }
+        inlineMath: [
+            ["$", "$"],
+            ["\\(", "\\)"],
+        ],
+    },
 };
 
 function loadMathJax() {
@@ -295,7 +726,8 @@ function loadMathJax() {
         }
 
         const script = document.createElement("script");
-        script.src = "https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js";
+        script.src =
+            "https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js";
 
         script.onload = () => {
             mathReady = true;
@@ -319,14 +751,13 @@ const nav = document.getElementById("navigation");
 function updateNavHeight() {
     document.documentElement.style.setProperty(
         "--nav-height",
-        `${nav.offsetHeight}px`
+        `${nav.offsetHeight}px`,
     );
 }
 
 updateNavHeight();
 new ResizeObserver(updateNavHeight).observe(nav);
 window.addEventListener("resize", updateNavHeight);
-
 
 function toggleFullscreen() {
     const el = document.documentElement;
@@ -356,7 +787,7 @@ function renderInlineMarkdown(text) {
 
     text = text
         .replace(/\*\*(.*?)\*\*/g, "<b>$1</b>")
-        .replace(/\*(.*?)\*/g, "<i>$1</i>")
+        .replace(/\*(.*?)\*/g, "<i>$1</i>");
 
     return renderMath(text);
 }
@@ -366,7 +797,6 @@ function renderMarkdown(text) {
     return renderInlineMarkdown(text).replace(/\n/g, "<br>");
 }
 
-
 async function renderQuiz() {
     const questionBox = document.querySelector(".question-box");
     const questionText = questionBox.querySelector("#question");
@@ -374,15 +804,18 @@ async function renderQuiz() {
     const navigationContainer = questionBox.querySelector("#navigation");
 
     if (!quiz.questions || quiz.questions.length === 0) {
-        document.getElementById("question").textContent = "No valid questions parsed";
+        document.getElementById("question").textContent =
+            "No valid questions parsed";
         return;
     }
 
     // Update question
-    questionText.innerHTML = renderMarkdown(quiz.questions[currentQuestionIndex].question);
+    questionText.innerHTML = renderMarkdown(
+        quiz.questions[currentQuestionIndex].question,
+    );
 
     // Clear and rebuild options
-    optionsContainer.innerHTML = '';
+    optionsContainer.innerHTML = "";
     wrongAnswerCount = 0; // Answer button is revealed when user exhausted all options
     optionButtons = [];
 
@@ -401,28 +834,44 @@ async function renderQuiz() {
         optionsContainer.appendChild(button);
     });
     // Update button states
-    const prevButton = navigationContainer.querySelector("#prevButton");
-    const nextButton = navigationContainer.querySelector("#nextButton");
-
+    const prevButton = navigationContainer.querySelector("#prev-button");
     prevButton.disabled = currentQuestionIndex === 0;
-    nextButton.disabled = currentQuestionIndex === quiz.questions.length - 1;
 
+    // Next button is not disabled as it goes to the result screen after last question
+    // const nextButton = navigationContainer.querySelector("#next-button");
+    // nextButton.disabled = currentQuestionIndex === quiz.questions.length - 1;
+
+    document.getElementById("question-scroll").scrollTop = 0; // reset scroll
 
     try {
         await MathJax.typesetPromise();
     } catch (err) {
         console.error(err);
     }
-
-
-
 }
 
 function nextQuestion() {
-    goTo(currentQuestionIndex + 1)
+    if (
+        currentQuestionIndex >= quiz.questions.length - 1 &&
+        results.style.display === "none"
+    ) {
+        renderResults();
+        return;
+    }
+    goTo(currentQuestionIndex + 1);
 }
 
 function prevQuestion() {
+    const results = document.getElementById("results");
+
+    if (results.style.display !== "none") {
+        results.style.display = "none";
+        document.querySelector(".question-box").style.display = "";
+        renderQuiz();
+        return;
+    }
+
+    if (currentQuestionIndex <= 0) return;
     goTo(currentQuestionIndex - 1);
 }
 
@@ -431,7 +880,6 @@ document.addEventListener("keydown", (e) => {
 
     const key = e.key.toLowerCase();
 
-
     // Number = choose
     let index = -1;
 
@@ -439,14 +887,12 @@ document.addEventListener("keydown", (e) => {
         index = Number(key) - 1;
     }
 
-
     if (index >= 0 && index < optionButtons.length) {
         const button = optionButtons[index];
         if (!button.disabled) {
             handleAnswer(index, button);
-        };
-        return
-
+        }
+        return;
     }
 
     // Reveal answer or go to next question
@@ -473,9 +919,39 @@ document.addEventListener("keydown", (e) => {
         e.preventDefault();
         prevQuestion();
         return;
-    };
+    }
 });
 
+// Tap or click to change question (touch control)
+
+questionBox.addEventListener("click", (e) => {
+    if (e.target.closest("button, input")) return;
+
+    const rect = questionBox.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+
+    if (x > rect.width * 0.7) {
+        if (!answerRevealed) {
+            revealAnswer();
+        } else {
+            nextQuestion();
+        }
+    } else if (x < rect.width * 0.3) {
+        prevQuestion();
+    }
+});
+
+// Change question directly
+const questionSelector = document.getElementById("question-selector");
+
+questionSelector.addEventListener("click", () => {
+    questionNumber.focus();
+    questionNumber.select();
+});
+
+questionNumber.addEventListener("input", () => {
+    questionNumber.value = questionNumber.value.replace(/\D/g, "");
+});
 questionNumber.addEventListener("change", () => {
     if (!questionNumber.value) return;
 
@@ -483,14 +959,13 @@ questionNumber.addEventListener("change", () => {
 });
 
 function goTo(question_index) {
-
     // Clamp between first and last question
     question_index = Math.max(
         0,
-        Math.min(question_index, quiz.questions.length - 1)
+        Math.min(question_index, quiz.questions.length - 1),
     );
 
-    currentQuestionIndex = question_index
+    currentQuestionIndex = question_index;
 
     setStoredQuestionIndex(currentQuestionIndex);
 
@@ -501,14 +976,24 @@ function goTo(question_index) {
 }
 
 function handleAnswer(index, button) {
+    questionAnswers[currentQuestionIndex] = index;
+    saveStats();
     if (index === currentQuestion.correct_index) {
         button.classList.add("correct");
         button.disabled = true;
 
-        optionButtons.forEach(btn => btn.disabled = true);
+        if (wrongAnswerCount === 0) {
+            questionResults[currentQuestionIndex] = CORRECT;
+            saveStats();
+        }
+
+        optionButtons.forEach((btn) => (btn.disabled = true));
     } else {
         button.classList.add("wrong");
         button.disabled = true;
+
+        questionResults[currentQuestionIndex] = WRONG;
+        saveStats();
 
         wrongAnswerCount++;
 
@@ -520,6 +1005,11 @@ function handleAnswer(index, button) {
 
 function revealAnswer() {
     answerRevealed = true;
+
+    if (questionResults[currentQuestionIndex] === UNANSWERED) {
+        questionResults[currentQuestionIndex] = SKIPPED;
+        saveStats();
+    }
     const currentQuestion = quiz.questions[currentQuestionIndex];
     const optionsContainer = document.getElementById("options");
 
@@ -528,13 +1018,17 @@ function revealAnswer() {
 
     // Highlight the correct answer
     buttons[currentQuestion.correct_index].classList.add("correct");
-};
+}
 
-// Download as HTML
-
+// Download as HTML.
 function downloadQuizHTML(filename = quiz.title) {
     // Get full document HTML
-    const html = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
+    let html = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
+
+    // Replace the quiz content with the local edits
+    const quizJSON = JSON.stringify(quiz).replace(/</g, "\\u003c");
+
+    html = html.replace(/const quiz = .*?;/s, `const quiz = ${quizJSON};`);
 
     const blob = new Blob([html], { type: "text/html" });
     const url = URL.createObjectURL(blob);
@@ -549,22 +1043,600 @@ function downloadQuizHTML(filename = quiz.title) {
     URL.revokeObjectURL(url);
 }
 
+// Timer
+
+function getTimerKey() {
+    return `quizTimer_${quizStorageKey}`;
+}
+
+function loadTimer() {
+    try {
+        const data = JSON.parse(localStorage.getItem(getTimerKey()));
+
+        timerElapsed = data?.elapsed || 0;
+        timerStart = data?.start || null;
+    } catch {
+        timerElapsed = 0;
+        timerStart = null;
+    }
+}
+
+function saveTimer() {
+    try {
+        localStorage.setItem(
+            getTimerKey(),
+            JSON.stringify({
+                elapsed: timerElapsed,
+                start: timerStart,
+            }),
+        );
+    } catch {}
+}
+
+function updateTimer() {
+    if (!timerStart) return;
+
+    const elapsed = timerElapsed + Math.floor((Date.now() - timerStart) / 1000);
+
+    timer.textContent = formatTime(elapsed);
+}
+
+function toggleTimer() {
+    timerVisible = !timerVisible;
+    timer.classList.toggle("visible", timerVisible);
+
+    if (timerVisible) {
+        loadTimer();
+
+        // Start
+        if (!timerStart) {
+            timerStart = Date.now();
+            saveTimer();
+        }
+
+        updateTimer();
+        timerInterval = setInterval(updateTimer, 1000);
+    } else {
+        // Pause
+        if (timerStart) {
+            timerElapsed += Math.floor((Date.now() - timerStart) / 1000);
+
+            timerStart = null;
+            saveTimer();
+        }
+
+        clearInterval(timerInterval);
+        timerInterval = null;
+    }
+}
+
+// Render results page
+
+function renderResults() {
+    const questionBox = document.querySelector(".question-box");
+    const results = document.getElementById("results");
+
+    questionBox.style.display = "none";
+    results.style.display = "";
+
+    const correct = questionResults.filter((x) => x === CORRECT).length;
+    const wrong = questionResults.filter((x) => x === WRONG).length;
+    const unanswered = questionResults.filter((x) => x === UNANSWERED).length;
+    const skipped = questionResults.filter((x) => x === SKIPPED).length;
+
+    const total = quiz.questions.length;
+    const answered = correct + wrong;
+
+    const accuracy = answered > 0 ? (correct / answered) * 100 : 0;
+
+    const elapsed = timerVisible
+        ? timerElapsed + Math.floor((Date.now() - timerStart) / 1000)
+        : Math.floor((Date.now() - defaultStartDate) / 1000);
+
+    const chartData = {
+        labels: ["Correct", "Wrong", "Unanswered", "Skipped"],
+        datasets: [
+            {
+                label: "Score Chart",
+                data: [correct, wrong, unanswered, skipped],
+                classNames: [
+                    "chart-correct",
+                    "chart-wrong",
+                    "chart-unanswered",
+                    "chart-skipped",
+                ],
+            },
+        ],
+    };
+    document.getElementById("score").textContent =
+        `Score: ${correct}/${wrong + correct}`;
+
+    document.getElementById("accuracy").textContent =
+        `Accuracy: ${accuracy.toFixed(1)}%`;
+
+    document.getElementById("correct").textContent = `Correct: ${correct}`;
+
+    document.getElementById("wrong").textContent = `Wrong: ${wrong}`;
+
+    document.getElementById("unanswered").textContent =
+        `Unanswered: ${unanswered}`;
+
+    document.getElementById("skipped").textContent = `Skipped: ${skipped}`;
+
+    document.getElementById("time").textContent =
+        `Time: ${formatTime(elapsed)}`;
+
+    document.getElementById("averageTime").textContent =
+        `Average time per question: ${formatTime(Math.floor(elapsed / total))}`;
+
+    createDonutChart(document.getElementById("statsChart"), chartData);
+    showCorrectionSheet();
+}
+
+function createDonutChart(container, data) {
+    const viewSize = 100;
+    const center = viewSize / 2;
+
+    const outerRadius = 37.5;
+    const innerRadius = 20;
+    const midRadius = (outerRadius + innerRadius) / 2;
+    const strokeWidth = outerRadius - innerRadius;
+
+    const circumference = 2 * Math.PI * midRadius;
+
+    const values = data.datasets[0].data;
+    const classNames = data.datasets[0].classNames;
+    const total = values.reduce((sum, v) => sum + v, 0);
+
+    let offset = 0;
+
+    const arcs = values
+        .map((value, i) => {
+            if (value === 0 || total === 0) return "";
+
+            const fraction = value / total;
+            const dash = fraction * circumference;
+            const gap = circumference - dash;
+
+            const circle = `<circle
+class="${classNames[i]}"
+cx="${center}" cy="${center}" r="${midRadius}"
+fill="none"
+stroke-width="${strokeWidth}"
+stroke-dasharray="${dash} ${gap}"
+stroke-dashoffset="${-offset}"
+transform="rotate(-90 ${center} ${center})"
+/>`;
+
+            offset += dash;
+            return circle;
+        })
+        .join("");
+
+    container.innerHTML = `
+<svg viewBox="0 0 ${viewSize} ${viewSize}" preserveAspectRatio="xMidYMid meet" style="width: 100%; height: 100%; display: block;">
+    ${arcs}
+</svg>
+`;
+}
+
+function formatTime(seconds) {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+
+    return `${String(minutes).padStart(2, "0")}:${String(remainingSeconds).padStart(2, "0")}`;
+}
+
+function getStatsKey() {
+    return `quizStats_${quizStorageKey}`;
+}
+
+function loadStats() {
+    try {
+        const data = JSON.parse(localStorage.getItem(getStatsKey()));
+
+        if (Array.isArray(data?.results)) {
+            questionResults = data.results;
+        }
+
+        if (Array.isArray(data?.answers)) {
+            questionAnswers = data.answers;
+        }
+
+        if (data?.startDate) {
+            defaultStartDate = data.startDate;
+        }
+    } catch {
+        questionResults = new Array(quiz.questions.length).fill(UNANSWERED);
+        questionAnswers = new Array(quiz.questions.length).fill(null);
+        defaultStartDate = Date.now();
+    }
+}
+
+function saveStats() {
+    try {
+        localStorage.setItem(
+            getStatsKey(),
+            JSON.stringify({
+                results: questionResults,
+                answers: questionAnswers,
+                startDate: defaultStartDate,
+            }),
+        );
+    } catch {}
+}
+
+function restartQuiz() {
+    // Reset question state
+    currentQuestionIndex = 0;
+    questionNumber.value = 1;
+    answerRevealed = false;
+    wrongAnswerCount = 0;
+
+    // Reset stats
+    questionResults = new Array(quiz.questions.length).fill(UNANSWERED);
+    questionAnswers = new Array(quiz.questions.length).fill(null);
+    document.getElementById("question-corrections").innerHTML = "";
+
+    // Reset timer
+    clearInterval(timerInterval);
+    timerInterval = null;
+
+    timerElapsed = 0;
+    timerStart = timerVisible ? Date.now() : null;
+    defaultStartDate = Date.now();
+
+    if (timerVisible) {
+        updateTimer();
+        timerInterval = setInterval(updateTimer, 1000);
+    } else {
+        timer.textContent = formatTime(0);
+    }
+    saveTimer();
+
+    // Reset stored question
+    setStoredQuestionIndex(0);
+
+    // Return to quiz
+    results.style.display = "none";
+    questionBox.style.display = "";
+
+    document.getElementById("restart-confirm").style.display = "none";
+
+    renderQuiz();
+}
+
+function confirmRestart() {
+    document.getElementById("restart-confirm").style.display = "flex";
+}
+
+function cancelRestart() {
+    document.getElementById("restart-confirm").style.display = "none";
+}
+
+function showCorrectionSheet() {
+    const container = document.getElementById("question-corrections");
+    const questions = quiz.questions;
+
+    container.innerHTML = "";
+
+    for (let index = 0; index < questions.length; index++) {
+        const question = questions[index];
+
+        const correctAnswer = question.options[question.correct_index];
+
+        const userIndex = questionAnswers[index];
+
+        const userAnswer =
+            questionResults[index] === SKIPPED
+                ? "Skipped"
+                : userIndex !== null
+                  ? question.options[userIndex]
+                  : "Unanswered";
+
+        const article = document.createElement("article");
+
+        article.innerHTML = `
+<h3>Question ${index + 1}</h3>
+
+<p>${renderMarkdown(question.question)}</p>
+
+<p>
+    <strong>Your answer:</strong>
+    ${renderMarkdown(userAnswer)}
+</p>
+
+<p>
+    <strong>Correct answer:</strong>
+    ${renderMarkdown(correctAnswer)}
+</p>
+`;
+
+        container.appendChild(article);
+    }
+}
+
+// Editor UI Functions
+
+document
+    .getElementById("editor-answer-number")
+    .addEventListener("input", (e) => {
+        e.target.value = e.target.value.replace(/\D/g, "");
+    });
+
+function openEditor() {
+    const questionBox = document.querySelector(".question-box");
+    const editor = document.getElementById("editor");
+    const prompt = document.getElementById("editor-close");
+
+    prompt.classList.remove("visible");
+
+    questionBox.style.display = "none";
+    editor.style.display = "";
+
+    const questionField = document.getElementById("editor-question");
+    const editorAnswer = document.getElementById("editor-answer-number");
+    const optionsContainer = document.getElementById("editor-distractors");
+
+    const question = quiz.questions[currentQuestionIndex];
+
+    // Set initial values
+    questionField.innerHTML = `<textarea>${question.question}</textarea>`;
+    editorAnswer.value = question.correct_index + 1;
+
+    optionsContainer.innerHTML = "";
+
+    question.options.forEach((option) => {
+        optionsContainer.appendChild(addEditorOption(option));
+    });
+}
+
+function addEditorOption(value) {
+    const article = document.createElement("article");
+
+    const textarea = document.createElement("textarea");
+    textarea.value = value;
+
+    const insertBtn = document.createElement("button");
+    insertBtn.textContent = "+";
+    insertBtn.onclick = () => {
+        article.after(addEditorOption(""));
+    };
+
+    const deleteBtn = document.createElement("button");
+    deleteBtn.textContent = "⌦";
+
+    const promptDiv = document.createElement("div");
+    promptDiv.className = "delete-prompt";
+
+    const confirmBtn = document.createElement("button");
+    confirmBtn.textContent = "Confirm";
+    confirmBtn.onclick = () => article.remove();
+
+    const cancelBtn = document.createElement("button");
+    cancelBtn.textContent = "Cancel";
+    cancelBtn.onclick = () => {
+        promptDiv.style.display = "none";
+    };
+
+    deleteBtn.onclick = () => {
+        promptDiv.style.display = "flex";
+    };
+
+    promptDiv.appendChild(confirmBtn);
+    promptDiv.appendChild(cancelBtn);
+
+    article.appendChild(insertBtn);
+    article.appendChild(deleteBtn);
+    article.appendChild(promptDiv);
+    article.appendChild(textarea);
+
+    return article;
+}
+
+function showEditorPrompt(
+    message,
+    onYes = null,
+    onNo = null,
+    yesText = "yes",
+    noText = "no",
+) {
+    const prompt = document.getElementById("editor-close");
+    const messageElement = document.getElementById("editor-prompt-message");
+    const yesButton = document.getElementById("editor-prompt-yes");
+    const noButton = document.getElementById("editor-prompt-no");
+    messageElement.textContent = message;
+    yesButton.textContent = yesText;
+    noButton.textContent = noText;
+    yesButton.style.display = "";
+    noButton.style.display = "";
+    yesButton.onclick = () => {
+        prompt.classList.remove("visible");
+        if (onYes) onYes();
+    };
+    noButton.onclick = () => {
+        prompt.classList.remove("visible");
+        if (onNo) onNo();
+    };
+    prompt.classList.add("visible");
+}
+
+function showEditorAlert(message) {
+    const prompt = document.getElementById("editor-close");
+    const messageElement = document.getElementById("editor-prompt-message");
+    const yesButton = document.getElementById("editor-prompt-yes");
+    const noButton = document.getElementById("editor-prompt-no");
+    messageElement.textContent = message;
+    yesButton.textContent = "OK";
+    yesButton.style.display = "";
+    noButton.style.display = "none";
+    yesButton.onclick = () => {
+        prompt.classList.remove("visible");
+    };
+    prompt.classList.add("visible");
+}
+
+// Returns false if the selected answer index does not exist in the DOM anymore
+function validateAnswerIndex() {
+    const answerInput = document.querySelector("#editor-answer-number");
+
+    const val = parseInt(answerInput.value) - 1;
+
+    const optionsContainer = document.getElementById("editor-distractors");
+    const options = optionsContainer.querySelectorAll("article");
+
+    if (val < 0 || val >= options.length) {
+        answerInput.classList.add("input-error");
+        showEditorAlert("Invalid Index: The selected option no longer exists.");
+        return false;
+    }
+
+    return true;
+}
+
+function closeEditorConfirm() {
+    showEditorPrompt(
+        "Exit? Unsaved changes will be lost.",
+        closeEditor,
+        null,
+        "yes",
+        "no",
+    );
+}
+
+function saveEdit() {
+    if (!validateAnswerIndex()) {
+        return;
+    }
+
+    // Extract data from DOM
+    const newQuestionText = document.querySelector(
+        "#editor-question textarea",
+    ).value;
+    const newIndex =
+        parseInt(document.querySelector("#editor-answer-number").value) - 1;
+    const optionsContainer = document.getElementById("editor-distractors");
+    const updatedOptions = Array.from(
+        optionsContainer.querySelectorAll("textarea"),
+    ).map((ta) => ta.value);
+
+    // Update global state
+    quiz.questions[currentQuestionIndex].question = newQuestionText;
+    quiz.questions[currentQuestionIndex].correct_index = newIndex;
+    quiz.questions[currentQuestionIndex].options = updatedOptions;
+
+    // Persist the actual changes (locally)
+    if (saveLocalEdit(currentQuestionIndex)) {
+        showEditorAlert("Changes saved.");
+    }
+}
+
+function closeEditor() {
+    const questionBox = document.querySelector(".question-box");
+    const editor = document.getElementById("editor");
+    const prompt = document.getElementById("editor-close");
+
+    prompt.classList.remove("visible");
+
+    editor.style.display = "none";
+
+    // Reset UI state
+    const options = document.getElementById("editor-distractors");
+    options.innerHTML = "";
+
+    questionBox.style.display = "";
+
+    renderQuiz();
+}
+
+function getQuizEditsKey() {
+    return `quizEdits_${quizStorageKey}`;
+}
+
+function saveLocalEdit(index) {
+    const key = getQuizEditsKey();
+
+    let edits = {};
+
+    try {
+        edits = JSON.parse(localStorage.getItem(key)) || {};
+    } catch {
+        edits = {};
+    }
+
+    edits[index] = quiz.questions[index];
+
+    try {
+        localStorage.setItem(key, JSON.stringify(edits));
+        console.log("Saved edit:", key, edits);
+        return true;
+    } catch (e) {
+        console.error("Failed to save edit:", e);
+        return false;
+    }
+}
+
+function loadQuizEdits() {
+    const key = getQuizEditsKey();
+
+    try {
+        const edits = JSON.parse(localStorage.getItem(key));
+
+        if (!edits) {
+            return;
+        }
+
+        for (const [index, question] of Object.entries(edits)) {
+            const i = Number(index);
+
+            if (i >= 0 && i < quiz.questions.length) {
+                quiz.questions[i] = question;
+            }
+        }
+    } catch (e) {
+        console.error("Failed to load quiz edits:", e);
+    }
+}
+
+function hashQuiz(quiz) {
+    // Hash derived from the quiz's content to avoid overlap
+    const data = JSON.stringify(quiz);
+
+    let hash = 0;
+    for (let i = 0; i < data.length; i++) {
+        hash = (hash << 5) - hash + data.charCodeAt(i);
+        hash |= 0;
+    }
+
+    return `currentQuestionIndex_${hash >>> 0}`;
+}
+
 function getStoredQuestionIndex() {
     try {
-        return Number(localStorage.getItem("currentQuestionIndex") ?? 0);
-    } catch (e) {
+        const index = Number(
+            localStorage.getItem(`currentQuestionIndex_${quizStorageKey}`),
+        );
+
+        if (!Number.isInteger(index)) {
+            return 0;
+        }
+
+        return Math.max(0, Math.min(index, quiz.questions.length - 1));
+    } catch {
         return 0;
     }
 }
 
 function setStoredQuestionIndex(value) {
     try {
-        localStorage.setItem("currentQuestionIndex", value);
+        localStorage.setItem(
+            `currentQuestionIndex_${quizStorageKey}`,
+            String(value),
+        );
     } catch (e) {
         // Ignore if storage is unavailable
     }
 }
-
 
 loadMathJax().then(() => {
     if (window.MathJax?.startup?.promise) {
@@ -576,13 +1648,32 @@ loadMathJax().then(() => {
 
 </script>
 <script>
-// Height reporting script
+
 function reportHeight() {
-    const h = document.documentElement.scrollHeight;
-    parent.postMessage({ type: 'iframe:height', height: h }, '*');
+    // Do not run when in fullscreen
+    if (document.fullscreenElement) return;
+
+
+    const questionBox = document.querySelector(".question-box");
+    const results = document.getElementById("results");
+    const editor = document.getElementById("editor");
+
+    const visible =
+        questionBox.style.display !== "none"
+            ? questionBox
+            : results.style.display !== "none"
+                ? results
+                : editor;
+
+    const h = visible.scrollHeight;
+
+    parent.postMessage({ type: "iframe:height", height: h }, "*");
 }
+
 window.addEventListener('load', reportHeight);
+
 new ResizeObserver(reportHeight).observe(document.body);
+
 </script>
 </body>
 </html>

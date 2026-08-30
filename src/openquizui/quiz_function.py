@@ -396,7 +396,7 @@ def question_parser_standard(lines) -> tuple[list[dict], int | None]:
         # multiline question
         if not current_question["options"]:
             if current_question["question"]:
-                current_question["question"] += " "
+                current_question["question"] += "\n"
             current_question["question"] += line
 
     if current_question and len(current_question["options"]) >= 2:
