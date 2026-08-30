@@ -23,6 +23,8 @@ THEMES = {
 
 --success: #0fff93;
 --danger: #ff4545;
+--skipped: #ffb800;
+--unanswered: #8a8a8a;
 
 --correct_bg: color-mix(in srgb, var(--success) 30%, var(--btn));
 --wrong_bg: color-mix(in srgb, var(--danger) 30%, var(--btn));
@@ -35,6 +37,8 @@ THEMES = {
 
 --success: #00ff00;
 --danger: #ff0000;
+--skipped: #ffcc00;
+--unanswered: #999999;
 
 --correct_bg: color-mix(in srgb, var(--success) 30%, var(--btn));
 --wrong_bg: color-mix(in srgb, var(--danger) 30%, var(--btn));
@@ -47,6 +51,8 @@ THEMES = {
 
 --success: #1abc9c;
 --danger: #ff007c;
+--skipped: #e0af68;
+--unanswered: #565f89;
 
 --correct_bg: color-mix(in srgb, var(--success) 30%, var(--btn));
 --wrong_bg: color-mix(in srgb, var(--danger) 30%, var(--btn));
@@ -59,6 +65,8 @@ THEMES = {
 
 --success: #00ff00;
 --danger: #ff0000;
+--skipped: #ffff00;
+--unanswered: #00ffff;
 
 --correct_bg: color-mix(in srgb, var(--success) 40%, var(--btn));
 --wrong_bg: color-mix(in srgb, var(--danger) 40%, var(--btn));
@@ -71,6 +79,8 @@ THEMES = {
 
 --success: #6bbf59;
 --danger: #e07a5f;
+--skipped: #e6b566;
+--unanswered: #a8998e;
 
 --correct_bg: color-mix(in srgb, var(--success) 25%, var(--btn));
 --wrong_bg: color-mix(in srgb, var(--danger) 25%, var(--btn));
