@@ -1508,7 +1508,7 @@ async function renderQuiz() {
     try {
         await MathJax.typesetPromise();
     } catch (err) {
-        console.error(err);
+        console.error("MathJax typesetting failed:", err);
     }
 }
 
@@ -1732,7 +1732,7 @@ function saveTimer() {
                 start: timerStart,
             }),
         );
-    } catch {}
+    } catch { }
 }
 
 function updateTimer() {
@@ -1774,7 +1774,7 @@ function toggleTimer() {
 
 // Render results page
 
-function renderResults() {
+async function renderResults() {
     const questionBox = document.querySelector(".question-box");
     const results = document.getElementById("results");
 
@@ -1833,6 +1833,16 @@ function renderResults() {
 
     createDonutChart(document.getElementById("statsChart"), chartData);
     showCorrectionSheet();
+
+    if (mathReady && window.MathJax) {
+        try {
+            await MathJax.typesetPromise([
+                document.getElementById("question-corrections"),
+            ]);
+        } catch (err) {
+            console.error("MathJax typesetting failed:", err);
+        }
+    }
 }
 
 function createDonutChart(container, data) {
@@ -1925,7 +1935,7 @@ function saveStats() {
                 startDate: defaultStartDate,
             }),
         );
-    } catch {}
+    } catch { }
 }
 
 function restartQuiz() {
@@ -1993,8 +2003,8 @@ function showCorrectionSheet() {
             questionResults[index] === SKIPPED
                 ? "Skipped"
                 : userIndex !== null
-                  ? question.options[userIndex]
-                  : "Unanswered";
+                    ? question.options[userIndex]
+                    : "Unanswered";
 
         const article = document.createElement("article");
 
