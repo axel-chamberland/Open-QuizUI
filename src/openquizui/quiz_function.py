@@ -1447,9 +1447,16 @@ function renderMath(text) {
 function renderInlineMarkdown(text) {
     if (!text) return "";
 
+    // keep <img> tags, but escape the rest
+    text = text.replace(/<(?!\/?img\b)[^>]*>/gi, (match) =>
+        match.replace(/</g, "&lt;").replace(/>/g, "&gt;"),
+    );
+
     text = text
+        .replace(/<(?!\/?img\b)/gi, "&lt;")
         .replace(/\*\*(.*?)\*\*/g, "<b>$1</b>")
-        .replace(/\*(.*?)\*/g, "<i>$1</i>");
+        .replace(/\*(.*?)\*/g, "<i>$1</i>")
+        .replace(/`([^`]+)`/g, "<code>$1</code>")
 
     return renderMath(text);
 }
