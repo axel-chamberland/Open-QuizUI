@@ -290,6 +290,9 @@ def parse_quiz(
         r"\b\d+\s*\*{0,2}\s*[-.):\s]\s*\*{0,2}\s*([A-Z])\s*\)?(?=\s*(?:\||,|$|\s+\d+\s*[-.):\s]))",
         # In Table
         r"^\|\s*\*{0,2}\d+\*{0,2}\s*\|\s*\*{0,2}([A-Z]).*\|\s*$",
+        # Numbered list with trailing text: 1. **B** (Vertices and edges) [1]
+        # Excludes numbered questions containing '?'
+        r"^\s*\*{0,2}\d+\s*\*{0,2}\s*[\.\):-]\s*\*{0,2}([A-Z])\*{0,2}(?=\s+[^?\n]+$)",
     ]
 
     for pattern in answer_patterns:
