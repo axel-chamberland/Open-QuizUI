@@ -252,7 +252,7 @@ def parse_quiz(
     # Parse questions
     # -------------------------
 
-    questions, first_question_line = question_parser_standard(lines)
+    questions, first_question_line = question_parser(lines)
 
     # -------------------------
     # Attempt to Infer Title
@@ -332,7 +332,7 @@ def parse_quiz(
     return title, questions
 
 
-def question_parser_standard(lines) -> tuple[list[dict], int | None]:
+def question_parser(lines) -> tuple[list[dict], int | None]:
     """
     Formats:
     #Question 1: ...
@@ -349,7 +349,7 @@ def question_parser_standard(lines) -> tuple[list[dict], int | None]:
     question_re = re.compile(
         r"(?:#{1,6}\s*)?"  # Optional Markdown Header (#)
         r"(?:\*\*)?"  # Optional bold question (**)
-        r"(?:(?:question|q(?![a-zÀ-ÿ])|bonus)\s*([0-9]+)?|(\*\*[0-9]+))"  # The Label/Number
+        r"(?:(?:question|q(?![a-zÀ-ÿ])|bonus)\s*([0-9]+)?|([0-9]+))"  # The Label/Number
         r"\s*[:.\-]?\s*"  # Separator (: . -)
         r"(?:\*\*)?"  # Skip bold end of question, if it exists
         r"(.*?)(?:\*\*)?$",  # actual question text, excluding ** if it exists
