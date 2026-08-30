@@ -294,6 +294,7 @@ def parse_quiz(
         # Excludes numbered questions containing '?'
         r"^\s*\*{0,2}\d+\s*\*{0,2}\s*[\.\):-]\s*\*{0,2}([A-Z])\*{0,2}(?=\s+[^?\n]+$)",
     ]
+    best_matches = []
 
     for pattern in answer_patterns:
         matches = [
@@ -301,8 +302,12 @@ def parse_quiz(
             for m in re.finditer(pattern, text, re.IGNORECASE | re.MULTILINE)
         ]
 
-        if len(matches) == len(questions):  # Verification step
+        if len(matches) > len(best_matches):
+            best_matches = matches
+
+        if len(matches) == len(questions):
             valid = True
+
             for q, letter in zip(questions, matches):
                 correct_index = ord(letter) - ord("A")
 
@@ -317,8 +322,11 @@ def parse_quiz(
                 break
     else:
         raise ValueError(
-            f"{matches}"
-            "Failed to parse answers" + str(len(matches)) + "/" + str(len(questions))
+            "Failed to parse quiz:\n"
+            f"Did the message make a formatting mistake? If not, consider telling to LLM to use the tool and submitting a bug report.\n"
+            f"Questions: {len(questions)}.\n"
+            f"Answers found: {len(best_matches)}.\n"
+            f"Closest answers: {best_matches}.\n"
         )
 
     return title, questions
@@ -468,7 +476,7 @@ def infer_title(lines, before_line):
         r"^chapter\b",
         r"^chapitre\b",
         # roman/numbered section headers like "Partie A", "Section 1"
-        r"^(partie|section|chapter|chapitre)\s+[a-z0-9]+",
+        r"^(part|partie|section|chapter|chapitre)\s+[a-z0-9]+",
         # generic labeled subsections like "A - something", "1 - something"
         r"^[a-z]\s*-\s+",
         r"^\d+\s*-\s+",
