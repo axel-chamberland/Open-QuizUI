@@ -137,7 +137,7 @@ function renderInlineMarkdown(text) {
         .replace(/<(?!\/?img\b)/gi, "&lt;")
         .replace(/\*\*(.*?)\*\*/g, "<b>$1</b>")
         .replace(/\*(.*?)\*/g, "<i>$1</i>")
-        .replace(/`([^`]+)`/g, "<code>$1</code>")
+        .replace(/`([^`]+)`/g, "<code>$1</code>");
 
     return renderMath(text);
 }
@@ -420,7 +420,7 @@ function saveTimer() {
                 start: timerStart,
             }),
         );
-    } catch { }
+    } catch {}
 }
 
 function updateTimer() {
@@ -623,7 +623,7 @@ function saveStats() {
                 startDate: defaultStartDate,
             }),
         );
-    } catch { }
+    } catch {}
 }
 
 function restartQuiz() {
@@ -691,8 +691,8 @@ function showCorrectionSheet() {
             questionResults[index] === SKIPPED
                 ? "Skipped"
                 : userIndex !== null
-                    ? question.options[userIndex]
-                    : "Unanswered";
+                  ? question.options[userIndex]
+                  : "Unanswered";
 
         const article = document.createElement("article");
 
@@ -734,6 +734,7 @@ function openEditor() {
     questionBox.style.display = "none";
     editor.style.display = "";
 
+    const titleField = document.getElementById("editor-title");
     const questionField = document.getElementById("editor-question");
     const editorAnswer = document.getElementById("editor-answer-number");
     const optionsContainer = document.getElementById("editor-distractors");
@@ -741,6 +742,7 @@ function openEditor() {
     const question = quiz.questions[currentQuestionIndex];
 
     // Set initial values
+    titleField.innerHTML = `<textarea>${quiz.title}</textarea>`;
     questionField.innerHTML = `<textarea>${question.question}</textarea>`;
     editorAnswer.value = question.correct_index + 1;
 
@@ -870,6 +872,7 @@ function saveEdit() {
     }
 
     // Extract data from DOM
+    const newTitleText = document.querySelector("#editor-title textarea").value;
     const newQuestionText = document.querySelector(
         "#editor-question textarea",
     ).value;
@@ -880,13 +883,18 @@ function saveEdit() {
         optionsContainer.querySelectorAll("textarea"),
     ).map((ta) => ta.value);
 
+    // Track whether the title was changed
+    const titleChanged = quiz.title !== newTitleText;
+    quiz.title = newTitleText;
+    document.getElementById("title").textContent = newTitleText;
+
     // Update global state
     quiz.questions[currentQuestionIndex].question = newQuestionText;
     quiz.questions[currentQuestionIndex].correct_index = newIndex;
     quiz.questions[currentQuestionIndex].options = updatedOptions;
 
     // Persist the actual changes (locally)
-    if (saveLocalEdit(currentQuestionIndex)) {
+    if (saveLocalEdit(currentQuestionIndex, titleChanged)) {
         showEditorAlert("Changes saved.");
     }
 }
@@ -913,7 +921,7 @@ function getQuizEditsKey() {
     return `quizEdits_${quizStorageKey}`;
 }
 
-function saveLocalEdit(index) {
+function saveLocalEdit(index, titleChanged) {
     const key = getQuizEditsKey();
 
     let edits = {};
@@ -922,6 +930,10 @@ function saveLocalEdit(index) {
         edits = JSON.parse(localStorage.getItem(key)) || {};
     } catch {
         edits = {};
+    }
+
+    if (titleChanged) {
+        edits.title = quiz.title;
     }
 
     edits[index] = quiz.questions[index];
@@ -946,10 +958,14 @@ function loadQuizEdits() {
             return;
         }
 
+        if (edits.title !== undefined) {
+            quiz.title = edits.title;
+        }
+
+        // Load edited questions
         for (const [index, question] of Object.entries(edits)) {
             const i = Number(index);
-
-            if (i >= 0 && i < quiz.questions.length) {
+            if (Number.isInteger(i) && i >= 0 && i < quiz.questions.length) {
                 quiz.questions[i] = question;
             }
         }
