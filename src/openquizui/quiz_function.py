@@ -880,7 +880,6 @@ body {{
     justify-content: flex-start;
     align-items: center;
     margin: 0;
-    overflow: hidden;
 }}
 
 :fullscreen body {{
@@ -1035,6 +1034,15 @@ button:disabled {{
 
     user-select: none;
     -webkit-user-select: none;
+}}
+
+#navigation button,
+#results-navigation button,
+#editor-navigation button {{
+    font-size: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }}
 
 :fullscreen #navigation,
