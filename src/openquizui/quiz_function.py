@@ -1417,6 +1417,72 @@ function toggleFullscreen() {
     }
 }
 
+
+document.addEventListener("keydown", (e) => {
+    if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
+
+    const key = e.key.toLowerCase();
+
+    // Number = choose
+    let index = -1;
+
+    if (/^[1-9]$/.test(key)) {
+        index = Number(key) - 1;
+    }
+
+    if (index >= 0 && index < optionButtons.length) {
+        const button = optionButtons[index];
+        if (!button.disabled) {
+            handleAnswer(index, button);
+        }
+        return;
+    }
+
+    // Reveal answer or go to next question
+    if (key === "enter" || key == " ") {
+        e.preventDefault();
+
+        if (!answerRevealed) {
+            revealAnswer();
+        } else {
+            nextQuestion();
+        }
+        return;
+    }
+
+    // Navigation
+    if (key === "arrowright" || key === "l") {
+        e.preventDefault();
+        nextQuestion();
+        return;
+    }
+
+    if (key === "arrowleft" || key === "h") {
+        e.preventDefault();
+        prevQuestion();
+        return;
+    }
+});
+
+// Tap or click to change question (touch control)
+
+questionBox.addEventListener("click", (e) => {
+    if (e.target.closest("button, input")) return;
+
+    const rect = questionBox.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+
+    if (x > rect.width * 0.7) {
+        if (!answerRevealed) {
+            revealAnswer();
+        } else {
+            nextQuestion();
+        }
+    } else if (x < rect.width * 0.3) {
+        prevQuestion();
+    }
+});
+
 // Helpers
 
 function renderMath(text) {
@@ -1530,71 +1596,6 @@ function prevQuestion() {
     goTo(currentQuestionIndex - 1);
 }
 
-document.addEventListener("keydown", (e) => {
-    if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
-
-    const key = e.key.toLowerCase();
-
-    // Number = choose
-    let index = -1;
-
-    if (/^[1-9]$/.test(key)) {
-        index = Number(key) - 1;
-    }
-
-    if (index >= 0 && index < optionButtons.length) {
-        const button = optionButtons[index];
-        if (!button.disabled) {
-            handleAnswer(index, button);
-        }
-        return;
-    }
-
-    // Reveal answer or go to next question
-    if (key === "enter" || key == " ") {
-        console.log("handled", key);
-        e.preventDefault();
-
-        if (!answerRevealed) {
-            revealAnswer();
-        } else {
-            nextQuestion();
-        }
-        return;
-    }
-
-    // Navigation
-    if (key === "arrowright" || key === "l") {
-        e.preventDefault();
-        nextQuestion();
-        return;
-    }
-
-    if (key === "arrowleft" || key === "h") {
-        e.preventDefault();
-        prevQuestion();
-        return;
-    }
-});
-
-// Tap or click to change question (touch control)
-
-questionBox.addEventListener("click", (e) => {
-    if (e.target.closest("button, input")) return;
-
-    const rect = questionBox.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-
-    if (x > rect.width * 0.7) {
-        if (!answerRevealed) {
-            revealAnswer();
-        } else {
-            nextQuestion();
-        }
-    } else if (x < rect.width * 0.3) {
-        prevQuestion();
-    }
-});
 
 // Change question directly
 const questionSelector = document.getElementById("question-selector");
@@ -1637,6 +1638,7 @@ function handleAnswer(index, button) {
         button.classList.add("correct");
         button.disabled = true;
 
+        answerRevealed = true;
         if (wrongAnswerCount === 0) {
             questionResults[currentQuestionIndex] = CORRECT;
             saveStats();
