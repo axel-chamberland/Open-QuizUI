@@ -537,7 +537,7 @@ const quiz = {quiz_json};
 reportHeight = """
 function reportHeight() {
     // Do not run when in fullscreen
-    if (document.fullscreenElement) return;
+    if (document.fullscreenElement || document.documentElement.classList.contains("pseudo-fullscreen-active")) return;
 
 
     const questionBox = document.querySelector(".question-box");
@@ -604,6 +604,7 @@ style = """
 {light_theme}
 }}
 
+
 @media (prefers-color-scheme: dark) {{
     :root {{
 {dark_theme}
@@ -622,21 +623,26 @@ body {{
     margin: 0;
 }}
 
-:fullscreen body {{
+:is(:fullscreen, .pseudo-fullscreen-active) body {{
     position: fixed;
     inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
 }}
 
-:fullscreen .question-box,
-:fullscreen #results,
-:fullscreen #editor {{
+:is(:fullscreen, .pseudo-fullscreen-active) .question-box,
+:is(:fullscreen, .pseudo-fullscreen-active) #results,
+:is(:fullscreen, .pseudo-fullscreen-active) #editor {{
     flex: 1;
     min-height: 0;
     display: flex;
     flex-direction: column;
 }}
 
-:fullscreen .navigation-scroll {{
+:is(:fullscreen, .pseudo-fullscreen-active) .navigation-scroll {{
     flex: 0 0 auto;
     order: 1;
 }}
@@ -672,7 +678,7 @@ body {{
     min-height: 0;
 }}
 
-:fullscreen #question-scroll {{
+:is(:fullscreen, .pseudo-fullscreen-active) #question-scroll {{
     flex: 1;
     order: 0;
 }}
@@ -684,7 +690,7 @@ body {{
     gap: 0.75rem;
 }}
 
-:fullscreen #options {{
+:is(:fullscreen, .pseudo-fullscreen-active) #options {{
     flex: 1;
     min-height: 0;
 }}
@@ -765,7 +771,9 @@ button:disabled {{
     padding: 0.75rem;
     justify-content: center;
     gap: 0.5rem;
-    width: min(800px, 100%);
+
+    width: max-content;
+    min-width: 100%;
     z-index: 1000;
     border-bottom: 1px solid var(--border);
     margin-bottom: 20px;
@@ -783,9 +791,9 @@ button:disabled {{
     justify-content: center;
 }}
 
-:fullscreen #navigation,
-:fullscreen #results-navigation,
-:fullscreen #editor-navigation {{
+:is(:fullscreen, .pseudo-fullscreen-active) #navigation,
+:is(:fullscreen, .pseudo-fullscreen-active) #results-navigation,
+:is(:fullscreen, .pseudo-fullscreen-active) #editor-navigation {{
     margin: 0;
     border: 0;
 }}
@@ -913,7 +921,7 @@ body.embedded #results-scroll {{
     max-height: 600px;
 }}
 
-:fullscreen #results-scroll {{
+:is(:fullscreen, .pseudo-fullscreen-active) #results-scroll {{
     flex: 1;
     min-height: 0;
     max-height: none;
@@ -961,7 +969,7 @@ body.embedded #results-scroll {{
 }}
 
 
-:fullscreen #editor {{
+:is(:fullscreen, .pseudo-fullscreen-active) #editor {{
     flex: 1;
     min-height: 0;
 }}
@@ -974,7 +982,7 @@ body.embedded #results-scroll {{
     min-height: 0;
 }}
 
-:fullscreen #editor-scroll {{
+:is(:fullscreen, .pseudo-fullscreen-active) #editor-scroll {{
     flex: 1;
     min-height: 0;
     order: 0;
@@ -1146,17 +1154,122 @@ function loadMathJax() {
 
 // UI events
 
-function toggleFullscreen() {
-    const el = document.documentElement;
+// In case the iframe was reset while in fullscreen, reload the page to reset affected elements
+// This mainly happens when you call the action function on another device while being in pseudo-fullscreen,
+// causing the iframe to reset without exiting pseudo-fullscreen
+try {
+    if (window.top.document.body.classList.contains("pseudo-fullscreen-active")) {
+        window.top.location.reload();
+    }
+} catch {
+    // The iframe may not be permitted to access the top document
+    // when origin restrictions are disabled.
+    // This is fine, since it means that pseudo-fullscreen did not modify anything that needs to be reset
+}
 
-    if (!document.fullscreenElement) {
-        el.requestFullscreen?.();
-    } else {
-        document.exitFullscreen?.();
+async function toggleFullscreen() {
+    if (document.fullscreenElement || document.webkitFullscreenElement) {
+        if (document.exitFullscreen) await document.exitFullscreen();
+        else document.webkitExitFullscreen?.();
+        return;
+    }
+    if (document.documentElement.classList.contains("pseudo-fullscreen-active")) {
+
+        document.documentElement.classList.remove("pseudo-fullscreen-active");
+        exitPseudoFullscreen();
+        return;
+    }
+    const root = document.documentElement;
+    if (root.requestFullscreen) {
+        try { await root.requestFullscreen(); return; } catch { }
+    } else if (root.webkitRequestFullscreen) {
+        root.webkitRequestFullscreen();
+        return;
+    }
+
+    // support for navigators that don't support fullscreen in iframes, such as iOS webkit (thanks, Apple!)
+    document.documentElement.classList.add("pseudo-fullscreen-active");
+    enterPseudoFullscreen();
+}
+
+let pseudoFullscreenState = null;
+
+function enterPseudoFullscreen() {
+    const iframe = window.frameElement;
+
+
+    // Keep track of fullscreen state in case the iframe is reset while in fullscreen (force a page reload)
+    const topBody = window.top.document.body;
+    topBody.classList.add("pseudo-fullscreen-active");
+
+    pseudoFullscreenState = {
+        scrollX: window.top.scrollX,
+        scrollY: window.top.scrollY,
+        elements: []
+    };
+
+    let el = iframe;
+
+    while (el && el !== document.body) {
+        pseudoFullscreenState.elements.push({
+            el,
+            style: el.getAttribute("style"),
+            siblings: [...el.parentElement.children]
+                .filter(x => x !== el)
+                .map(x => [x, x.style.display])
+        });
+
+        el.style.position = "fixed";
+        el.style.inset = "0";
+        el.style.width = "100vw";
+        el.style.height = "100dvh";
+        el.style.margin = "0";
+        el.style.maxWidth = "none";
+        el.style.maxHeight = "none";
+        el.style.zIndex = "999999";
+
+        for (const child of el.parentElement.children) {
+            if (child !== el)
+                child.style.display = "none";
+        }
+
+        el = el.parentElement;
     }
 }
 
+function exitPseudoFullscreen() {
 
+    const topBody = window.top.document.body;
+
+    topBody.classList.remove("pseudo-fullscreen-active");
+
+    if (!pseudoFullscreenState) {
+        return;
+    }
+
+    const { elements, scrollX, scrollY } = pseudoFullscreenState;
+
+    for (const item of elements) {
+        if (item.style === null)
+            item.el.removeAttribute("style");
+        else
+            item.el.setAttribute("style", item.style);
+
+        for (const [sibling, display] of item.siblings)
+            sibling.style.display = display;
+    }
+
+    pseudoFullscreenState = null;
+
+    // Return the top page to where it was.
+    window.top.scrollTo(scrollX, scrollY);
+
+    // Make sure the iframe itself is visible.
+    window.frameElement.scrollIntoView({
+        block: "center",
+        inline: "nearest"
+    });
+}
 document.addEventListener("keydown", (e) => {
     if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
 
