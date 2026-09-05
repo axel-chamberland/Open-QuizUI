@@ -1146,20 +1146,6 @@ function loadMathJax() {
 
 // UI events
 
-// Get height of navigation bar for CSS (fullscreen mode)
-const nav = document.getElementById("navigation");
-
-function updateNavHeight() {
-    document.documentElement.style.setProperty(
-        "--nav-height",
-        `${nav.offsetHeight}px`,
-    );
-}
-
-updateNavHeight();
-new ResizeObserver(updateNavHeight).observe(nav);
-window.addEventListener("resize", updateNavHeight);
-
 function toggleFullscreen() {
     const el = document.documentElement;
 
@@ -1478,7 +1464,7 @@ function saveTimer() {
                 start: timerStart,
             }),
         );
-    } catch {}
+    } catch { }
 }
 
 function updateTimer() {
@@ -1681,7 +1667,7 @@ function saveStats() {
                 startDate: defaultStartDate,
             }),
         );
-    } catch {}
+    } catch { }
 }
 
 function restartQuiz() {
@@ -1749,8 +1735,8 @@ function showCorrectionSheet() {
             questionResults[index] === SKIPPED
                 ? "Skipped"
                 : userIndex !== null
-                  ? question.options[userIndex]
-                  : "Unanswered";
+                    ? question.options[userIndex]
+                    : "Unanswered";
 
         const article = document.createElement("article");
 

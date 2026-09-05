@@ -93,20 +93,6 @@ function loadMathJax() {
 
 // UI events
 
-// Get height of navigation bar for CSS (fullscreen mode)
-const nav = document.getElementById("navigation");
-
-function updateNavHeight() {
-    document.documentElement.style.setProperty(
-        "--nav-height",
-        `${nav.offsetHeight}px`,
-    );
-}
-
-updateNavHeight();
-new ResizeObserver(updateNavHeight).observe(nav);
-window.addEventListener("resize", updateNavHeight);
-
 function toggleFullscreen() {
     const el = document.documentElement;
 
