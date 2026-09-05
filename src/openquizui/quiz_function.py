@@ -643,7 +643,7 @@ def wrap_html(quiz, enable_mathjax: bool, light_theme, dark_theme):
 <body>
 {svg_icons}
 <div class="question-box">
-    <div id="title-bar">
+    <div class="title-bar">
         <h1 id="title"></h1>
         <span id="timer">00:00</span>
     </div>
@@ -688,9 +688,9 @@ def wrap_html(quiz, enable_mathjax: bool, light_theme, dark_theme):
         <div id="options"></div>
     </div>
 </div>
+
+
 <div id="results" style="display: none;">
-
-
     <div class=navigation-scroll>
         <div id="results-navigation">
             <button onclick="prevQuestion()">&lt</button>
@@ -740,6 +740,7 @@ def wrap_html(quiz, enable_mathjax: bool, light_theme, dark_theme):
     </div>
 
 </div>
+
 
 <div id="editor" style="display: none;">
     <h1>Question Editor</h1>
@@ -901,17 +902,17 @@ body {{
     order: 1;
 }}
 
-#title-bar {{
+.title-bar {{
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 1rem;
 }}
 
-#title {{
+.title-bar h1 {{
     margin: 0;
 }}
-.question-box {{
+.question-box, #results, #editor {{
     display: flex;
     flex-direction: column;
     color: var(--text);
@@ -1025,9 +1026,7 @@ button:disabled {{
     padding: 0.75rem;
     justify-content: center;
     gap: 0.5rem;
-
-    width: max-content;
-    min-width: 100%;
+    width: min(800px, 100%);
     z-index: 1000;
     border-bottom: 1px solid var(--border);
     margin-bottom: 20px;
@@ -1159,25 +1158,20 @@ mjx-container {{
 .chart-unanswered{{ stroke: var(--unanswered); }}
 .chart-skipped   {{ stroke: var(--skipped); }}
 
-#results {{
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    height: auto;
-    color: var(--text);
-}}
 
 #results-scroll {{
     min-height: 0;
     display: flex;
     flex-direction: column;
     gap: 1rem;
-    width: 100%;
-    max-height: 600px;
-    max-width: 700px;
     margin: 0 auto;
     text-align: center;
     overflow-y: auto;
+}}
+
+/* When embedded in an iframe */
+body.embedded #results-scroll {{
+    max-height: 600px;
 }}
 
 :fullscreen #results-scroll {{
@@ -1225,15 +1219,6 @@ mjx-container {{
 
 .correction-sheet p {{
     margin: 0.5rem 0;
-}}
-
-#editor {{
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    max-width: 800px;
-    height: auto;
-    color: var(--text);
 }}
 
 
@@ -1329,6 +1314,11 @@ textarea:focus {{
 script = r"""
 // Try to load math library (WARNING: requires internet)
 const ENABLE_MATHJAX = __ENABLE_MATHJAX__;
+
+// Detect if in an iframe (used for better UI support)
+if (window.self !== window.top) {
+    document.body.classList.add("embedded");
+}
 
 let mathReady = false;
 

@@ -1,6 +1,11 @@
 // Try to load math library (WARNING: requires internet)
 const ENABLE_MATHJAX = __ENABLE_MATHJAX__;
 
+// Detect if in an iframe (used for better UI support)
+if (window.self !== window.top) {
+    document.body.classList.add("embedded");
+}
+
 let mathReady = false;
 
 let wrongAnswerCount = 0;
@@ -420,7 +425,7 @@ function saveTimer() {
                 start: timerStart,
             }),
         );
-    } catch {}
+    } catch { }
 }
 
 function updateTimer() {
@@ -623,7 +628,7 @@ function saveStats() {
                 startDate: defaultStartDate,
             }),
         );
-    } catch {}
+    } catch { }
 }
 
 function restartQuiz() {
@@ -691,8 +696,8 @@ function showCorrectionSheet() {
             questionResults[index] === SKIPPED
                 ? "Skipped"
                 : userIndex !== null
-                  ? question.options[userIndex]
-                  : "Unanswered";
+                    ? question.options[userIndex]
+                    : "Unanswered";
 
         const article = document.createElement("article");
 
