@@ -4,14 +4,17 @@ This is a tool / action function for displaying interactive multiple choice quiz
 
 Features:
 
-- Render MathJax for LaTeX expressions (optional)
+- Render MathJax for LaTeX expressions¹
+- Full-screen / focus mode²
 - Separate Light/Dark themes
 - Save a quiz and share it as an HTML file
-- Full-screen / focus mode (note : does not work on WebKit iOS/iPadOS)
 - Edit any question after the quiz generation using the editor
 - Results/stats page at the end with corrections
 - Use one of many colour schemes or make your own
 - Fits nicely on small screens
+
+¹For the UI to render LaTeX with MathJax, you must turn it on in the settings (gear icon)
+²If using WebKit iOS/iPadOS full-screen requires **iframe Sandbox Allow Same Origin** enabled in Open WebUI's interface settings.
 
 ## Example (outdated, I need to redo the screenshots)
 
@@ -37,8 +40,6 @@ There are two options:
 
 - Put the tool code in Workspace > Tools > New Tool.
 - Put the function code in Admin Panel > Functions > New Function.
-
-> For the UI to render LaTeX with MathJax, you must turn it on in the settings (gear icon)
 
 While the tool will work, I recommend using the action function for large quizzes since it is easier for an LLM to write quizzes naturally then by using a specific structure format via tool calling.
 
