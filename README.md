@@ -62,10 +62,10 @@ If you encounter a format that should be supported but isn't, please submit a bu
 
 More detailed documentation is available in the [`docs/`](docs/) directory:
 
-* [Getting Started](Getting-Started.md)
-* [Usage](Usage.md)
-* [Formatting](Formatting.md)
-* [Customization](Customization.md)
-* [Troubleshooting](Troubleshooting.md)
-* [Development](Development.md)
-* [Contributing](Contributing.md)
+* [Getting Started](docs/Getting-Started.md)
+* [Usage](docs/Usage.md)
+* [Formatting](docs/Formatting.md)
+* [Customization](docs/Customization.md)
+* [Troubleshooting](docs/Troubleshooting.md)
+* [Development](docs/Development.md)
+* [Contributing](docs/Contributing.md)
