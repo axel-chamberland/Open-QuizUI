@@ -555,7 +555,8 @@ def infer_title(lines, before_line):
 
 def clean_text(text: str, strip_refs: bool, strip_end_brackets: bool):
     """
-    Remove HTML tags and thinking blocks.
+    Remove thinking blocks and reference links,
+    and convert markdown links and embedded to HTML links
     """
     # Delete reasoning/tool-call blocks entirely (tag + body)
     text = re.sub(
@@ -576,6 +577,22 @@ def clean_text(text: str, strip_refs: bool, strip_end_brackets: bool):
     # LLMs will sometimes give the answer inline in brackets, or a hint that gives off the answer
     if strip_end_brackets:
         text = re.sub(r"\s*\[[^\]]*\]\s*$", "", text, flags=re.MULTILINE)
+
+    # Convert Markdown images to HTML images
+    # ![alt text](https://example.com/image.png)
+    text = re.sub(
+        r"!\[([^\]]*)\]\(([^)\s]+)\)",
+        r'<img src="\2" alt="\1">',
+        text,
+    )
+
+    # Convert Markdown links to HTML links
+    # [text](https://example.com)
+    text = re.sub(
+        r"\[([^\]]+)\]\(([^)\s]+)\)",
+        r'<a href="\2" target="_blank" rel="noopener noreferrer">\1</a>',
+        text,
+    )
     return text.strip().replace("\r", "")
 
 
