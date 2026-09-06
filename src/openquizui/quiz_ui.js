@@ -97,7 +97,9 @@ function loadMathJax() {
 // This mainly happens when you call the action function on another device while being in pseudo-fullscreen,
 // causing the iframe to reset without exiting pseudo-fullscreen
 try {
-    if (window.top.document.body.classList.contains("pseudo-fullscreen-active")) {
+    if (
+        window.top.document.body.classList.contains("pseudo-fullscreen-active")
+    ) {
         window.top.location.reload();
     }
 } catch {
@@ -112,15 +114,19 @@ async function toggleFullscreen() {
         else document.webkitExitFullscreen?.();
         return;
     }
-    if (document.documentElement.classList.contains("pseudo-fullscreen-active")) {
-
+    if (
+        document.documentElement.classList.contains("pseudo-fullscreen-active")
+    ) {
         document.documentElement.classList.remove("pseudo-fullscreen-active");
         exitPseudoFullscreen();
         return;
     }
     const root = document.documentElement;
     if (root.requestFullscreen) {
-        try { await root.requestFullscreen(); return; } catch { }
+        try {
+            await root.requestFullscreen();
+            return;
+        } catch {}
     } else if (root.webkitRequestFullscreen) {
         root.webkitRequestFullscreen();
         return;
@@ -136,7 +142,6 @@ let pseudoFullscreenState = null;
 function enterPseudoFullscreen() {
     const iframe = window.frameElement;
 
-
     // Keep track of fullscreen state in case the iframe is reset while in fullscreen (force a page reload)
     const topBody = window.top.document.body;
     topBody.classList.add("pseudo-fullscreen-active");
@@ -144,7 +149,7 @@ function enterPseudoFullscreen() {
     pseudoFullscreenState = {
         scrollX: window.top.scrollX,
         scrollY: window.top.scrollY,
-        elements: []
+        elements: [],
     };
 
     let el = iframe;
@@ -154,8 +159,8 @@ function enterPseudoFullscreen() {
             el,
             style: el.getAttribute("style"),
             siblings: [...el.parentElement.children]
-                .filter(x => x !== el)
-                .map(x => [x, x.style.display])
+                .filter((x) => x !== el)
+                .map((x) => [x, x.style.display]),
         });
 
         el.style.position = "fixed";
@@ -168,8 +173,7 @@ function enterPseudoFullscreen() {
         el.style.zIndex = "999999";
 
         for (const child of el.parentElement.children) {
-            if (child !== el)
-                child.style.display = "none";
+            if (child !== el) child.style.display = "none";
         }
 
         el = el.parentElement;
@@ -177,7 +181,6 @@ function enterPseudoFullscreen() {
 }
 
 function exitPseudoFullscreen() {
-
     const topBody = window.top.document.body;
 
     topBody.classList.remove("pseudo-fullscreen-active");
@@ -189,10 +192,8 @@ function exitPseudoFullscreen() {
     const { elements, scrollX, scrollY } = pseudoFullscreenState;
 
     for (const item of elements) {
-        if (item.style === null)
-            item.el.removeAttribute("style");
-        else
-            item.el.setAttribute("style", item.style);
+        if (item.style === null) item.el.removeAttribute("style");
+        else item.el.setAttribute("style", item.style);
 
         for (const [sibling, display] of item.siblings)
             sibling.style.display = display;
@@ -206,7 +207,7 @@ function exitPseudoFullscreen() {
     // Make sure the iframe itself is visible.
     window.frameElement.scrollIntoView({
         block: "center",
-        inline: "nearest"
+        inline: "nearest",
     });
 }
 document.addEventListener("keydown", (e) => {
@@ -286,27 +287,90 @@ function renderMath(text) {
         return `<code>${expr}</code>`;
     });
 }
-
 function renderInlineMarkdown(text) {
     if (!text) return "";
 
-    // keep <img> tags, but escape the rest
-    text = text.replace(/<(?!\/?img\b)[^>]*>/gi, (match) =>
-        match.replace(/</g, "&lt;").replace(/>/g, "&gt;"),
+    const protectedParts = [];
+
+    function protect(value) {
+        const index = protectedParts.length;
+        protectedParts.push(value);
+        return `\uE000${index}\uE001`;
+    }
+
+    // Protect math from Markdown processing.
+    text = text.replace(/\$\$[\s\S]*?\$\$/g, protect);
+    text = text.replace(/\$(?!\$)[\s\S]*?\$(?!\$)/g, protect);
+
+    // Escape things that look like HTML tags but aren't actually
+    // part of a valid HTML element.
+    const voidElements = new Set([
+        "area",
+        "base",
+        "br",
+        "col",
+        "embed",
+        "hr",
+        "img",
+        "input",
+        "link",
+        "meta",
+        "param",
+        "source",
+        "track",
+        "wbr",
+    ]);
+
+    text = text.replace(
+        /<\/?([A-Za-z][A-Za-z0-9-]*)(?:\s[^>]*)?>/g,
+        (match, tagName, offset, wholeText) => {
+            const tag = tagName.toLowerCase();
+
+            // Closing tags are valid if they appear.
+            if (match.startsWith("</")) {
+                return match;
+            }
+
+            // Self-closing tags are valid.
+            if (/\/>$/.test(match)) {
+                return match;
+            }
+
+            // Void HTML elements don't need a closing tag.
+            if (voidElements.has(tag)) {
+                return match;
+            }
+
+            // For normal elements, require a matching closing tag.
+            const closingTag = new RegExp(`</${tag}\\s*>`, "i");
+
+            if (closingTag.test(wholeText.slice(offset + match.length))) {
+                return match;
+            }
+
+            // Otherwise, treat it as literal text.
+            return match.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        },
     );
 
+    // Markdown.
     text = text
-        .replace(/<(?!\/?img\b)/gi, "&lt;")
         .replace(/\*\*(.*?)\*\*/g, "<b>$1</b>")
         .replace(/\*(.*?)\*/g, "<i>$1</i>")
-        .replace(/`([^`]+)`/g, "<code>$1</code>");
+        .replace(/`([^]+?)`/g, "<code>$1</code>");
+
+    // Restore math.
+    text = text.replace(
+        /\uE000(\d+)\uE001/g,
+        (_, index) => protectedParts[Number(index)],
+    );
 
     return renderMath(text);
 }
 
 function renderMarkdown(text) {
     if (!text) return "";
-    return renderInlineMarkdown(text).replace(/\n/g, "<br>");
+    return renderInlineMarkdown(text);
 }
 
 async function renderQuiz() {
@@ -386,7 +450,6 @@ function prevQuestion() {
     if (currentQuestionIndex <= 0) return;
     goTo(currentQuestionIndex - 1);
 }
-
 
 // Change question directly
 const questionSelector = document.getElementById("question-selector");
@@ -518,7 +581,7 @@ function saveTimer() {
                 start: timerStart,
             }),
         );
-    } catch { }
+    } catch {}
 }
 
 function updateTimer() {
@@ -721,7 +784,7 @@ function saveStats() {
                 startDate: defaultStartDate,
             }),
         );
-    } catch { }
+    } catch {}
 }
 
 function restartQuiz() {
@@ -789,8 +852,8 @@ function showCorrectionSheet() {
             questionResults[index] === SKIPPED
                 ? "Skipped"
                 : userIndex !== null
-                    ? question.options[userIndex]
-                    : "Unanswered";
+                  ? question.options[userIndex]
+                  : "Unanswered";
 
         const article = document.createElement("article");
 
