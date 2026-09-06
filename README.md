@@ -1,22 +1,23 @@
-# QuizUI
+# Open-QuizUI
 
-This is a tool / action function for displaying interactive multiple choice quizzes inside Open WebUI using rich UI element embedding.
+Open-QuizUI is a tool / action function for displaying interactive multiple-choice quizzes inside Open WebUI using rich UI element embedding.
 
-Features:
+## Features
 
-- Render MathJax for LaTeX expressions¹
-- Full-screen / focus mode²
-- Separate Light/Dark themes
-- Save a quiz and share it as an HTML file
-- Edit any question after the quiz generation using the editor
-- Results/stats page at the end with corrections
-- Use one of many colour schemes or make your own
-- Fits nicely on small screens
+* Render MathJax for LaTeX expressions¹
+* Full-screen / focus mode²
+* Separate light/dark themes
+* Save a quiz and share it as an HTML file
+* Edit any question after quiz generation using the editor
+* Results/stats page at the end with corrections
+* Use one of many colour schemes or make your own
+* Fits nicely on small screens
 
-¹For the UI to render LaTeX with MathJax, you must turn it on in the settings (gear icon)
-²If using WebKit iOS/iPadOS full-screen requires **iframe Sandbox Allow Same Origin** enabled in Open WebUI's interface settings.
+¹ MathJax must be enabled in the function's vavles (settings) for LaTeX expressions to render.
 
-## Example (outdated, I need to redo the screenshots)
+² On WebKit-based browsers on iOS/iPadOS, full-screen mode requires **"iframe Sandbox Allow Same Origin"** to be enabled in Open WebUI's interface settings.
+
+## Example
 
 <details open>
 <summary>Dark Mode</summary>
@@ -36,21 +37,35 @@ Features:
 
 ## Usage
 
-There are two options:
+There are two ways to use Open-QuizUI:
 
-- Put the tool code in Workspace > Tools > New Tool.
-- Put the function code in Admin Panel > Functions > New Function.
+* **Tool:** Add the tool code through **Workspace → Tools → New Tool**.
+* **Action Function:** Add the function code through **Admin Panel → Functions → New Function**.
 
-While the tool will work, I recommend using the action function for large quizzes since it is easier for an LLM to write quizzes naturally then by using a specific structure format via tool calling.
+Both options work, but the **action function is recommended for larger quizzes**. It allows the LLM to write quizzes naturally instead of having to follow a specific structure for tool calling.
 
-The function is triggered by pressing the action button under an LLM's message.
+The action function is triggered by pressing the action button below an LLM's message.
 
-If the function doesn't work for a particular format, most of the time it is because the LLM made an error somewhere (which it would have done with the tool either way). You can either manually fix it, or ask the LLM to convert it by itself using the tool. If it's not the case, please consider submitting a bug report with the message's content so we can fix it.
+If the action function doesn't work with a particular format, it is often because the LLM made a formatting error. You can either fix the formatting manually or ask the LLM to use the tool in a follow-up message.
+
+If you encounter a format that should be supported but isn't, please submit a bug report with the message content so it can be investigated. You can also try to fix the issue yourself and include any fixes or findings in the issue.
 
 ## Recommendations
 
-- Any model will work. However, some models such as Qwen3.5 9B can break it by making formatting mistakes or doubting themselves outside a think block. Gemma usually has better formatting.
-- Currently, answer keys in a Markdown table are not fully supported. Most standard formatting should work (adjust your prompt as needed).
-- For parsing questions with the function, consider asking the LLM to begin all questions with "Question:", as the LLM can make more some mistakes otherwise.
-- Supported languages by function tool: Parsing looks for French and English keywords (Question, Answer, A, Réponse, R) or a number. If you use another language, you can update the parsing in the code to add keywords or modify your prompt to let the LLM use the proper keywords.
-- For the function to work, BOTH the questions and the answers must be in the same message: if the LLM gives them in two different messages, you can edit the LLM's first message and paste the answer key there.
+* Any model will work. However, some models such as Qwen3.5 9B can break it by making formatting mistakes or doubting themselves outside a think block. Gemma usually has better formatting.
+* Answer keys in Markdown tables are not fully supported yet. Most standard formatting should work, but you may need to adjust your prompt.
+* For the recommended question and answer format for the action function, see the [Recommended Format](docs/Usage.md#recommended-format) documentation.
+* The action function currently looks for French and English keywords such as `Question`, `Answer`, `A`, `Réponse`, and `R`, as well as numbered questions. If you use another language, you can modify the parser to add the appropriate keywords or adjust your prompt.
+* The questions and answers must be in the **same message** for the action function to parse them. If the LLM provides them in separate messages, you can edit the first message and paste the answer key into it.
+
+## Documentation
+
+More detailed documentation is available in the [`docs/`](docs/) directory:
+
+* [Getting Started](Getting-Started.md)
+* [Usage](Usage.md)
+* [Formatting](Formatting.md)
+* [Customization](Customization.md)
+* [Troubleshooting](Troubleshooting.md)
+* [Development](Development.md)
+* [Contributing](Contributing.md)
