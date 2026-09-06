@@ -17,10 +17,10 @@ Action | User has direct control over when to display a quiz, can modify the mes
 
 ## Pages
 
-* [[Getting Started]]
-* [[Usage]]
-* [[Formatting]]
-* [[Customization]]
-* [[Troubleshooting]]
-* [[Development]]
-* [[Contributing]]
+* [Getting Started](Getting-Started.md)
+* [Usage](Usage.md)
+* [Formatting](Formatting.md)
+* [Customization](Customization.md)
+* [Troubleshooting](Troubleshooting.md)
+* [Development](Development.md)
+* [Contributing](Contributing.md)
