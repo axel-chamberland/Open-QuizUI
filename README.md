@@ -52,7 +52,7 @@ If you encounter a format that should be supported but isn't, please submit a bu
 
 ## Recommendations
 
-* Any model will work. However, small models such as Qwen3.5 9B can fail long tool calls or break the action function by making formatting mistakes or doubting themselves outside a think block. Gemma usually has better formatting.
+* Any model will work. However, small models such as Qwen3.5 9B can fail heavy tool calls or break the action function by making formatting mistakes or doubting themselves outside a think block. Gemma usually has better formatting.
 * Answer keys in Markdown tables are not fully supported yet. Most standard formatting should work, but you may need to adjust your prompt.
 * For the recommended question and answer format for the action function, see the [Recommended Format](docs/Usage.md#recommended-format) documentation.
 * The action function currently looks for French and English keywords such as `Question`, `Answer`, `A`, `Réponse`, and `R`, as well as numbered questions. If you use another language, you can modify the parser to add the appropriate keywords or adjust your prompt.
