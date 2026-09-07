@@ -29,8 +29,12 @@ B. <Choice>
 
 # Answer key
 
-1. <Letter corresponding to the correct choice>
-2. <Letter corresponding to the correct choice>
+| Question | Correct Answer | Explanation |
+| --- | --- | --- |
+| 1 | <Correct choice letter> | <Explanation.> |
+| 2 | <Correct choice letter> | <Explanation.> |
+
+
 ```
 
 Keep the questions, choices, and answer key in the same message. Most standard formats are supported. If the Action fails to parse a particular format, consider opening an issue and providing the raw message.
