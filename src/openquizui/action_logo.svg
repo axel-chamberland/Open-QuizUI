@@ -4,7 +4,7 @@
       <rect width="512" height="512" rx="98" ry="98"/>
     </clipPath>
   </defs>
-  <rect width="512" height="512" rx="98" ry="98" fill="#3981f7"  clip-path="url(#canvas-clip)"/>
+  <rect width="512" height="512" rx="98" ry="98" fill="#306ed3"  clip-path="url(#canvas-clip)"/>
   <g clip-path="url(#canvas-clip)">
     <g transform="rotate(0, 256, 256)">
       
