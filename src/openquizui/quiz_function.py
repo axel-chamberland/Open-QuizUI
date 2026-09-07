@@ -1712,7 +1712,6 @@ textarea:focus {{
 img, video, iframe, table {{
     display: block;
     max-width: 100%;
-    height: auto;
     object-fit: contain;
     margin-inline: auto;
 }}
