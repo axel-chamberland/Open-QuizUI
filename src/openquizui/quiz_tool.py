@@ -1748,26 +1748,26 @@ function showExplanation(question) {
 
 // Download as HTML.
 function downloadQuizHTML(filename = quiz.title) {
-    let html = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
+    // quiz is the current runtime-modified quiz
+    const appData = {
+        enableMathJax: ENABLE_MATHJAX,
+        quiz: quiz,
+    };
 
-    // Grab the existing JSON payload from the DOM
-    const dataScript = document.getElementById("app-data");
-    let appData = JSON.parse(dataScript.textContent);
+    // Clone the document so the live page is not modified.
+    const documentClone = document.documentElement.cloneNode(true);
 
-    // Update the quiz property with current runtime edits
-    appData.quiz = quiz;
+    // Replace the JSON payload in the cloned document.
+    const dataScript = documentClone.querySelector("#app-data");
 
-    // Stringify the updated object safely
-    const jsonPayload = JSON.stringify(appData, null, 2).replace(
-        /</g,
-        "\\u003c",
-    );
+    if (!dataScript) {
+        throw new Error("Could not find #app-data");
+    }
 
-    // Replace the content inside the JSON script tag
-    html = html.replace(
-        /(<script\s+id="app-data"\s+type="application\/json">)[\s\S]*?(<\/script>)/i,
-        `$1\n${jsonPayload}\n$2`,
-    );
+    dataScript.textContent = JSON.stringify(appData, null, 2);
+
+    // Serialize the cloned document.
+    const html = "<!DOCTYPE html>\n" + documentClone.outerHTML;
 
     const blob = new Blob([html], { type: "text/html" });
     const url = URL.createObjectURL(blob);
@@ -1775,10 +1775,11 @@ function downloadQuizHTML(filename = quiz.title) {
     const a = document.createElement("a");
     a.href = url;
     a.download = filename.endsWith(".html") ? filename : filename + ".html";
+
     document.body.appendChild(a);
     a.click();
+    a.remove();
 
-    document.body.removeChild(a);
     URL.revokeObjectURL(url);
 }
 
