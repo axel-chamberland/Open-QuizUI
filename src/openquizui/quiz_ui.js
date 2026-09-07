@@ -966,6 +966,7 @@ function openEditor() {
     });
 }
 
+// Copying
 function formatQuestionAsText(question, index) {
     const lines = [];
 
@@ -973,14 +974,33 @@ function formatQuestionAsText(question, index) {
     lines.push("");
 
     question.options.forEach((option, i) => {
-        const marker = i === question.correct_index ? "[correct]" : "";
-        lines.push(`${i + 1}. ${option} ${marker}`.trim());
+        const letter = String.fromCharCode(65 + i);
+        lines.push(`${letter}. ${option}`);
     });
 
-    if (question.explanation) {
-        lines.push("");
-        lines.push(`Explanation: ${question.explanation}`);
-    }
+    return lines.join("\n");
+}
+
+function formatAnswerKey(questions) {
+    const lines = [
+        "Answer Key:",
+        "",
+        "| Question | Correct Answer | Explanation |",
+        "| --- | --- | --- |",
+    ];
+
+    questions.forEach((question, index) => {
+        const correctLetter = String.fromCharCode(65 + question.correct_index);
+
+        const escapeTableCell = (text) =>
+            String(text ?? "")
+                .replace(/\|/g, "\\|")
+                .replace(/\n/g, " ");
+
+        lines.push(
+            `| ${index + 1} | ${correctLetter} | ${escapeTableCell(question.explanation || "")} |`,
+        );
+    });
 
     return lines.join("\n");
 }
@@ -992,6 +1012,8 @@ function formatQuizAsText() {
         lines.push(formatQuestionAsText(question, index));
         lines.push("");
     });
+
+    lines.push(formatAnswerKey(quiz.questions));
 
     return lines.join("\n").trim();
 }
@@ -1019,10 +1041,14 @@ function copyQuiz() {
 }
 
 function copyQuestion() {
-    const text = formatQuestionAsText(
-        quiz.questions[currentQuestionIndex],
-        currentQuestionIndex,
-    );
+    const question = quiz.questions[currentQuestionIndex];
+
+    const text = [
+        formatQuestionAsText(question, currentQuestionIndex),
+        "",
+        formatAnswerKey([question]),
+    ].join("\n");
+
     copyToClipboard(text, "Question copied to clipboard.");
 }
 
