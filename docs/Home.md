@@ -1,4 +1,4 @@
-# Open-QuizUI Wiki
+# Open-QuizUI Documentation
 
 Documentation for [Open-QuizUI](https://github.com/axel-chamberland/Open-QuizUI).
 
