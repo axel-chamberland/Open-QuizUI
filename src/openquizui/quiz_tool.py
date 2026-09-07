@@ -414,7 +414,7 @@ def wrap_html(
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Quiz</title>
+<title>{quiz["title"][:60]}</title>
 
 <style>
 {style.format(light_theme=light_theme, dark_theme=dark_theme)}
@@ -425,7 +425,7 @@ def wrap_html(
 {svg_icons}
 <div class="question-box">
     <div class="title-bar">
-        <h1 id="title"></h1>
+        <h1 id="title">{quiz["title"][:60]}</h1>
         <span id="timer">00:00</span>
     </div>
     <div class="navigation-scroll">
@@ -1222,9 +1222,6 @@ const optionsContainer = document.getElementById("options");
 const navigationContainer = questionBox.querySelector("#navigation");
 const questionNumber = document.getElementById("question-number");
 const results = document.getElementById("results");
-
-// Update title
-document.getElementById("title").textContent = quiz.title;
 
 // Update max question count
 const questionCount = document.getElementById("question-count");
