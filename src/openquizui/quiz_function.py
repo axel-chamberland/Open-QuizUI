@@ -264,7 +264,7 @@ ANSWER_PATTERNS = [
     # Adding a space as option:
     r"\b\d+\s*\*{0,2}\s*[-.):\s]\s*\*{0,2}\s*([A-Z])\s*\)?(?=\s*(?:\||,|$|\s+\d+\s*[-.):\s]))",
     # In Table
-    r"^\|\s*\*{0,2}\d+\*{0,2}\s*\|\s*\*{0,2}([A-Z]).*\|\s*$",
+    r"^\|\s*\*{0,2}\d+\*{0,2}\s*\|\s*\*{0,2}([A-Z])\*{0,2}(?=\s*\|)",
     # Numbered list with trailing text: 1. **B** (Vertices and edges) [1]
     # Excludes numbered questions containing '?'
     r"^\s*\*{0,2}\d+\s*\*{0,2}\s*[\.\):-]\s*\*{0,2}([A-Z])\*{0,2}(?=\s+[^?\n]+$)",
@@ -594,6 +594,7 @@ def answer_parser(
         # Its answer matches are authoritative.
         # ---------------------------------------------------------
 
+        # Get the line number where each answer starts.
         answer_lines = [text.count("\n", 0, match.start()) for match in answer_matches]
 
         for i, (q, answer_match, answer_line) in enumerate(
@@ -601,38 +602,62 @@ def answer_parser(
         ):
             q["correct_index"] = ord(answer_match.group(1).upper()) - ord("A")
 
-            is_last_answer = i == len(answer_lines) - 1
+            # The next question always starts at the beginning of its line.
+            next_question_line = (
+                question_lines[i + 1] if i + 1 < len(question_lines) else None
+            )
 
-            if is_last_answer:
-                # There is no next question/answer to compare against.
-                # If this answer is after the last question, it is answer-key mode.
-                is_answer_key = answer_line > question_lines[-1]
+            next_question_pos = (
+                line_starts[next_question_line]
+                if next_question_line is not None
+                else None
+            )
+
+            # The next answer normally starts on its own line, but it might
+            # be on the SAME line as the current answer. Therefore, use the
+            # actual character position of the next answer instead of its line.
+            next_answer_pos = (
+                answer_matches[i + 1].start() if i + 1 < len(answer_matches) else None
+            )
+
+            # Find the closest boundary after the current answer.
+            possible_end_positions = [
+                pos
+                for pos in (next_question_pos, next_answer_pos)
+                if pos is not None and pos > answer_match.end()
+            ]
+
+            if possible_end_positions:
+                # Stop immediately before whichever comes first.
+                end = min(possible_end_positions)
             else:
-                next_question_line = question_lines[i + 1]
-                is_answer_key = answer_line > next_question_line
+                # Nothing follows this answer.
+                end = len(text)
 
-            if is_answer_key:
-                if is_last_answer:
-                    end_line = len(lines)
-                else:
-                    end_line = answer_lines[i + 1]
-            else:
-                end_line = next_question_line
-
+            # Start immediately after the current answer.
             start = answer_match.end()
-            end = line_starts[end_line]
 
             explanation = text[start:end].strip()
+            # If this is the last answer in an answer key, don't consume
+            # unrelated text after the explanation.
+            is_last_answer = i == len(answer_matches) - 1
 
-            # Last answer in an answer key reaches the end of the document.
-            # A double newline means the explanation has ended.
-            if is_answer_key and is_last_answer:
-                explanation = re.split(r"\n\s*\n", explanation, maxsplit=1)[0].strip()
+            if is_last_answer:
+                explanation = re.split(
+                    r"\n\s*\n",
+                    explanation,
+                    maxsplit=1,
+                )[0].strip()
 
             if explanation:
-                q["explanation"] = clean_explanation(explanation)
+                explanation = clean_explanation(explanation)
+
+                # Only add the explanation if cleanup left actual text.
+                if explanation:
+                    q["explanation"] = explanation
 
         return questions
+
     raise ValueError(
         "Failed to parse quiz:\n"
         "Did the message make a formatting mistake? If not, "
@@ -667,11 +692,11 @@ def clean_text(text: str, strip_refs: bool, strip_end_brackets: bool):
 
     # Remove reference-style link definitions: [id]: url
     if strip_refs:
-        text = re.sub(r"\s*\[\d+\](?=\s*\*{0,2}\s*$)", "", text, flags=re.MULTILINE)
+        text = re.sub(r"\s*\[\d+\](?!.*[^\W\d_])", "", text, flags=re.MULTILINE)
 
     # LLMs will sometimes give the answer inline in brackets, or a hint that gives off the answer
     if strip_end_brackets:
-        text = re.sub(r"\s*\[[^\]]*\]\s*$", "", text, flags=re.MULTILINE)
+        text = re.sub(r"\s*\[[^\]]*\](?=[^\W\d_]*$)", "", text, flags=re.MULTILINE)
 
     # Convert Markdown images to HTML images
     # ![alt text](https://example.com/image.png)
@@ -772,7 +797,7 @@ def clean_explanation(text: str) -> str:
 
         # Remove obvious artifacts at the outermost beginning.
         body = re.sub(
-            r"^(?:\*\*|[)\]}>|]+)\s*",
+            r"^(?:\*\*|[,)\]}>|]+)\s*",
             "",
             body,
         ).strip()
@@ -822,6 +847,9 @@ def clean_explanation(text: str) -> str:
         if text == previous:
             break
 
+    # Remove a trailing Markdown table delimiter.
+    text = re.sub(r"\s*\|\s*$", "", text).strip()
+
     # Add terminal punctuation.
     lines = []
 
@@ -832,6 +860,10 @@ def clean_explanation(text: str) -> str:
             line += "."
 
         lines.append(line)
+
+    # If nothing but punctuation/whitespace remains, there is no explanation.
+    if not re.search(r"[^\W_]", text, re.UNICODE):
+        return ""
 
     return "\n".join(lines).strip()
 
@@ -874,7 +906,9 @@ def shuffle_options(questions: list[dict]):
 # =========================
 
 
-def wrap_html(quiz, enable_mathjax: bool, light_theme, dark_theme):
+def wrap_html(
+    quiz, enable_mathjax: bool, light_theme="default_light", dark_theme="default_dark"
+):
     quiz_json = json.dumps(quiz)
 
     rendered_script = script.replace(
@@ -1771,7 +1805,7 @@ async function toggleFullscreen() {
         try {
             await root.requestFullscreen();
             return;
-        } catch { }
+        } catch {}
     } else if (root.webkitRequestFullscreen) {
         root.webkitRequestFullscreen();
         return;
@@ -1935,6 +1969,7 @@ function renderMath(text) {
         return `<code>${expr}</code>`;
     });
 }
+
 function renderMarkdown(text) {
     if (!text) return "";
 
@@ -1970,7 +2005,7 @@ function renderMarkdown(text) {
     ]);
 
     text = text.replace(
-        /<\/?([A-Za-z][A-Za-z0-9-]*)(?:\s[^>]*)?>/g,
+        /<\/?(\p{L}[\p{L}\p{N}-]*)(?:\s[^>]*)?>/gu,
         (match, tagName, offset, wholeText) => {
             const tag = tagName.toLowerCase();
 
@@ -1990,7 +2025,7 @@ function renderMarkdown(text) {
             }
 
             // For normal elements, require a matching closing tag.
-            const closingTag = new RegExp(`</${tag}\\s*>`, "i");
+            const closingTag = new RegExp(`</${tag}\\s*>`, "iu");
 
             if (closingTag.test(wholeText.slice(offset + match.length))) {
                 return match;
@@ -2015,7 +2050,6 @@ function renderMarkdown(text) {
 
     return renderMath(text);
 }
-
 
 async function renderQuiz() {
     const questionBox = document.querySelector(".question-box");
@@ -2182,8 +2216,8 @@ function showExplanation(question) {
         explanationEl.style.display = "block";
 
         if (mathReady && window.MathJax) {
-            MathJax.typesetPromise([explanationEl]).catch(err =>
-                console.error("MathJax typesetting failed:", err)
+            MathJax.typesetPromise([explanationEl]).catch((err) =>
+                console.error("MathJax typesetting failed:", err),
             );
         }
     } else {
@@ -2242,7 +2276,7 @@ function saveTimer() {
                 start: timerStart,
             }),
         );
-    } catch { }
+    } catch {}
 }
 
 function updateTimer() {
@@ -2445,7 +2479,7 @@ function saveStats() {
                 startDate: defaultStartDate,
             }),
         );
-    } catch { }
+    } catch {}
 }
 
 function restartQuiz() {
@@ -2513,8 +2547,8 @@ function showCorrectionSheet() {
             questionResults[index] === SKIPPED
                 ? "Skipped"
                 : userIndex !== null
-                    ? question.options[userIndex]
-                    : "Unanswered";
+                  ? question.options[userIndex]
+                  : "Unanswered";
 
         const article = document.createElement("article");
 
@@ -2533,12 +2567,16 @@ function showCorrectionSheet() {
     ${renderMarkdown(correctAnswer)}
 </p>
 
-${question.explanation ? `
+${
+    question.explanation
+        ? `
 <p>
     <strong>Explanation:</strong>
     ${renderMarkdown(question.explanation)}
 </p>
-` : ""}
+`
+        : ""
+}
 `;
 
         container.appendChild(article);
@@ -2579,7 +2617,8 @@ function openEditor() {
     questionField.querySelector("textarea").value = question.question;
 
     explanationField.innerHTML = `<textarea></textarea>`;
-    explanationField.querySelector("textarea").value = question.explanation || "";
+    explanationField.querySelector("textarea").value =
+        question.explanation || "";
 
     editorAnswer.value = question.correct_index + 1;
 
@@ -2632,10 +2671,11 @@ function copyToClipboard(text, successMessage) {
 }
 
 function showManualCopyPrompt(text) {
-    showEditorAlert("Clipboard access isn't available here. You may select and copy the text from the console.");
+    showEditorAlert(
+        "Clipboard access isn't available here. You may select and copy the text from the console.",
+    );
     console.log(text);
 }
-
 
 function copyQuiz() {
     copyToClipboard(formatQuizAsText(), "Quiz copied to clipboard.");
@@ -2779,9 +2819,9 @@ function saveEdit() {
         optionsContainer.querySelectorAll("textarea"),
     ).map((ta) => ta.value);
 
-
-    const newExplanationText =
-        document.querySelector("#editor-explanation textarea").value;
+    const newExplanationText = document.querySelector(
+        "#editor-explanation textarea",
+    ).value;
 
     // Track whether the title was changed
     const titleChanged = quiz.title !== newTitleText;
