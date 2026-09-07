@@ -909,11 +909,13 @@ def shuffle_options(questions: list[dict]):
 def wrap_html(
     quiz, enable_mathjax: bool, light_theme="default_light", dark_theme="default_dark"
 ):
-    quiz_json = json.dumps(quiz)
 
     rendered_script = script.replace(
         "__ENABLE_MATHJAX__", "true" if enable_mathjax else "false"
     )
+
+    payload = {"enableMathJax": bool(enable_mathjax), "quiz": quiz}
+    app_data_json = json.dumps(payload)
 
     return f"""
 <!DOCTYPE html>
@@ -1095,10 +1097,14 @@ def wrap_html(
 
 
 
+<script id="app-data" type="application/json">
+{app_data_json}
+</script>
+
 <script>
-const quiz = {quiz_json};
 {rendered_script}
 </script>
+
 <script>
 {reportHeight}
 </script>
@@ -1677,8 +1683,11 @@ img, video, iframe, table {{
 # =========================
 
 script = r"""
-// Try to load math library (WARNING: requires internet)
-const ENABLE_MATHJAX = __ENABLE_MATHJAX__;
+const appData = JSON.parse(document.getElementById("app-data").textContent);
+
+const ENABLE_MATHJAX = appData.enableMathJax;
+
+const quiz = appData.quiz;
 
 // Detect if in an iframe (used for better UI support)
 if (window.self !== window.top) {
@@ -2228,20 +2237,33 @@ function showExplanation(question) {
 
 // Download as HTML.
 function downloadQuizHTML(filename = quiz.title) {
-    // Get full document HTML
     let html = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
 
-    // Replace the quiz content with the local edits
-    const quizJSON = JSON.stringify(quiz).replace(/</g, "\\u003c");
+    // Grab the existing JSON payload from the DOM
+    const dataScript = document.getElementById("app-data");
+    let appData = JSON.parse(dataScript.textContent);
 
-    html = html.replace(/const quiz = .*?;/s, `const quiz = ${quizJSON};`);
+    // Update the quiz property with current runtime edits
+    appData.quiz = quiz;
+
+    // Stringify the updated object safely
+    const jsonPayload = JSON.stringify(appData, null, 2).replace(
+        /</g,
+        "\\u003c",
+    );
+
+    // Replace the content inside the JSON script tag
+    html = html.replace(
+        /(<script\s+id="app-data"\s+type="application\/json">)[\s\S]*?(<\/script>)/i,
+        `$1\n${jsonPayload}\n$2`,
+    );
 
     const blob = new Blob([html], { type: "text/html" });
     const url = URL.createObjectURL(blob);
 
     const a = document.createElement("a");
     a.href = url;
-    a.download = filename;
+    a.download = filename.endsWith(".html") ? filename : filename + ".html";
     document.body.appendChild(a);
     a.click();
 

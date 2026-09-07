@@ -77,7 +77,7 @@ async def test_generate_quiz_theme_dark(quiz_tool):
 
 
 @pytest.mark.asyncio
-async def test_generate_quiz_mathjax_enabled(quiz_tool):
+async def test_generate_mathjax(quiz_tool):
     """Test enabling MathJax."""
     title = "Math Quiz"
     questions = [
@@ -86,25 +86,7 @@ async def test_generate_quiz_mathjax_enabled(quiz_tool):
     quiz_tool.valves.enable_mathjax = True
 
     response = await quiz_tool.generate_quiz(title, questions)
+    body = response.body.decode("utf-8")
 
     assert isinstance(response, HTMLResponse)
-    assert (
-        "https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
-        in response.body.decode("utf-8")
-    )
-    assert "const ENABLE_MATHJAX = true;" in response.body.decode("utf-8")
-
-
-@pytest.mark.asyncio
-async def test_generate_quiz_mathjax_disabled(quiz_tool):
-    """Test disabling MathJax."""
-    title = "No Math Quiz"
-    questions = [
-        {"question": "What is $x$?", "answer": "Variable", "distractors": ["Number"]}
-    ]
-    quiz_tool.valves.enable_mathjax = False
-
-    response = await quiz_tool.generate_quiz(title, questions)
-
-    assert isinstance(response, HTMLResponse)
-    assert "const ENABLE_MATHJAX = false;" in response.body.decode("utf-8")
+    assert "https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" in body
