@@ -3,6 +3,7 @@
 Open-QuizUI is a tool / action function for displaying interactive multiple-choice quizzes inside Open WebUI using rich UI element embedding.
 
 ## Features
+[Showcase Quiz: Click here to test it online!](https://axel-chamberland.github.io/Open-QuizUI/examples/Feature_Showcase.html)
 
 * Render MathJax for LaTeX expressions¹
 * Full-screen / focus mode²
@@ -17,6 +18,7 @@ Open-QuizUI is a tool / action function for displaying interactive multiple-choi
 ¹ MathJax must be enabled in the function's vavles (settings) for LaTeX expressions to render.
 
 ² On WebKit-based browsers on iOS/iPadOS, full-screen mode requires **"iframe Sandbox Allow Same Origin"** to be enabled in Open WebUI's interface settings.
+
 
 ## Example
 
