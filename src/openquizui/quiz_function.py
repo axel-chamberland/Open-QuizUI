@@ -106,17 +106,8 @@ THEMES = {
 }
 
 
-# Icon for the action function
-# char = "🃍"
-# svg = f"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-# <text x="12" y="18" text-anchor="middle" font-size="20" fill="currentColor" stroke="currentColor" stroke-width="0.5">{char}</text>
-# </svg>"""
-
-
 class Action:
-    #    icon_url = "data:image/svg+xml;base64," + base64.b64encode(
-    #        svg.encode("utf-8")
-    #    ).decode("ascii")
+    icon_url = "https://raw.githubusercontent.com/axel-chamberland/Open-QuizUI/main/src/openquizui/action_logo.svg"
 
     class Valves(BaseModel):
         shuffle_choices: bool = Field(
@@ -126,6 +117,11 @@ class Action:
         enable_mathjax: bool = Field(
             default=False,
             description="Disabled by default for privacy and performance. Enable LaTeX/math rendering with MathJax. Requires Internet access to load the MathJax library from a CDN. When disabled or offline, LaTeX expressions are displayed as plain text.",
+        )
+
+        enable_explanations: bool = Field(
+            default=True,
+            description="Attempt to include an explanation for each questions if one exists",
         )
 
         strip_references: bool = Field(
@@ -195,7 +191,7 @@ class Action:
             if not text:
                 raise ValueError("No content received")
 
-            title, questions = parse_quiz(text)
+            title, questions = parse_quiz(text, self.valves.enable_explanations)
 
             if self.valves.shuffle_choices:
                 shuffle_options(questions)
@@ -273,6 +269,7 @@ ANSWER_PATTERNS = [
 
 def parse_quiz(
     text: str,
+    explanations: bool,
 ) -> tuple[str, list[dict]]:
 
     lines = [line.strip() for line in text.split("\n")]
@@ -293,7 +290,7 @@ def parse_quiz(
     # Parse answer key (anywhere in the text)
     # -------------------------
 
-    questions = answer_parser(text, questions, question_lines)
+    questions = answer_parser(text, questions, question_lines, explanations)
 
     return title, questions
 
@@ -527,6 +524,7 @@ def answer_parser(
     text: str,
     questions: list[dict],
     question_lines: list[int],
+    explanations: bool,
 ) -> list[dict]:
     """
     Resolve each question's correct_index and optional explanation.
@@ -540,8 +538,6 @@ def answer_parser(
       - the next question line
       - the end of the text
     """
-
-    lines = text.splitlines()
 
     if len(question_lines) != len(questions):
         raise ValueError(
@@ -589,11 +585,6 @@ def answer_parser(
         if not valid:
             continue
 
-        # ---------------------------------------------------------
-        # This is the winning pattern.
-        # Its answer matches are authoritative.
-        # ---------------------------------------------------------
-
         # Get the line number where each answer starts.
         answer_lines = [text.count("\n", 0, match.start()) for match in answer_matches]
 
@@ -601,6 +592,9 @@ def answer_parser(
             zip(questions, answer_matches, answer_lines)
         ):
             q["correct_index"] = ord(answer_match.group(1).upper()) - ord("A")
+
+            if not explanations:
+                continue
 
             # The next question always starts at the beginning of its line.
             next_question_line = (
@@ -614,7 +608,7 @@ def answer_parser(
             )
 
             # The next answer normally starts on its own line, but it might
-            # be on the SAME line as the current answer. Therefore, use the
+            # be on the same line as the current answer. Therefore, use the
             # actual character position of the next answer instead of its line.
             next_answer_pos = (
                 answer_matches[i + 1].start() if i + 1 < len(answer_matches) else None
@@ -2651,6 +2645,7 @@ function openEditor() {
     });
 }
 
+// Copying
 function formatQuestionAsText(question, index) {
     const lines = [];
 
@@ -2658,14 +2653,33 @@ function formatQuestionAsText(question, index) {
     lines.push("");
 
     question.options.forEach((option, i) => {
-        const marker = i === question.correct_index ? "[correct]" : "";
-        lines.push(`${i + 1}. ${option} ${marker}`.trim());
+        const letter = String.fromCharCode(65 + i);
+        lines.push(`${letter}. ${option}`);
     });
 
-    if (question.explanation) {
-        lines.push("");
-        lines.push(`Explanation: ${question.explanation}`);
-    }
+    return lines.join("\n");
+}
+
+function formatAnswerKey(questions) {
+    const lines = [
+        "Answer Key:",
+        "",
+        "| Question | Correct Answer | Explanation |",
+        "| --- | --- | --- |",
+    ];
+
+    questions.forEach((question, index) => {
+        const correctLetter = String.fromCharCode(65 + question.correct_index);
+
+        const escapeTableCell = (text) =>
+            String(text ?? "")
+                .replace(/\|/g, "\\|")
+                .replace(/\n/g, " ");
+
+        lines.push(
+            `| ${index + 1} | ${correctLetter} | ${escapeTableCell(question.explanation || "")} |`,
+        );
+    });
 
     return lines.join("\n");
 }
@@ -2677,6 +2691,8 @@ function formatQuizAsText() {
         lines.push(formatQuestionAsText(question, index));
         lines.push("");
     });
+
+    lines.push(formatAnswerKey(quiz.questions));
 
     return lines.join("\n").trim();
 }
@@ -2704,10 +2720,14 @@ function copyQuiz() {
 }
 
 function copyQuestion() {
-    const text = formatQuestionAsText(
-        quiz.questions[currentQuestionIndex],
-        currentQuestionIndex,
-    );
+    const question = quiz.questions[currentQuestionIndex];
+
+    const text = [
+        formatQuestionAsText(question, currentQuestionIndex),
+        "",
+        formatAnswerKey([question]),
+    ].join("\n");
+
     copyToClipboard(text, "Question copied to clipboard.");
 }
 

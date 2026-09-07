@@ -32,15 +32,17 @@ def test_each_case(file):
     content: str = data["content"]
     expected: list[str | list[dict]] = data["expected"]
 
-    output: tuple[str, list[dict]] = parse_quiz(clean_text(content, True, True))
+    output: tuple[str, list[dict]] = parse_quiz(clean_text(content, True, True), True)
 
     os.makedirs("tmp", exist_ok=True)
     with open(f"tmp/{file.replace('.json', '.out')}", "w") as f:
         f.write(json.dumps({"expected": output}))
 
-    assert output[0] == expected[0], (
-        f"\nDifferent title recieved. FILE: {file}\nEXPECTED: {expected[0]}\nGOT: {output[0]}. \n This may not be a bad thing: verify the title."
-    )
-    assert output[1] == expected[1], (
-        f"\nDifferent questions recieved. FILE: {file}\nEXPECTED: {expected[1]}\nGOT: {output[1]}. \n."
-    )
+    assert output[0] == expected[0], f"\nDifferent title recieved. FILE: {
+        file
+    }\nEXPECTED: {expected[0]}\nGOT: {
+        output[0]
+    }. \n This may not be a bad thing: verify the title."
+    assert output[1] == expected[1], f"\nDifferent questions recieved. FILE: {
+        file
+    }\nEXPECTED: {expected[1]}\nGOT: {output[1]}. \n."
