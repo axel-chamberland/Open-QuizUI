@@ -426,39 +426,46 @@ def wrap_html(quiz, enable_mathjax: bool, light_theme, dark_theme):
     </div>
     <div class="navigation-scroll">
 
-        <div id="navigation">
+    <div id="navigation">
 
-            <button id="prev-button" onclick="prevQuestion()">&lt;</button>
+        <button id="prev-button" onclick="prevQuestion()" aria-label="Previous question">&lt;</button>
 
-            <div id="question-selector">
-                <input id="question-number" type="text" inputmode="numeric" value="1">
-                <span class="separator">/</span>
-                <span id="question-count">1</span>
-            </div>
-
-            <button id="next-button" onclick="nextQuestion()">&gt;</button>
-
-            <button id="reveal-button" onclick="revealAnswer()" aria-label="Reveal answer">
-                <svg><use href="#icon-reveal"></use></svg>
-            </button>
-
-            <button id="maximize-button" onclick="toggleFullscreen()" aria-label="Fullscreen">
-                <svg><use href="#icon-fullscreen"></use></svg>
-            </button>
-
-            <button id="download-button" onclick="downloadQuizHTML()" aria-label="Download">
-                <svg><use href="#icon-download"></use></svg>
-            </button>
-
-            <button id="timer-toggle" onclick="toggleTimer()" aria-label="Timer">
-                <svg><use href="#icon-timer"></use></svg>
-            </button>
-
-            <button id="editor-button" onclick="openEditor()" aria-label="Editor">
-                <svg><use href="#icon-editor"></use></svg>
-            </button>
-
+        <div id="question-selector">
+            <input id="question-number" type="text" inputmode="numeric" value="1">
+            <span class="separator">/</span>
+            <span id="question-count">1</span>
         </div>
+
+        <button id="next-button" onclick="nextQuestion()" aria-label="Next question">&gt;</button>
+
+        <button id="reveal-button" onclick="revealAnswer()" title="Reveal answer" aria-label="Reveal answer">
+            <svg><use href="#icon-reveal"></use></svg>
+        </button>
+
+        <button id="maximize-button" onclick="toggleFullscreen()" title="Toggle Fullscreen" aria-label="Fullscreen">
+            <svg><use href="#icon-fullscreen"></use></svg>
+        </button>
+
+        <button id="download-button" onclick="downloadQuizHTML()" title="Download quiz" aria-label="Download quiz">
+            <svg><use href="#icon-download"></use></svg>
+        </button>
+
+        <button id="timer-toggle" onclick="toggleTimer()" title="Toggle timer" aria-label="Toggle timer">
+            <svg><use href="#icon-timer"></use></svg>
+        </button>
+
+        <button onclick="copyQuiz()" title="Copy quiz" aria-label="Copy quiz">
+            <svg><use href="#icon-copy-all"></use></svg>
+        </button>
+
+        <button onclick="copyQuestion()" title="Copy question" aria-label="Copy question">
+            <svg><use href="#icon-copy"></use></svg>
+        </button>
+        <button id="editor-button" onclick="openEditor()" title="Edit question" aria-label="Edit question">
+            <svg><use href="#icon-editor"></use></svg>
+        </button>
+
+    </div>
     </div>
     <div id="question-scroll">
         <p id="question"></p>
@@ -471,14 +478,21 @@ def wrap_html(quiz, enable_mathjax: bool, light_theme, dark_theme):
 <div id="results" style="display: none;">
     <div class=navigation-scroll>
         <div id="results-navigation">
-            <button onclick="prevQuestion()">&lt</button>
+            <button onclick="prevQuestion()" title="Back to quiz" aria-label="Back to quiz">&lt</button>
 
-            <button onclick="toggleFullscreen()" aria-label="Fullscreen">
+            <button onclick="toggleFullscreen()" title="Toggle Fullscreen" aria-label="Fullscreen">
                 <svg><use href="#icon-fullscreen"></use></svg>
             </button>
 
-            <button id="resultsDownloadButton" onclick="downloadQuizHTML()" aria-label="Download">
+            <button id="resultsDownloadButton" onclick="downloadQuizHTML()" title="Download quiz" aria-label="Download quiz">
                 <svg><use href="#icon-download"></use></svg>
+            </button>
+
+            <button onclick="copyQuiz()" title="Copy quiz" aria-label="Copy quiz">
+                <svg><use href="#icon-copy-all"></use></svg>
+            </button>
+            <button onclick="copyQuestion()" title="Copy question" aria-label="Copy question">
+                <svg><use href="#icon-copy"></use></svg>
             </button>
         </div>
     </div>
@@ -504,11 +518,11 @@ def wrap_html(quiz, enable_mathjax: bool, light_theme, dark_theme):
 
         <div id="statsChart"></div>
 
-        <button onclick="confirmRestart()">Restart</button>
+        <button onclick="confirmRestart()" aria-label="Restart quiz">Restart Quiz</button>
         <div id="restart-confirm" style="display: none;">
             <span>Restart quiz?</span>
-            <button onclick="restartQuiz()">Yes</button>
-            <button onclick="cancelRestart()">No</button>
+            <button onclick="restartQuiz()" aria-label="Confirm restart">Yes</button>
+            <button onclick="cancelRestart()" aria-label="Cancel restart">No</button>
         </div>
 
     <section class="correction-sheet">
@@ -523,11 +537,21 @@ def wrap_html(quiz, enable_mathjax: bool, light_theme, dark_theme):
 <div id="editor" style="display: none;">
     <h1>Question Editor</h1>
     <div class=navigation-scroll id="editor-navigation">
-        <button onclick="saveEdit()">save</button>
-        <button onclick="toggleFullscreen()" aria-label="Fullscreen">
+        <button onclick="saveEdit()" title="Save changes" aria-label="Save changes" data-tooltip="Save changes">
+            <svg><use href="#icon-save"></use></svg>
+        </button>
+        <button onclick="copyQuiz()" title="Copy quiz" aria-label="Copy quiz">
+            <svg><use href="#icon-copy-all"></use></svg>
+        </button>
+        <button onclick="copyQuestion()" title="Copy question" aria-label="Copy question">
+            <svg><use href="#icon-copy"></use></svg>
+        </button>
+        <button onclick="toggleFullscreen()" title="Fullscreen" aria-label="Fullscreen">
             <svg><use href="#icon-fullscreen"></use></svg>
         </button>
-        <button onclick="closeEditorConfirm()">close</button>
+        <button onclick="closeEditorConfirm()" title="Close editor" aria-label="Close editor" data-tooltip="Close editor">
+            <svg><use href="#icon-close"></use></svg>
+        </button>
     </div>
     <div id="editor-close" class="editor-prompt">
         <p id="editor-prompt-message"></p>
@@ -631,6 +655,28 @@ svg_icons = """
         <rect x="5" y="4" width="14" height="17" rx="2"/>
         <path d="M9 3h6v3H9z"/>
         <path d="M8 11h8M8 15h5"/>
+    </symbol>
+
+    <symbol id="icon-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+    </symbol>
+
+    <symbol id="icon-copy-all" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+        <polyline points="2 17 12 22 22 17"></polyline>
+        <polyline points="2 12 12 17 22 12"></polyline>
+    </symbol>
+
+    <symbol id="icon-save" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+        <polyline points="17 21 17 13 7 13 7 21"></polyline>
+        <polyline points="7 3 7 8 15 8"></polyline>
+    </symbol>
+
+    <symbol id="icon-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
     </symbol>
 </svg>
 """
@@ -975,7 +1021,7 @@ body.embedded #results-scroll {{
 :is(:fullscreen, .pseudo-fullscreen-active) #results-scroll {{
     flex: 1;
     min-height: 0;
-    max-height: none;
+    max-height: none !important;
     padding: 1rem;
     box-sizing: border-box;
 }}
@@ -2065,6 +2111,65 @@ function openEditor() {
     question.options.forEach((option) => {
         optionsContainer.appendChild(addEditorOption(option));
     });
+}
+
+function formatQuestionAsText(question, index) {
+    const lines = [];
+
+    lines.push(`Question ${index + 1}: ${question.question}`);
+    lines.push("");
+
+    question.options.forEach((option, i) => {
+        const marker = i === question.correct_index ? "[correct]" : "";
+        lines.push(`${i + 1}. ${option} ${marker}`.trim());
+    });
+
+    if (question.explanation) {
+        lines.push("");
+        lines.push(`Explanation: ${question.explanation}`);
+    }
+
+    return lines.join("\n");
+}
+
+function formatQuizAsText() {
+    const lines = [quiz.title, ""];
+
+    quiz.questions.forEach((question, index) => {
+        lines.push(formatQuestionAsText(question, index));
+        lines.push("");
+    });
+
+    return lines.join("\n").trim();
+}
+
+function copyToClipboard(text, successMessage) {
+    if (navigator.clipboard?.writeText) {
+        navigator.clipboard
+            .writeText(text)
+            .then(() => showEditorAlert(successMessage))
+            .catch(() => showManualCopyPrompt(text));
+    } else {
+        showManualCopyPrompt(text);
+    }
+}
+
+function showManualCopyPrompt(text) {
+    showEditorAlert("Clipboard access isn't available here. You may select and copy the text from the console.");
+    console.log(text);
+}
+
+
+function copyQuiz() {
+    copyToClipboard(formatQuizAsText(), "Quiz copied to clipboard.");
+}
+
+function copyQuestion() {
+    const text = formatQuestionAsText(
+        quiz.questions[currentQuestionIndex],
+        currentQuestionIndex,
+    );
+    copyToClipboard(text, "Question copied to clipboard.");
 }
 
 function addEditorOption(value) {

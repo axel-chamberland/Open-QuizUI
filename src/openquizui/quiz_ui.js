@@ -945,6 +945,65 @@ function openEditor() {
     });
 }
 
+function formatQuestionAsText(question, index) {
+    const lines = [];
+
+    lines.push(`Question ${index + 1}: ${question.question}`);
+    lines.push("");
+
+    question.options.forEach((option, i) => {
+        const marker = i === question.correct_index ? "[correct]" : "";
+        lines.push(`${i + 1}. ${option} ${marker}`.trim());
+    });
+
+    if (question.explanation) {
+        lines.push("");
+        lines.push(`Explanation: ${question.explanation}`);
+    }
+
+    return lines.join("\n");
+}
+
+function formatQuizAsText() {
+    const lines = [quiz.title, ""];
+
+    quiz.questions.forEach((question, index) => {
+        lines.push(formatQuestionAsText(question, index));
+        lines.push("");
+    });
+
+    return lines.join("\n").trim();
+}
+
+function copyToClipboard(text, successMessage) {
+    if (navigator.clipboard?.writeText) {
+        navigator.clipboard
+            .writeText(text)
+            .then(() => showEditorAlert(successMessage))
+            .catch(() => showManualCopyPrompt(text));
+    } else {
+        showManualCopyPrompt(text);
+    }
+}
+
+function showManualCopyPrompt(text) {
+    showEditorAlert("Clipboard access isn't available here. You may select and copy the text from the console.");
+    console.log(text);
+}
+
+
+function copyQuiz() {
+    copyToClipboard(formatQuizAsText(), "Quiz copied to clipboard.");
+}
+
+function copyQuestion() {
+    const text = formatQuestionAsText(
+        quiz.questions[currentQuestionIndex],
+        currentQuestionIndex,
+    );
+    copyToClipboard(text, "Question copied to clipboard.");
+}
+
 function addEditorOption(value) {
     const article = document.createElement("article");
 
