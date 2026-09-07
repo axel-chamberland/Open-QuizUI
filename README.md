@@ -16,7 +16,7 @@ Open-QuizUI is a tool / action function for displaying interactive multiple-choi
 * Optional per-question explanations shown after answering
 * Fits nicely on small screens
 
-¹ MathJax must be enabled in the function's vavles (settings) for LaTeX expressions to render.
+¹ MathJax must be enabled in the function's valves (settings) for LaTeX expressions to render.
 
 ² On WebKit-based browsers on iOS/iPadOS, full-screen mode requires **"iframe Sandbox Allow Same Origin"** to be enabled in Open WebUI's interface settings.
 
