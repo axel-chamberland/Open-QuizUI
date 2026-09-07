@@ -1383,9 +1383,12 @@ document.addEventListener("keydown", (e) => {
 questionBox.addEventListener("click", (e) => {
     if (e.target.closest("button, input")) return;
 
+    // Don't navigate if the user just made a text selection
+    const selection = window.getSelection();
+    if (selection && selection.toString().length > 0) return;
+
     const rect = questionBox.getBoundingClientRect();
     const x = e.clientX - rect.left;
-
     if (x > rect.width * 0.7) {
         if (!answerRevealed) {
             revealAnswer();
