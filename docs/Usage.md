@@ -35,6 +35,8 @@ B. <Choice>
 
 Keep the questions, choices, and answer key in the same message. Most standard formats are supported. If the Action fails to parse a particular format, consider opening an issue and providing the raw message.
 
+Any text between an answer key item and the next answer key item (or the next question) is treated as that question's explanation:
+
 ## Taking a Quiz
 
 Select an answer and move through the questions using the quiz controls. You can cycle through questions using the tap zones, **Enter**, **Space**, or the arrow keys. Choices can also be selected using the number keys.
