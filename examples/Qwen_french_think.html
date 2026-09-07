@@ -26,6 +26,7 @@
 
 }
 
+
 @media (prefers-color-scheme: dark) {
     :root {
 
@@ -55,39 +56,43 @@ body {
     justify-content: flex-start;
     align-items: center;
     margin: 0;
+}
+
+:is(:fullscreen, .pseudo-fullscreen-active) body {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
     overflow: hidden;
 }
 
-:fullscreen body {
-    position: fixed;
-    inset: 0;
-}
-
-:fullscreen .question-box,
-:fullscreen #results,
-:fullscreen #editor {
+:is(:fullscreen, .pseudo-fullscreen-active) .question-box,
+:is(:fullscreen, .pseudo-fullscreen-active) #results,
+:is(:fullscreen, .pseudo-fullscreen-active) #editor {
     flex: 1;
     min-height: 0;
     display: flex;
     flex-direction: column;
 }
 
-:fullscreen .navigation-scroll {
+:is(:fullscreen, .pseudo-fullscreen-active) .navigation-scroll {
     flex: 0 0 auto;
     order: 1;
 }
 
-#title-bar {
+.title-bar {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 1rem;
 }
 
-#title {
+.title-bar h1 {
     margin: 0;
 }
-.question-box {
+.question-box, #results, #editor {
     display: flex;
     flex-direction: column;
     color: var(--text);
@@ -108,7 +113,7 @@ body {
     min-height: 0;
 }
 
-:fullscreen #question-scroll {
+:is(:fullscreen, .pseudo-fullscreen-active) #question-scroll {
     flex: 1;
     order: 0;
 }
@@ -120,7 +125,7 @@ body {
     gap: 0.75rem;
 }
 
-:fullscreen #options {
+:is(:fullscreen, .pseudo-fullscreen-active) #options {
     flex: 1;
     min-height: 0;
 }
@@ -189,6 +194,15 @@ button:disabled {
     content: " ✗";
     font-weight: bold;
 }
+
+#explanation {
+    display: none;
+    margin-top: 1rem;
+    padding: 0.75rem;
+    background: var(--btn);
+    border-radius: 0.5rem;
+}
+
 .navigation-scroll {
     overflow-x: auto;
     overflow-y: hidden;
@@ -212,9 +226,18 @@ button:disabled {
     -webkit-user-select: none;
 }
 
-:fullscreen #navigation,
-:fullscreen #results-navigation,
-:fullscreen #editor-navigation {
+#navigation button,
+#results-navigation button,
+#editor-navigation button {
+    font-size: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+:is(:fullscreen, .pseudo-fullscreen-active) #navigation,
+:is(:fullscreen, .pseudo-fullscreen-active) #results-navigation,
+:is(:fullscreen, .pseudo-fullscreen-active) #editor-navigation {
     margin: 0;
     border: 0;
 }
@@ -326,31 +349,26 @@ mjx-container {
 .chart-unanswered{ stroke: var(--unanswered); }
 .chart-skipped   { stroke: var(--skipped); }
 
-#results {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    height: auto;
-    color: var(--text);
-}
 
 #results-scroll {
     min-height: 0;
     display: flex;
     flex-direction: column;
     gap: 1rem;
-    width: 100%;
-    max-height: 600px;
-    max-width: 700px;
     margin: 0 auto;
     text-align: center;
     overflow-y: auto;
 }
 
-:fullscreen #results-scroll {
+/* When embedded in an iframe */
+body.embedded #results-scroll {
+    max-height: 600px;
+}
+
+:is(:fullscreen, .pseudo-fullscreen-active) #results-scroll {
     flex: 1;
     min-height: 0;
-    max-height: none;
+    max-height: none !important;
     padding: 1rem;
     box-sizing: border-box;
 }
@@ -394,17 +412,8 @@ mjx-container {
     margin: 0.5rem 0;
 }
 
-#editor {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    max-width: 800px;
-    height: auto;
-    color: var(--text);
-}
 
-
-:fullscreen #editor {
+:is(:fullscreen, .pseudo-fullscreen-active) #editor {
     flex: 1;
     min-height: 0;
 }
@@ -417,7 +426,7 @@ mjx-container {
     min-height: 0;
 }
 
-:fullscreen #editor-scroll {
+:is(:fullscreen, .pseudo-fullscreen-active) #editor-scroll {
     flex: 1;
     min-height: 0;
     order: 0;
@@ -487,6 +496,16 @@ textarea:focus {
     text-align: center;
 }
 
+
+/* image and embedded styles */
+img, video, iframe, table {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    object-fit: contain;
+    margin-inline: auto;
+}
+
 </style>
 </head>
 
@@ -516,67 +535,104 @@ textarea:focus {
         <path d="M9 3h6v3H9z"/>
         <path d="M8 11h8M8 15h5"/>
     </symbol>
+
+    <symbol id="icon-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+    </symbol>
+
+    <symbol id="icon-copy-all" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+        <polyline points="2 17 12 22 22 17"></polyline>
+        <polyline points="2 12 12 17 22 12"></polyline>
+    </symbol>
+
+    <symbol id="icon-save" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+        <polyline points="17 21 17 13 7 13 7 21"></polyline>
+        <polyline points="7 3 7 8 15 8"></polyline>
+    </symbol>
+
+    <symbol id="icon-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+    </symbol>
 </svg>
 
 <div class="question-box">
-    <div id="title-bar">
+    <div class="title-bar">
         <h1 id="title"></h1>
         <span id="timer">00:00</span>
     </div>
     <div class="navigation-scroll">
 
-        <div id="navigation">
+    <div id="navigation">
 
-            <button id="prev-button" onclick="prevQuestion()">&lt;</button>
+        <button id="prev-button" onclick="prevQuestion()" aria-label="Previous question">&lt;</button>
 
-            <div id="question-selector">
-                <input id="question-number" type="text" inputmode="numeric" value="1">
-                <span class="separator">/</span>
-                <span id="question-count">1</span>
-            </div>
-
-            <button id="next-button" onclick="nextQuestion()">&gt;</button>
-
-            <button id="reveal-button" onclick="revealAnswer()" aria-label="Reveal answer">
-                <svg><use href="#icon-reveal"></use></svg>
-            </button>
-
-            <button id="maximize-button" onclick="toggleFullscreen()" aria-label="Fullscreen">
-                <svg><use href="#icon-fullscreen"></use></svg>
-            </button>
-
-            <button id="download-button" onclick="downloadQuizHTML()" aria-label="Download">
-                <svg><use href="#icon-download"></use></svg>
-            </button>
-
-            <button id="timer-toggle" onclick="toggleTimer()" aria-label="Timer">
-                <svg><use href="#icon-timer"></use></svg>
-            </button>
-
-            <button id="editor-button" onclick="openEditor()" aria-label="Editor">
-                <svg><use href="#icon-editor"></use></svg>
-            </button>
-
+        <div id="question-selector">
+            <input id="question-number" type="text" inputmode="numeric" value="1">
+            <span class="separator">/</span>
+            <span id="question-count">1</span>
         </div>
+
+        <button id="next-button" onclick="nextQuestion()" aria-label="Next question">&gt;</button>
+
+        <button id="reveal-button" onclick="revealAnswer()" title="Reveal answer" aria-label="Reveal answer">
+            <svg><use href="#icon-reveal"></use></svg>
+        </button>
+
+        <button id="maximize-button" onclick="toggleFullscreen()" title="Toggle Fullscreen" aria-label="Fullscreen">
+            <svg><use href="#icon-fullscreen"></use></svg>
+        </button>
+
+        <button id="download-button" onclick="downloadQuizHTML()" title="Download quiz" aria-label="Download quiz">
+            <svg><use href="#icon-download"></use></svg>
+        </button>
+
+        <button id="timer-toggle" onclick="toggleTimer()" title="Toggle timer" aria-label="Toggle timer">
+            <svg><use href="#icon-timer"></use></svg>
+        </button>
+
+        <button onclick="copyQuiz()" title="Copy quiz" aria-label="Copy quiz">
+            <svg><use href="#icon-copy-all"></use></svg>
+        </button>
+
+        <button onclick="copyQuestion()" title="Copy question" aria-label="Copy question">
+            <svg><use href="#icon-copy"></use></svg>
+        </button>
+        <button id="editor-button" onclick="openEditor()" title="Edit question" aria-label="Edit question">
+            <svg><use href="#icon-editor"></use></svg>
+        </button>
+
+    </div>
     </div>
     <div id="question-scroll">
         <p id="question"></p>
         <div id="options"></div>
+        <div id="explanation"></div>
     </div>
 </div>
+
+
 <div id="results" style="display: none;">
-
-
     <div class=navigation-scroll>
         <div id="results-navigation">
-            <button onclick="prevQuestion()">&lt</button>
+            <button onclick="prevQuestion()" title="Back to quiz" aria-label="Back to quiz">&lt</button>
 
-            <button onclick="toggleFullscreen()" aria-label="Fullscreen">
+            <button onclick="toggleFullscreen()" title="Toggle Fullscreen" aria-label="Fullscreen">
                 <svg><use href="#icon-fullscreen"></use></svg>
             </button>
 
-            <button id="resultsDownloadButton" onclick="downloadQuizHTML()" aria-label="Download">
+            <button id="resultsDownloadButton" onclick="downloadQuizHTML()" title="Download quiz" aria-label="Download quiz">
                 <svg><use href="#icon-download"></use></svg>
+            </button>
+
+            <button onclick="copyQuiz()" title="Copy quiz" aria-label="Copy quiz">
+                <svg><use href="#icon-copy-all"></use></svg>
+            </button>
+            <button onclick="copyQuestion()" title="Copy question" aria-label="Copy question">
+                <svg><use href="#icon-copy"></use></svg>
             </button>
         </div>
     </div>
@@ -602,11 +658,11 @@ textarea:focus {
 
         <div id="statsChart"></div>
 
-        <button onclick="confirmRestart()">Restart</button>
+        <button onclick="confirmRestart()" aria-label="Restart quiz">Restart Quiz</button>
         <div id="restart-confirm" style="display: none;">
             <span>Restart quiz?</span>
-            <button onclick="restartQuiz()">Yes</button>
-            <button onclick="cancelRestart()">No</button>
+            <button onclick="restartQuiz()" aria-label="Confirm restart">Yes</button>
+            <button onclick="cancelRestart()" aria-label="Cancel restart">No</button>
         </div>
 
     <section class="correction-sheet">
@@ -617,14 +673,25 @@ textarea:focus {
 
 </div>
 
+
 <div id="editor" style="display: none;">
-    <h1 id="editor-title">Question Editor</h1>
+    <h1>Question Editor</h1>
     <div class=navigation-scroll id="editor-navigation">
-        <button onclick="saveEdit()">save</button>
-        <button onclick="toggleFullscreen()" aria-label="Fullscreen">
+        <button onclick="saveEdit()" title="Save changes" aria-label="Save changes" data-tooltip="Save changes">
+            <svg><use href="#icon-save"></use></svg>
+        </button>
+        <button onclick="copyQuiz()" title="Copy quiz" aria-label="Copy quiz">
+            <svg><use href="#icon-copy-all"></use></svg>
+        </button>
+        <button onclick="copyQuestion()" title="Copy question" aria-label="Copy question">
+            <svg><use href="#icon-copy"></use></svg>
+        </button>
+        <button onclick="toggleFullscreen()" title="Fullscreen" aria-label="Fullscreen">
             <svg><use href="#icon-fullscreen"></use></svg>
         </button>
-        <button onclick="closeEditorConfirm()">close</button>
+        <button onclick="closeEditorConfirm()" title="Close editor" aria-label="Close editor" data-tooltip="Close editor">
+            <svg><use href="#icon-close"></use></svg>
+        </button>
     </div>
     <div id="editor-close" class="editor-prompt">
         <p id="editor-prompt-message"></p>
@@ -639,24 +706,40 @@ textarea:focus {
         Download the modified quiz as a new HTML file to keep your changes permanently.
     </p>
     <div id="editor-scroll">
+        <p><strong>Title:</strong></p>
+        <div id="editor-title"></div>
         <p><strong>Question:</strong></p>
         <div id="editor-question"></div>
         <div class="answer-position">
             <p><strong>Answer Position:</strong></p>
             <input type="text" id="editor-answer-number" inputmode="numeric"></input>
         </div>
+        <p><strong>Explanation:</strong></p>
+        <div id="editor-explanation"></div>
         <p><strong>Choices:</strong></p>
         <div id="editor-distractors"></div>
+
     </div>
 </div>
 
 
 
-<script>
-const quiz = {"title": "Quiz : Structures de Donn\u00e9es", "questions": [{"question": "Quelle est la complexit\u00e9 temporelle moyenne d'une op\u00e9ration SEARCH dans une Hash Map ?", "options": ["O(1)", "*O(log n)*", "$a \\leftarrow b$  O(n)", "O(n\u00b2)"], "correct_index": 0}, {"question": "Dans quel type de structure de donn\u00e9es l'\u00e9l\u00e9ment en dernier entr\u00e9 est le premier \u00e0 sortir ?", "options": ["File d'attente (Queue)", "Pile (Stack)", "Liste cha\u00een\u00e9e simple", "Arbre binaire"], "correct_index": 1}, {"question": "Quelle op\u00e9ration est la plus lente dans une liste cha\u00een\u00e9e compar\u00e9e \u00e0 un tableau ?", "options": ["Acc\u00e8s par index", "Insertion en t\u00eate", "Suppression du premier \u00e9l\u00e9ment", "Parcourir tous les \u00e9l\u00e9ments"], "correct_index": 0}, {"question": "Quelle structure de donn\u00e9es est utilis\u00e9e pour impl\u00e9menter un algorithme d'inversage ?", "options": ["File d'attente doublement cha\u00een\u00e9e", "Pile et File d'attente simultan\u00e9es", "Arbre B", "Hash Table"], "correct_index": 1}, {"question": "Quel est l'inconv\u00e9nient principal des tables de hachage ?", "options": ["Elles ne supportent pas les suppressions", "Les collisions peuvent d\u00e9grader la performance \u00e0 O(n) dans certains cas", "La m\u00e9moire est sous-utilis\u00e9e m\u00eame si on stocke peu d'\u00e9l\u00e9ments", "Elles n\u00e9cessitent une connaissance du nombre exact d'op\u00e9rations avant cr\u00e9ation"], "correct_index": 1}, {"question": "Dans un arbre B, qu'est-ce que M repr\u00e9sente ?", "options": ["La hauteur minimale de l'arbre", "Le nombre maximum d'enfants pour n\u0153ud int\u00e9rieur", "Le facteur d'\u00e9quilibrage global de l'arbre", "La charge moyenne du disque dur lors des insertions/suppressions."], "correct_index": 1}, {"question": "Quelle op\u00e9ration est O(\u221an dans le pire cas pour un arbre B ?", "options": ["Recherche d'une cl\u00e9 sp\u00e9cifique", "Insertion ou suppression de n\u0153uds en fonction du nombre d'\u00e9l\u00e9ments \u00e0 traiter.", "Parcourir toutes les feuilles en profondeur.", "Mise \u00e0 jour racine apr\u00e8s insertion/suppression massives."], "correct_index": 1}, {"question": "Dans quelle structure peut-on trouver une paire de nombres dont la somme est \u00e9gale \u00e0 une valeur cible en temps optimal ?", "options": ["Liste cha\u00een\u00e9e non tri\u00e9e", "Tableau avec deux pointeurs (left/right pointer technique).", "Hash Table pour stocker les compl\u00e9mentaires.", "Arbre binaire binomial ou arbre AVL."], "correct_index": 2}, {"question": "Quel type de structure convient mieux \u00e0 un navigateur d'historique ?", "options": ["File d'attente FIFO seule", "Liste cha\u00een\u00e9e doublement avec gestion des \u00e9tats pr\u00e9c\u00e9dent/suivant.", "Pile LIFO simple pour les actions annulables.", "Arbre B multi-niveaux hi\u00e9rarchis\u00e9 par session utilisateur."], "correct_index": 2}, {"question": "Quelle op\u00e9ration est O(\u221an dans un tas binaire ?", "options": ["Recherche d'un \u00e9l\u00e9ment sp\u00e9cifique arbitraire", "Insertion en fonction du nombre total de cl\u00e9s stock\u00e9es.", "Extraction de l'\u00e9l\u00e9ment minimum/maximum racine apr\u00e8s suppression massive.", "Parcourir toutes les feuilles pour trouver une valeur cible donn\u00e9e par niveau maximal autoris\u00e9."], "correct_index": 2}, {"question": "Dans quel cas l'arbre B redimensionne-t-il sa taille ?", "options": ["Lorsqu'une feuille contient M/2+1 \u00e9l\u00e9ments au maximum", "Lorsque la racine devient inapte \u00e0 supporter plus d'enfants internes.", "Quand on doit supprimer un n\u0153ud contenant une cl\u00e9 interne uniquement.", "Si le facteur d'\u00e9quilibrage global d\u00e9passe 50% du nombre maximal th\u00e9orique possible de cl\u00e9s stock\u00e9es dans l'arbre B actuel."], "correct_index": 1}, {"question": "Quelle op\u00e9ration est O(\u221an dans le pire cas pour un arbre AVL ?", "options": ["Recherche d'une cl\u00e9 sp\u00e9cifique", "Insertion ou suppression de n\u0153uds en fonction du nombre d'\u00e9l\u00e9ments \u00e0 traiter.", "Parcourir toutes les feuilles en profondeur.", "Mise \u00e0 jour racine apr\u00e8s insertion/suppression massives."], "correct_index": 1}, {"question": "Dans quelle structure peut-on trouver une paire de nombres dont la somme est \u00e9gale \u00e0 une valeur cible en temps optimal ?", "options": ["Liste cha\u00een\u00e9e non tri\u00e9e", "Tableau avec deux pointeurs (left/right pointer technique).", "Hash Table pour stocker les compl\u00e9mentaires.", "Arbre binaire binomial ou arbre AVL."], "correct_index": 2}, {"question": "Quelle op\u00e9ration est O(log n) dans un tas binaire ?", "options": ["Recherche d'un \u00e9l\u00e9ment sp\u00e9cifique arbitraire", "Insertion en fonction du nombre total de cl\u00e9s stock\u00e9es.", "Extraction de l'\u00e9l\u00e9ment minimum/maximum racine apr\u00e8s suppression massive.", "Parcourir toutes les feuilles pour trouver une valeur cible donn\u00e9e par niveau maximal autoris\u00e9."], "correct_index": 0}, {"question": "Quelle op\u00e9ration est constante en temps dans un tas binaire ?", "options": ["Recherche d'un \u00e9l\u00e9ment sp\u00e9cifique arbitraire", "Insertion ou suppression de racine apr\u00e8s ajustement massifs.", "Extraction de l'\u00e9l\u00e9ment minimum/maximum racine apr\u00e8s suppression massive.", "Parcourir toutes les feuilles pour trouver une valeur cible donn\u00e9e par niveau maximal autoris\u00e9."], "correct_index": 3}]};
+<script id="app-data" type="application/json">
+{"enableMathJax": true, "quiz": {"title": "Quiz : Structures de Donn\u00e9es", "questions": [{"question": "Quelle est la complexit\u00e9 temporelle moyenne d'une op\u00e9ration SEARCH dans une Hash Map ?", "options": ["O(1)", "*O(log n)*", "$a \\leftarrow b$  O(n)", "O(n\u00b2)"], "correct_index": 0, "explanation": "(O(1)) - En moyenne, les acc\u00e8s sont constants."}, {"question": "Dans quel type de structure de donn\u00e9es l'\u00e9l\u00e9ment en dernier entr\u00e9 est le premier \u00e0 sortir ?", "options": ["File d'attente (Queue)", "Pile (Stack)", "Liste cha\u00een\u00e9e simple", "Arbre binaire"], "correct_index": 1, "explanation": "Pile/Stack/LIFO - Last In First Out."}, {"question": "Quelle op\u00e9ration est la plus lente dans une liste cha\u00een\u00e9e compar\u00e9e \u00e0 un tableau ?", "options": ["Acc\u00e8s par index", "Insertion en t\u00eate", "Suppression du premier \u00e9l\u00e9ment", "Parcourir tous les \u00e9l\u00e9ments"], "correct_index": 0, "explanation": "Acc\u00e8s O(n) vs O(1)"}, {"question": "Quelle structure de donn\u00e9es est utilis\u00e9e pour impl\u00e9menter un algorithme d'inversage ?", "options": ["File d'attente doublement cha\u00een\u00e9e", "Pile et File d'attente simultan\u00e9es", "Arbre B", "Hash Table"], "correct_index": 1, "explanation": "Utilise 2 piles ou une pile + queue invers\u00e9e pour invertir le contenu sans modifier la structure originale."}, {"question": "Quel est l'inconv\u00e9nient principal des tables de hachage ?", "options": ["Elles ne supportent pas les suppressions", "Les collisions peuvent d\u00e9grader la performance \u00e0 O(n) dans certains cas", "La m\u00e9moire est sous-utilis\u00e9e m\u00eame si on stocke peu d'\u00e9l\u00e9ments", "Elles n\u00e9cessitent une connaissance du nombre exact d'op\u00e9rations avant cr\u00e9ation"], "correct_index": 1, "explanation": "Les mauvaises fonctions de hachage ou les collisions fr\u00e9quentes d\u00e9gradent la performance."}, {"question": "Dans un arbre B, qu'est-ce que M repr\u00e9sente ?", "options": ["La hauteur minimale de l'arbre", "Le nombre maximum d'enfants pour n\u0153ud int\u00e9rieur", "Le facteur d'\u00e9quilibrage global de l'arbre", "La charge moyenne du disque dur lors des insertions/suppressions."], "correct_index": 1, "explanation": "M = nombre max d'enfants par noeud interne, M-1 nombres max cl\u00e9s internes."}, {"question": "Quelle op\u00e9ration est O(\u221an dans le pire cas pour un arbre B ?", "options": ["Recherche d'une cl\u00e9 sp\u00e9cifique", "Insertion ou suppression de n\u0153uds en fonction du nombre d'\u00e9l\u00e9ments \u00e0 traiter.", "Parcourir toutes les feuilles en profondeur.", "Mise \u00e0 jour racine apr\u00e8s insertion/suppression massives."], "correct_index": 1, "explanation": "L'\u00e9quilibrage prend O(\u221an) quand le nombre de cl\u00e9s d\u00e9passe un certain seuil."}, {"question": "Dans quelle structure peut-on trouver une paire de nombres dont la somme est \u00e9gale \u00e0 une valeur cible en temps optimal ?", "options": ["Liste cha\u00een\u00e9e non tri\u00e9e", "Tableau avec deux pointeurs (left/right pointer technique).", "Hash Table pour stocker les compl\u00e9mentaires.", "Arbre binaire binomial ou arbre AVL."], "correct_index": 2, "explanation": "On garde la somme dans le hash et on cherche O(1)."}, {"question": "Quel type de structure convient mieux \u00e0 un navigateur d'historique ?", "options": ["File d'attente FIFO seule", "Liste cha\u00een\u00e9e doublement avec gestion des \u00e9tats pr\u00e9c\u00e9dent/suivant.", "Pile LIFO simple pour les actions annulables.", "Arbre B multi-niveaux hi\u00e9rarchis\u00e9 par session utilisateur."], "correct_index": 2, "explanation": "La pile impl\u00e9mente parfaitement le \"undo\" classique navigateur."}, {"question": "Quelle op\u00e9ration est O(\u221an dans un tas binaire ?", "options": ["Recherche d'un \u00e9l\u00e9ment sp\u00e9cifique arbitraire", "Insertion en fonction du nombre total de cl\u00e9s stock\u00e9es.", "Extraction de l'\u00e9l\u00e9ment minimum/maximum racine apr\u00e8s suppression massive.", "Parcourir toutes les feuilles pour trouver une valeur cible donn\u00e9e par niveau maximal autoris\u00e9."], "correct_index": 2, "explanation": "L'\u00e9quilibrage prend O(\u221an) quand le nombre de cl\u00e9s d\u00e9passe un certain seuil."}, {"question": "Dans quel cas l'arbre B redimensionne-t-il sa taille ?", "options": ["Lorsqu'une feuille contient M/2+1 \u00e9l\u00e9ments au maximum", "Lorsque la racine devient inapte \u00e0 supporter plus d'enfants internes.", "Quand on doit supprimer un n\u0153ud contenant une cl\u00e9 interne uniquement.", "Si le facteur d'\u00e9quilibrage global d\u00e9passe 50% du nombre maximal th\u00e9orique possible de cl\u00e9s stock\u00e9es dans l'arbre B actuel."], "correct_index": 1, "explanation": "La racine devient inapte apr\u00e8s insertion massive, donc redimensionne son aire."}, {"question": "Quelle op\u00e9ration est O(\u221an dans le pire cas pour un arbre AVL ?", "options": ["Recherche d'une cl\u00e9 sp\u00e9cifique", "Insertion ou suppression de n\u0153uds en fonction du nombre d'\u00e9l\u00e9ments \u00e0 traiter.", "Parcourir toutes les feuilles en profondeur.", "Mise \u00e0 jour racine apr\u00e8s insertion/suppression massives."], "correct_index": 1, "explanation": "L'\u00e9quilibrage prend O(\u221an) quand le nombre de cl\u00e9s d\u00e9passe un certain seuil."}, {"question": "Dans quelle structure peut-on trouver une paire de nombres dont la somme est \u00e9gale \u00e0 une valeur cible en temps optimal ?", "options": ["Liste cha\u00een\u00e9e non tri\u00e9e", "Tableau avec deux pointeurs (left/right pointer technique).", "Hash Table pour stocker les compl\u00e9mentaires.", "Arbre binaire binomial ou arbre AVL."], "correct_index": 2, "explanation": "On garde la somme dans le hash et on cherche O(1)."}, {"question": "Quelle op\u00e9ration est O(log n) dans un tas binaire ?", "options": ["Recherche d'un \u00e9l\u00e9ment sp\u00e9cifique arbitraire", "Insertion en fonction du nombre total de cl\u00e9s stock\u00e9es.", "Extraction de l'\u00e9l\u00e9ment minimum/maximum racine apr\u00e8s suppression massive.", "Parcourir toutes les feuilles pour trouver une valeur cible donn\u00e9e par niveau maximal autoris\u00e9."], "correct_index": 0, "explanation": "La recherche prend O(log n)."}, {"question": "Quelle op\u00e9ration est constante en temps dans un tas binaire ?", "options": ["Recherche d'un \u00e9l\u00e9ment sp\u00e9cifique arbitraire", "Insertion ou suppression de racine apr\u00e8s ajustement massifs.", "Extraction de l'\u00e9l\u00e9ment minimum/maximum racine apr\u00e8s suppression massive.", "Parcourir toutes les feuilles pour trouver une valeur cible donn\u00e9e par niveau maximal autoris\u00e9."], "correct_index": 3, "explanation": "L'extraction prend O(1)."}]}}
+</script>
 
-// Try to load math library (WARNING: requires internet)
-const ENABLE_MATHJAX = true;
+<script>
+
+const appData = JSON.parse(document.getElementById("app-data").textContent);
+
+const ENABLE_MATHJAX = appData.enableMathJax;
+
+const quiz = appData.quiz;
+
+// Detect if in an iframe (used for better UI support)
+if (window.self !== window.top) {
+    document.body.classList.add("embedded");
+}
 
 let mathReady = false;
 
@@ -745,29 +828,190 @@ function loadMathJax() {
 
 // UI events
 
-// Get height of navigation bar for CSS (fullscreen mode)
-const nav = document.getElementById("navigation");
-
-function updateNavHeight() {
-    document.documentElement.style.setProperty(
-        "--nav-height",
-        `${nav.offsetHeight}px`,
-    );
+// In case the iframe was reset while in fullscreen, reload the page to reset affected elements
+// This mainly happens when you call the action function on another device while being in pseudo-fullscreen,
+// causing the iframe to reset without exiting pseudo-fullscreen
+try {
+    if (
+        window.top.document.body.classList.contains("pseudo-fullscreen-active")
+    ) {
+        window.top.location.reload();
+    }
+} catch {
+    // The iframe may not be permitted to access the top document
+    // when origin restrictions are disabled.
+    // This is fine, since it means that pseudo-fullscreen did not modify anything that needs to be reset
 }
 
-updateNavHeight();
-new ResizeObserver(updateNavHeight).observe(nav);
-window.addEventListener("resize", updateNavHeight);
+async function toggleFullscreen() {
+    if (document.fullscreenElement || document.webkitFullscreenElement) {
+        if (document.exitFullscreen) await document.exitFullscreen();
+        else document.webkitExitFullscreen?.();
+        return;
+    }
+    if (
+        document.documentElement.classList.contains("pseudo-fullscreen-active")
+    ) {
+        document.documentElement.classList.remove("pseudo-fullscreen-active");
+        exitPseudoFullscreen();
+        return;
+    }
+    const root = document.documentElement;
+    if (root.requestFullscreen) {
+        try {
+            await root.requestFullscreen();
+            return;
+        } catch {}
+    } else if (root.webkitRequestFullscreen) {
+        root.webkitRequestFullscreen();
+        return;
+    }
 
-function toggleFullscreen() {
-    const el = document.documentElement;
+    // support for navigators that don't support fullscreen in iframes, such as iOS webkit (thanks, Apple!)
+    document.documentElement.classList.add("pseudo-fullscreen-active");
+    enterPseudoFullscreen();
+}
 
-    if (!document.fullscreenElement) {
-        el.requestFullscreen?.();
-    } else {
-        document.exitFullscreen?.();
+let pseudoFullscreenState = null;
+
+function enterPseudoFullscreen() {
+    const iframe = window.frameElement;
+
+    // Keep track of fullscreen state in case the iframe is reset while in fullscreen (force a page reload)
+    const topBody = window.top.document.body;
+    topBody.classList.add("pseudo-fullscreen-active");
+
+    pseudoFullscreenState = {
+        scrollX: window.top.scrollX,
+        scrollY: window.top.scrollY,
+        elements: [],
+    };
+
+    let el = iframe;
+
+    while (el && el !== document.body) {
+        pseudoFullscreenState.elements.push({
+            el,
+            style: el.getAttribute("style"),
+            siblings: [...el.parentElement.children]
+                .filter((x) => x !== el)
+                .map((x) => [x, x.style.display]),
+        });
+
+        el.style.position = "fixed";
+        el.style.inset = "0";
+        el.style.width = "100vw";
+        el.style.height = "100dvh";
+        el.style.margin = "0";
+        el.style.maxWidth = "none";
+        el.style.maxHeight = "none";
+        el.style.zIndex = "999999";
+
+        for (const child of el.parentElement.children) {
+            if (child !== el) child.style.display = "none";
+        }
+
+        el = el.parentElement;
     }
 }
+
+function exitPseudoFullscreen() {
+    const topBody = window.top.document.body;
+
+    topBody.classList.remove("pseudo-fullscreen-active");
+
+    if (!pseudoFullscreenState) {
+        return;
+    }
+
+    const { elements, scrollX, scrollY } = pseudoFullscreenState;
+
+    for (const item of elements) {
+        if (item.style === null) item.el.removeAttribute("style");
+        else item.el.setAttribute("style", item.style);
+
+        for (const [sibling, display] of item.siblings)
+            sibling.style.display = display;
+    }
+
+    pseudoFullscreenState = null;
+
+    // Return the top page to where it was.
+    window.top.scrollTo(scrollX, scrollY);
+
+    // Make sure the iframe itself is visible.
+    window.frameElement.scrollIntoView({
+        block: "center",
+        inline: "nearest",
+    });
+}
+document.addEventListener("keydown", (e) => {
+    if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
+
+    const key = e.key.toLowerCase();
+
+    // Number = choose
+    let index = -1;
+
+    if (/^[1-9]$/.test(key)) {
+        index = Number(key) - 1;
+    }
+
+    if (index >= 0 && index < optionButtons.length) {
+        const button = optionButtons[index];
+        if (!button.disabled) {
+            handleAnswer(index, button);
+        }
+        return;
+    }
+
+    // Reveal answer or go to next question
+    if (key === "enter" || key == " ") {
+        e.preventDefault();
+
+        if (!answerRevealed) {
+            revealAnswer();
+        } else {
+            nextQuestion();
+        }
+        return;
+    }
+
+    // Navigation
+    if (key === "arrowright" || key === "l") {
+        e.preventDefault();
+        nextQuestion();
+        return;
+    }
+
+    if (key === "arrowleft" || key === "h") {
+        e.preventDefault();
+        prevQuestion();
+        return;
+    }
+});
+
+// Tap or click to change question (touch control)
+
+questionBox.addEventListener("click", (e) => {
+    if (e.target.closest("button, input")) return;
+
+    // Don't navigate if the user just made a text selection
+    const selection = window.getSelection();
+    if (selection && selection.toString().length > 0) return;
+
+    const rect = questionBox.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    if (x > rect.width * 0.7) {
+        if (!answerRevealed) {
+            revealAnswer();
+        } else {
+            nextQuestion();
+        }
+    } else if (x < rect.width * 0.3) {
+        prevQuestion();
+    }
+});
 
 // Helpers
 
@@ -782,19 +1026,85 @@ function renderMath(text) {
     });
 }
 
-function renderInlineMarkdown(text) {
-    if (!text) return "";
-
-    text = text
-        .replace(/\*\*(.*?)\*\*/g, "<b>$1</b>")
-        .replace(/\*(.*?)\*/g, "<i>$1</i>");
-
-    return renderMath(text);
-}
-
 function renderMarkdown(text) {
     if (!text) return "";
-    return renderInlineMarkdown(text).replace(/\n/g, "<br>");
+
+    const protectedParts = [];
+
+    function protect(value) {
+        const index = protectedParts.length;
+        protectedParts.push(value);
+        return `\uE000${index}\uE001`;
+    }
+
+    // Protect math from Markdown processing.
+    text = text.replace(/\$\$[\s\S]*?\$\$/g, protect);
+    text = text.replace(/\$(?!\$)[\s\S]*?\$(?!\$)/g, protect);
+
+    // Escape things that look like HTML tags but aren't actually
+    // part of a valid HTML element.
+    const voidElements = new Set([
+        "area",
+        "base",
+        "br",
+        "col",
+        "embed",
+        "hr",
+        "img",
+        "input",
+        "link",
+        "meta",
+        "param",
+        "source",
+        "track",
+        "wbr",
+    ]);
+
+    text = text.replace(
+        /<\/?(\p{L}[\p{L}\p{N}-]*)(?:\s[^>]*)?>/gu,
+        (match, tagName, offset, wholeText) => {
+            const tag = tagName.toLowerCase();
+
+            // Closing tags are valid if they appear.
+            if (match.startsWith("</")) {
+                return match;
+            }
+
+            // Self-closing tags are valid.
+            if (/\/>$/.test(match)) {
+                return match;
+            }
+
+            // Void HTML elements don't need a closing tag.
+            if (voidElements.has(tag)) {
+                return match;
+            }
+
+            // For normal elements, require a matching closing tag.
+            const closingTag = new RegExp(`</${tag}\\s*>`, "iu");
+
+            if (closingTag.test(wholeText.slice(offset + match.length))) {
+                return match;
+            }
+
+            // Otherwise, treat it as literal text.
+            return match.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        },
+    );
+
+    // Markdown.
+    text = text
+        .replace(/\*\*(.*?)\*\*/g, "<b>$1</b>")
+        .replace(/\*(.*?)\*/g, "<i>$1</i>")
+        .replace(/`([^]+?)`/g, "<code>$1</code>");
+
+    // Restore math.
+    text = text.replace(
+        /\uE000(\d+)\uE001/g,
+        (_, index) => protectedParts[Number(index)],
+    );
+
+    return renderMath(text);
 }
 
 async function renderQuiz() {
@@ -802,6 +1112,7 @@ async function renderQuiz() {
     const questionText = questionBox.querySelector("#question");
     const optionsContainer = document.getElementById("options");
     const navigationContainer = questionBox.querySelector("#navigation");
+    const explanationEl = document.getElementById("explanation");
 
     if (!quiz.questions || quiz.questions.length === 0) {
         document.getElementById("question").textContent =
@@ -813,6 +1124,10 @@ async function renderQuiz() {
     questionText.innerHTML = renderMarkdown(
         quiz.questions[currentQuestionIndex].question,
     );
+
+    // Clear explanation
+    explanationEl.textContent = "";
+    explanationEl.style.display = "none";
 
     // Clear and rebuild options
     optionsContainer.innerHTML = "";
@@ -846,7 +1161,7 @@ async function renderQuiz() {
     try {
         await MathJax.typesetPromise();
     } catch (err) {
-        console.error(err);
+        console.error("MathJax typesetting failed:", err);
     }
 }
 
@@ -874,72 +1189,6 @@ function prevQuestion() {
     if (currentQuestionIndex <= 0) return;
     goTo(currentQuestionIndex - 1);
 }
-
-document.addEventListener("keydown", (e) => {
-    if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
-
-    const key = e.key.toLowerCase();
-
-    // Number = choose
-    let index = -1;
-
-    if (/^[1-9]$/.test(key)) {
-        index = Number(key) - 1;
-    }
-
-    if (index >= 0 && index < optionButtons.length) {
-        const button = optionButtons[index];
-        if (!button.disabled) {
-            handleAnswer(index, button);
-        }
-        return;
-    }
-
-    // Reveal answer or go to next question
-    if (key === "enter" || key == " ") {
-        console.log("handled", key);
-        e.preventDefault();
-
-        if (!answerRevealed) {
-            revealAnswer();
-        } else {
-            nextQuestion();
-        }
-        return;
-    }
-
-    // Navigation
-    if (key === "arrowright" || key === "l") {
-        e.preventDefault();
-        nextQuestion();
-        return;
-    }
-
-    if (key === "arrowleft" || key === "h") {
-        e.preventDefault();
-        prevQuestion();
-        return;
-    }
-});
-
-// Tap or click to change question (touch control)
-
-questionBox.addEventListener("click", (e) => {
-    if (e.target.closest("button, input")) return;
-
-    const rect = questionBox.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-
-    if (x > rect.width * 0.7) {
-        if (!answerRevealed) {
-            revealAnswer();
-        } else {
-            nextQuestion();
-        }
-    } else if (x < rect.width * 0.3) {
-        prevQuestion();
-    }
-});
 
 // Change question directly
 const questionSelector = document.getElementById("question-selector");
@@ -981,22 +1230,19 @@ function handleAnswer(index, button) {
     if (index === currentQuestion.correct_index) {
         button.classList.add("correct");
         button.disabled = true;
-
+        answerRevealed = true;
         if (wrongAnswerCount === 0) {
             questionResults[currentQuestionIndex] = CORRECT;
             saveStats();
         }
-
         optionButtons.forEach((btn) => (btn.disabled = true));
+        showExplanation(currentQuestion);
     } else {
         button.classList.add("wrong");
         button.disabled = true;
-
         questionResults[currentQuestionIndex] = WRONG;
         saveStats();
-
         wrongAnswerCount++;
-
         if (wrongAnswerCount === currentQuestion.options.length - 1) {
             revealAnswer();
         }
@@ -1005,37 +1251,66 @@ function handleAnswer(index, button) {
 
 function revealAnswer() {
     answerRevealed = true;
-
     if (questionResults[currentQuestionIndex] === UNANSWERED) {
         questionResults[currentQuestionIndex] = SKIPPED;
         saveStats();
     }
     const currentQuestion = quiz.questions[currentQuestionIndex];
     const optionsContainer = document.getElementById("options");
-
     // Get all buttons in the current question
     const buttons = optionsContainer.querySelectorAll("button");
-
     // Highlight the correct answer
     buttons[currentQuestion.correct_index].classList.add("correct");
+    showExplanation(currentQuestion);
+}
+
+function showExplanation(question) {
+    const explanationEl = document.getElementById("explanation");
+
+    if (question.explanation) {
+        explanationEl.innerHTML = renderMarkdown(question.explanation);
+        explanationEl.style.display = "block";
+
+        if (mathReady && window.MathJax) {
+            MathJax.typesetPromise([explanationEl]).catch((err) =>
+                console.error("MathJax typesetting failed:", err),
+            );
+        }
+    } else {
+        explanationEl.innerHTML = "";
+        explanationEl.style.display = "none";
+    }
 }
 
 // Download as HTML.
 function downloadQuizHTML(filename = quiz.title) {
-    // Get full document HTML
     let html = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
 
-    // Replace the quiz content with the local edits
-    const quizJSON = JSON.stringify(quiz).replace(/</g, "\\u003c");
+    // Grab the existing JSON payload from the DOM
+    const dataScript = document.getElementById("app-data");
+    let appData = JSON.parse(dataScript.textContent);
 
-    html = html.replace(/const quiz = .*?;/s, `const quiz = ${quizJSON};`);
+    // Update the quiz property with current runtime edits
+    appData.quiz = quiz;
+
+    // Stringify the updated object safely
+    const jsonPayload = JSON.stringify(appData, null, 2).replace(
+        /</g,
+        "\\u003c",
+    );
+
+    // Replace the content inside the JSON script tag
+    html = html.replace(
+        /(<script\s+id="app-data"\s+type="application\/json">)[\s\S]*?(<\/script>)/i,
+        `$1\n${jsonPayload}\n$2`,
+    );
 
     const blob = new Blob([html], { type: "text/html" });
     const url = URL.createObjectURL(blob);
 
     const a = document.createElement("a");
     a.href = url;
-    a.download = filename;
+    a.download = filename.endsWith(".html") ? filename : filename + ".html";
     document.body.appendChild(a);
     a.click();
 
@@ -1112,7 +1387,7 @@ function toggleTimer() {
 
 // Render results page
 
-function renderResults() {
+async function renderResults() {
     const questionBox = document.querySelector(".question-box");
     const results = document.getElementById("results");
 
@@ -1171,6 +1446,16 @@ function renderResults() {
 
     createDonutChart(document.getElementById("statsChart"), chartData);
     showCorrectionSheet();
+
+    if (mathReady && window.MathJax) {
+        try {
+            await MathJax.typesetPromise([
+                document.getElementById("question-corrections"),
+            ]);
+        } catch (err) {
+            console.error("MathJax typesetting failed:", err);
+        }
+    }
 }
 
 function createDonutChart(container, data) {
@@ -1350,6 +1635,17 @@ function showCorrectionSheet() {
     <strong>Correct answer:</strong>
     ${renderMarkdown(correctAnswer)}
 </p>
+
+${
+    question.explanation
+        ? `
+<p>
+    <strong>Explanation:</strong>
+    ${renderMarkdown(question.explanation)}
+</p>
+`
+        : ""
+}
 `;
 
         container.appendChild(article);
@@ -1374,14 +1670,25 @@ function openEditor() {
     questionBox.style.display = "none";
     editor.style.display = "";
 
+    const titleField = document.getElementById("editor-title");
     const questionField = document.getElementById("editor-question");
+    const explanationField = document.getElementById("editor-explanation");
     const editorAnswer = document.getElementById("editor-answer-number");
     const optionsContainer = document.getElementById("editor-distractors");
 
     const question = quiz.questions[currentQuestionIndex];
 
     // Set initial values
-    questionField.innerHTML = `<textarea>${question.question}</textarea>`;
+    titleField.innerHTML = `<textarea></textarea>`;
+    titleField.querySelector("textarea").value = quiz.title;
+
+    questionField.innerHTML = `<textarea></textarea>`;
+    questionField.querySelector("textarea").value = question.question;
+
+    explanationField.innerHTML = `<textarea></textarea>`;
+    explanationField.querySelector("textarea").value =
+        question.explanation || "";
+
     editorAnswer.value = question.correct_index + 1;
 
     optionsContainer.innerHTML = "";
@@ -1389,6 +1696,66 @@ function openEditor() {
     question.options.forEach((option) => {
         optionsContainer.appendChild(addEditorOption(option));
     });
+}
+
+function formatQuestionAsText(question, index) {
+    const lines = [];
+
+    lines.push(`Question ${index + 1}: ${question.question}`);
+    lines.push("");
+
+    question.options.forEach((option, i) => {
+        const marker = i === question.correct_index ? "[correct]" : "";
+        lines.push(`${i + 1}. ${option} ${marker}`.trim());
+    });
+
+    if (question.explanation) {
+        lines.push("");
+        lines.push(`Explanation: ${question.explanation}`);
+    }
+
+    return lines.join("\n");
+}
+
+function formatQuizAsText() {
+    const lines = [quiz.title, ""];
+
+    quiz.questions.forEach((question, index) => {
+        lines.push(formatQuestionAsText(question, index));
+        lines.push("");
+    });
+
+    return lines.join("\n").trim();
+}
+
+function copyToClipboard(text, successMessage) {
+    if (navigator.clipboard?.writeText) {
+        navigator.clipboard
+            .writeText(text)
+            .then(() => showEditorAlert(successMessage))
+            .catch(() => showManualCopyPrompt(text));
+    } else {
+        showManualCopyPrompt(text);
+    }
+}
+
+function showManualCopyPrompt(text) {
+    showEditorAlert(
+        "Clipboard access isn't available here. You may select and copy the text from the console.",
+    );
+    console.log(text);
+}
+
+function copyQuiz() {
+    copyToClipboard(formatQuizAsText(), "Quiz copied to clipboard.");
+}
+
+function copyQuestion() {
+    const text = formatQuestionAsText(
+        quiz.questions[currentQuestionIndex],
+        currentQuestionIndex,
+    );
+    copyToClipboard(text, "Question copied to clipboard.");
 }
 
 function addEditorOption(value) {
@@ -1510,6 +1877,7 @@ function saveEdit() {
     }
 
     // Extract data from DOM
+    const newTitleText = document.querySelector("#editor-title textarea").value;
     const newQuestionText = document.querySelector(
         "#editor-question textarea",
     ).value;
@@ -1520,13 +1888,23 @@ function saveEdit() {
         optionsContainer.querySelectorAll("textarea"),
     ).map((ta) => ta.value);
 
+    const newExplanationText = document.querySelector(
+        "#editor-explanation textarea",
+    ).value;
+
+    // Track whether the title was changed
+    const titleChanged = quiz.title !== newTitleText;
+    quiz.title = newTitleText;
+    document.getElementById("title").textContent = newTitleText;
+
     // Update global state
     quiz.questions[currentQuestionIndex].question = newQuestionText;
     quiz.questions[currentQuestionIndex].correct_index = newIndex;
     quiz.questions[currentQuestionIndex].options = updatedOptions;
+    quiz.questions[currentQuestionIndex].explanation = newExplanationText;
 
     // Persist the actual changes (locally)
-    if (saveLocalEdit(currentQuestionIndex)) {
+    if (saveLocalEdit(currentQuestionIndex, titleChanged)) {
         showEditorAlert("Changes saved.");
     }
 }
@@ -1553,7 +1931,7 @@ function getQuizEditsKey() {
     return `quizEdits_${quizStorageKey}`;
 }
 
-function saveLocalEdit(index) {
+function saveLocalEdit(index, titleChanged) {
     const key = getQuizEditsKey();
 
     let edits = {};
@@ -1562,6 +1940,10 @@ function saveLocalEdit(index) {
         edits = JSON.parse(localStorage.getItem(key)) || {};
     } catch {
         edits = {};
+    }
+
+    if (titleChanged) {
+        edits.title = quiz.title;
     }
 
     edits[index] = quiz.questions[index];
@@ -1586,10 +1968,14 @@ function loadQuizEdits() {
             return;
         }
 
+        if (edits.title !== undefined) {
+            quiz.title = edits.title;
+        }
+
+        // Load edited questions
         for (const [index, question] of Object.entries(edits)) {
             const i = Number(index);
-
-            if (i >= 0 && i < quiz.questions.length) {
+            if (Number.isInteger(i) && i >= 0 && i < quiz.questions.length) {
                 quiz.questions[i] = question;
             }
         }
@@ -1647,11 +2033,12 @@ loadMathJax().then(() => {
 });
 
 </script>
+
 <script>
 
 function reportHeight() {
     // Do not run when in fullscreen
-    if (document.fullscreenElement) return;
+    if (document.fullscreenElement || document.documentElement.classList.contains("pseudo-fullscreen-active")) return;
 
 
     const questionBox = document.querySelector(".question-box");
