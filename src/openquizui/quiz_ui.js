@@ -126,7 +126,7 @@ async function toggleFullscreen() {
         try {
             await root.requestFullscreen();
             return;
-        } catch {}
+        } catch { }
     } else if (root.webkitRequestFullscreen) {
         root.webkitRequestFullscreen();
         return;
@@ -287,7 +287,7 @@ function renderMath(text) {
         return `<code>${expr}</code>`;
     });
 }
-function renderInlineMarkdown(text) {
+function renderMarkdown(text) {
     if (!text) return "";
 
     const protectedParts = [];
@@ -368,16 +368,13 @@ function renderInlineMarkdown(text) {
     return renderMath(text);
 }
 
-function renderMarkdown(text) {
-    if (!text) return "";
-    return renderInlineMarkdown(text);
-}
 
 async function renderQuiz() {
     const questionBox = document.querySelector(".question-box");
     const questionText = questionBox.querySelector("#question");
     const optionsContainer = document.getElementById("options");
     const navigationContainer = questionBox.querySelector("#navigation");
+    const explanationEl = document.getElementById("explanation");
 
     if (!quiz.questions || quiz.questions.length === 0) {
         document.getElementById("question").textContent =
@@ -389,6 +386,10 @@ async function renderQuiz() {
     questionText.innerHTML = renderMarkdown(
         quiz.questions[currentQuestionIndex].question,
     );
+
+    // Clear explanation
+    explanationEl.textContent = "";
+    explanationEl.style.display = "none";
 
     // Clear and rebuild options
     optionsContainer.innerHTML = "";
@@ -491,23 +492,19 @@ function handleAnswer(index, button) {
     if (index === currentQuestion.correct_index) {
         button.classList.add("correct");
         button.disabled = true;
-
         answerRevealed = true;
         if (wrongAnswerCount === 0) {
             questionResults[currentQuestionIndex] = CORRECT;
             saveStats();
         }
-
         optionButtons.forEach((btn) => (btn.disabled = true));
+        showExplanation(currentQuestion);
     } else {
         button.classList.add("wrong");
         button.disabled = true;
-
         questionResults[currentQuestionIndex] = WRONG;
         saveStats();
-
         wrongAnswerCount++;
-
         if (wrongAnswerCount === currentQuestion.options.length - 1) {
             revealAnswer();
         }
@@ -516,19 +513,35 @@ function handleAnswer(index, button) {
 
 function revealAnswer() {
     answerRevealed = true;
-
     if (questionResults[currentQuestionIndex] === UNANSWERED) {
         questionResults[currentQuestionIndex] = SKIPPED;
         saveStats();
     }
     const currentQuestion = quiz.questions[currentQuestionIndex];
     const optionsContainer = document.getElementById("options");
-
     // Get all buttons in the current question
     const buttons = optionsContainer.querySelectorAll("button");
-
     // Highlight the correct answer
     buttons[currentQuestion.correct_index].classList.add("correct");
+    showExplanation(currentQuestion);
+}
+
+function showExplanation(question) {
+    const explanationEl = document.getElementById("explanation");
+
+    if (question.explanation) {
+        explanationEl.innerHTML = renderMarkdown(question.explanation);
+        explanationEl.style.display = "block";
+
+        if (mathReady && window.MathJax) {
+            MathJax.typesetPromise([explanationEl]).catch(err =>
+                console.error("MathJax typesetting failed:", err)
+            );
+        }
+    } else {
+        explanationEl.innerHTML = "";
+        explanationEl.style.display = "none";
+    }
 }
 
 // Download as HTML.
@@ -581,7 +594,7 @@ function saveTimer() {
                 start: timerStart,
             }),
         );
-    } catch {}
+    } catch { }
 }
 
 function updateTimer() {
@@ -784,7 +797,7 @@ function saveStats() {
                 startDate: defaultStartDate,
             }),
         );
-    } catch {}
+    } catch { }
 }
 
 function restartQuiz() {
@@ -852,8 +865,8 @@ function showCorrectionSheet() {
             questionResults[index] === SKIPPED
                 ? "Skipped"
                 : userIndex !== null
-                  ? question.options[userIndex]
-                  : "Unanswered";
+                    ? question.options[userIndex]
+                    : "Unanswered";
 
         const article = document.createElement("article");
 
@@ -871,6 +884,13 @@ function showCorrectionSheet() {
     <strong>Correct answer:</strong>
     ${renderMarkdown(correctAnswer)}
 </p>
+
+${question.explanation ? `
+<p>
+    <strong>Explanation:</strong>
+    ${renderMarkdown(question.explanation)}
+</p>
+` : ""}
 `;
 
         container.appendChild(article);
@@ -897,14 +917,22 @@ function openEditor() {
 
     const titleField = document.getElementById("editor-title");
     const questionField = document.getElementById("editor-question");
+    const explanationField = document.getElementById("editor-explanation");
     const editorAnswer = document.getElementById("editor-answer-number");
     const optionsContainer = document.getElementById("editor-distractors");
 
     const question = quiz.questions[currentQuestionIndex];
 
     // Set initial values
-    titleField.innerHTML = `<textarea>${quiz.title}</textarea>`;
-    questionField.innerHTML = `<textarea>${question.question}</textarea>`;
+    titleField.innerHTML = `<textarea></textarea>`;
+    titleField.querySelector("textarea").value = quiz.title;
+
+    questionField.innerHTML = `<textarea></textarea>`;
+    questionField.querySelector("textarea").value = question.question;
+
+    explanationField.innerHTML = `<textarea></textarea>`;
+    explanationField.querySelector("textarea").value = question.explanation || "";
+
     editorAnswer.value = question.correct_index + 1;
 
     optionsContainer.innerHTML = "";
@@ -1044,6 +1072,10 @@ function saveEdit() {
         optionsContainer.querySelectorAll("textarea"),
     ).map((ta) => ta.value);
 
+
+    const newExplanationText =
+        document.querySelector("#editor-explanation textarea").value;
+
     // Track whether the title was changed
     const titleChanged = quiz.title !== newTitleText;
     quiz.title = newTitleText;
@@ -1053,6 +1085,7 @@ function saveEdit() {
     quiz.questions[currentQuestionIndex].question = newQuestionText;
     quiz.questions[currentQuestionIndex].correct_index = newIndex;
     quiz.questions[currentQuestionIndex].options = updatedOptions;
+    quiz.questions[currentQuestionIndex].explanation = newExplanationText;
 
     // Persist the actual changes (locally)
     if (saveLocalEdit(currentQuestionIndex, titleChanged)) {

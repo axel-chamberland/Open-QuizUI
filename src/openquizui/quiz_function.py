@@ -6,12 +6,13 @@ description: Converts a multiple choice quiz message into an interactive HTML qu
 version: 2.0
 """
 
-from pydantic import BaseModel, Field
-from fastapi.responses import HTMLResponse
-import re
+import base64
 import json
 import random
-import base64
+import re
+
+from fastapi.responses import HTMLResponse
+from pydantic import BaseModel, Field
 
 # =========================
 # THEME -- Feel free to add your own theme or modify presets
@@ -233,10 +234,41 @@ class Action:
             )
         return {"content": "Action encountered an error"}
 
+    # =========================
+    # PARSER
+    # =========================
 
-# =========================
-# PARSER
-# =========================
+
+# Use various degrees of detection for the answer keys (harder to detect than question keys).
+# The first one is a numbered list, if not found, try the next pattern.
+# Works both if answers are below each questions or in an answer key.
+# The current regex may be too permissive, but we verify answer counts after to make up for that fact.
+# This needs polishing, as some could be redundant.
+# \*{0,2} is used to allow bold characters.
+# Asterix could also be stripped them from lines to simplify the regex.
+ANSWER_PATTERNS = [
+    # Numbered list: 1. B
+    r"^\s*\*{0,2}\d+\s*\*{0,2}\s*[\.\):-]\s*\*{0,2}([A-Z])\*{0,2}(?=\s*(?:,|$))",
+    # Numbered list: 1. B (less strict)
+    r"^\s*\*{0,2}\d+\s*\*{0,2}\s*[\.\):-]\s*\*{0,2}([A-Z])\*{0,2}\b",
+    # Réponse : B / Answer: B / Correct answer: B or even **Answer** or **R:** or R:
+    r"^\s*\*{0,2}(?:réponse|answer|correct answer|r|a)\s*\*{0,2}\s*[:\-]?\s*\*{0,2}\s*([A-Z])\b",
+    # In Bullet Point
+    r"^\s*[*\-]?\s*\*{0,2}\s*(?:r|answer|réponse|correct answer)\s*\*{0,2}\s*[:\-]?\s*\*{0,2}\s*([A-Z])\b",
+    # **Q1 Answer:** **c) ...** / **Q1 Answer:** **c)** trailing text
+    r"^\s*\*{0,2}\s*q\s*\d+\s*(?:r|answer|réponse|correct answer)\s*\*{0,2}\s*[:\-]?\s*\*{0,2}\s*\*{0,2}\s*([A-Z])\b",
+    # Question 1 : B
+    r"^\s*question\s*\d+.*?([A-Z])\b",
+    # Numbered bulk: 1.A, 2.B, 3.C, 4.B, 5.A and optional | and ) delimiters
+    r"\b\d+\s*\*{0,2}\s*[\.\):-]\s*\*{0,2}\s*([A-Z])\s*\)?(?=\s*(?:\||,|$|\s+\d+\s*[\.\):-]))",
+    # Adding a space as option:
+    r"\b\d+\s*\*{0,2}\s*[-.):\s]\s*\*{0,2}\s*([A-Z])\s*\)?(?=\s*(?:\||,|$|\s+\d+\s*[-.):\s]))",
+    # In Table
+    r"^\|\s*\*{0,2}\d+\*{0,2}\s*\|\s*\*{0,2}([A-Z]).*\|\s*$",
+    # Numbered list with trailing text: 1. **B** (Vertices and edges) [1]
+    # Excludes numbered questions containing '?'
+    r"^\s*\*{0,2}\d+\s*\*{0,2}\s*[\.\):-]\s*\*{0,2}([A-Z])\*{0,2}(?=\s+[^?\n]+$)",
+]
 
 
 def parse_quiz(
@@ -249,87 +281,24 @@ def parse_quiz(
     # Parse questions
     # -------------------------
 
-    questions, first_question_line = question_parser(lines)
+    questions, question_lines = question_parser(lines)
 
     # -------------------------
     # Attempt to Infer Title
     # -------------------------
 
-    title: str = infer_title(lines, first_question_line)
+    title: str = infer_title(lines, question_lines[0])
 
     # -------------------------
     # Parse answer key (anywhere in the text)
     # -------------------------
 
-    # We use various degrees of detection.
-    # The first one is a numbered list, if not found, try the next pattern.
-    # Works both if answers are below each questions or in an answer key.
-    # The current regex may be too permissive, but we verify answer counts after to make up for that fact.
-    # This needs polishing, as some could be redundant.
-    # \*{0,2} is used to allow bold characters.
-    # Asterix could also be stripped them from lines to simplify the regex.
-    answer_patterns = [
-        # Numbered list: 1. B
-        r"^\s*\*{0,2}\d+\s*\*{0,2}\s*[\.\):-]\s*\*{0,2}([A-Z])\*{0,2}(?=\s*(?:,|$))",
-        # Numbered list: 1. B (less strict)
-        r"^\s*\*{0,2}\d+\s*\*{0,2}\s*[\.\):-]\s*\*{0,2}([A-Z])\*{0,2}\b",
-        # Réponse : B / Answer: B / Correct answer: B or even **Answer** or **R:** or R:
-        r"^\s*\*{0,2}(?:réponse|answer|correct answer|r|a)\s*\*{0,2}\s*[:\-]?\s*\*{0,2}\s*([A-Z])\b",
-        # In Bullet Point
-        r"^\s*[*\-]?\s*\*{0,2}\s*(?:r|answer|réponse|correct answer)\s*\*{0,2}\s*[:\-]?\s*\*{0,2}\s*([A-Z])\b",
-        # **Q1 Answer:** **c) ...** / **Q1 Answer:** **c)** trailing text
-        r"^\s*\*{0,2}\s*q\s*\d+\s*(?:r|answer|réponse|correct answer)\s*\*{0,2}\s*[:\-]?\s*\*{0,2}\s*\*{0,2}\s*([A-Z])\b",
-        # Question 1 : B
-        r"^\s*question\s*\d+.*?([A-Z])\b",
-        # Numbered bulk: 1.A, 2.B, 3.C, 4.B, 5.A and optional | and ) delimiters
-        r"\b\d+\s*\*{0,2}\s*[\.\):-]\s*\*{0,2}\s*([A-Z])\s*\)?(?=\s*(?:\||,|$|\s+\d+\s*[\.\):-]))",
-        # Adding a space as option:
-        r"\b\d+\s*\*{0,2}\s*[-.):\s]\s*\*{0,2}\s*([A-Z])\s*\)?(?=\s*(?:\||,|$|\s+\d+\s*[-.):\s]))",
-        # In Table
-        r"^\|\s*\*{0,2}\d+\*{0,2}\s*\|\s*\*{0,2}([A-Z]).*\|\s*$",
-        # Numbered list with trailing text: 1. **B** (Vertices and edges) [1]
-        # Excludes numbered questions containing '?'
-        r"^\s*\*{0,2}\d+\s*\*{0,2}\s*[\.\):-]\s*\*{0,2}([A-Z])\*{0,2}(?=\s+[^?\n]+$)",
-    ]
-    best_matches = []
-
-    for pattern in answer_patterns:
-        matches = [
-            m.group(1).upper()
-            for m in re.finditer(pattern, text, re.IGNORECASE | re.MULTILINE)
-        ]
-
-        if len(matches) > len(best_matches):
-            best_matches = matches
-
-        if len(matches) == len(questions):
-            valid = True
-
-            for q, letter in zip(questions, matches):
-                correct_index = ord(letter) - ord("A")
-
-                # Check that the answer exists in the question's choices
-                if correct_index < 0 or correct_index >= len(q["options"]):
-                    valid = False
-                    break
-
-                q["correct_index"] = correct_index
-
-            if valid:
-                break
-    else:
-        raise ValueError(
-            "Failed to parse quiz:\n"
-            f"Did the message make a formatting mistake? If not, consider telling to LLM to use the tool and submitting a bug report.\n"
-            f"Questions: {len(questions)}.\n"
-            f"Answers found: {len(best_matches)}.\n"
-            f"Closest answers: {best_matches}.\n"
-        )
+    questions = answer_parser(text, questions, question_lines)
 
     return title, questions
 
 
-def question_parser(lines) -> tuple[list[dict], int | None]:
+def question_parser(lines) -> tuple[list[dict], list[int]]:
     """
     Formats:
     #Question 1: ...
@@ -358,27 +327,30 @@ def question_parser(lines) -> tuple[list[dict], int | None]:
     )
 
     questions = []
-    current_question = None
+    question_lines = []
 
-    first_question_line = None
+    current_question = None
+    current_question_line = None
+
     for line_no, line in enumerate(lines):
         if not line:
             continue
 
         question_match = question_re.match(line)
         if question_match:
-            if first_question_line is None:
-                first_question_line = line_no
+            # Finish the previous question.
             if current_question and len(current_question["options"]) >= 2:
                 questions.append(current_question)
+                question_lines.append(current_question_line)
 
-            # Change to next question
+            # Start the new question.
             current_question = {
                 "question": question_match.group(3).strip(" :-"),
                 "options": [],
                 "correct_index": None,
             }
 
+            current_question_line = line_no
             continue
 
         if current_question is None:
@@ -395,23 +367,26 @@ def question_parser(lines) -> tuple[list[dict], int | None]:
 
             current_question["options"].append(value)
 
-            # fallback only
+            # Fallback only.
             if current_question["correct_index"] is None and "**" in line:
                 current_question["correct_index"] = len(current_question["options"]) - 1
 
             continue
 
-        # multiline question
+        # Multiline question.
         if not current_question["options"]:
             if current_question["question"]:
                 current_question["question"] += "\n"
             current_question["question"] += line
 
+    # Finish the final question.
     if current_question and len(current_question["options"]) >= 2:
         questions.append(current_question)
+        question_lines.append(current_question_line)
 
     _verify_questions(questions)
-    return questions, first_question_line
+
+    return questions, question_lines
 
 
 def _verify_questions(questions):
@@ -548,6 +523,126 @@ def infer_title(lines, before_line):
     return best[-1][1]
 
 
+def answer_parser(
+    text: str,
+    questions: list[dict],
+    question_lines: list[int],
+) -> list[dict]:
+    """
+    Resolve each question's correct_index and optional explanation.
+
+    Each answer pattern is tried independently. The first pattern that
+    produces exactly one valid answer per question is used.
+
+    Explanations are never captured by the answer regex. They are extracted
+    as the text between the current answer line and whichever comes first:
+      - the next answer line matched by the same pattern
+      - the next question line
+      - the end of the text
+    """
+
+    lines = text.splitlines()
+
+    if len(question_lines) != len(questions):
+        raise ValueError(
+            f"Question line count ({len(question_lines)}) does not match "
+            f"question count ({len(questions)})."
+        )
+
+    # Character offset of the beginning of each line.
+    line_starts = [0]
+
+    for line in text.splitlines(keepends=True):
+        line_starts.append(line_starts[-1] + len(line))
+
+    best_matches = []
+
+    for pattern in ANSWER_PATTERNS:
+        answer_matches = list(
+            re.finditer(
+                pattern,
+                text,
+                re.IGNORECASE | re.MULTILINE,
+            )
+        )
+
+        matches = [match.group(1).upper() for match in answer_matches]
+
+        if len(matches) > len(best_matches):
+            best_matches = matches
+
+        # This pattern must match exactly one answer per question.
+        if len(answer_matches) != len(questions):
+            continue
+
+        # Validate that every matched answer exists in its question's
+        # options.
+        valid = True
+
+        for q, letter in zip(questions, matches):
+            correct_index = ord(letter) - ord("A")
+
+            if correct_index < 0 or correct_index >= len(q["options"]):
+                valid = False
+                break
+
+        if not valid:
+            continue
+
+        # ---------------------------------------------------------
+        # This is the winning pattern.
+        # Its answer matches are authoritative.
+        # ---------------------------------------------------------
+
+        answer_lines = [text.count("\n", 0, match.start()) for match in answer_matches]
+
+        for i, (q, answer_match, answer_line) in enumerate(
+            zip(questions, answer_matches, answer_lines)
+        ):
+            q["correct_index"] = ord(answer_match.group(1).upper()) - ord("A")
+
+            is_last_answer = i == len(answer_lines) - 1
+
+            if is_last_answer:
+                # There is no next question/answer to compare against.
+                # If this answer is after the last question, it is answer-key mode.
+                is_answer_key = answer_line > question_lines[-1]
+            else:
+                next_question_line = question_lines[i + 1]
+                is_answer_key = answer_line > next_question_line
+
+            if is_answer_key:
+                if is_last_answer:
+                    end_line = len(lines)
+                else:
+                    end_line = answer_lines[i + 1]
+            else:
+                end_line = next_question_line
+
+            start = answer_match.end()
+            end = line_starts[end_line]
+
+            explanation = text[start:end].strip()
+
+            # Last answer in an answer key reaches the end of the document.
+            # A double newline means the explanation has ended.
+            if is_answer_key and is_last_answer:
+                explanation = re.split(r"\n\s*\n", explanation, maxsplit=1)[0].strip()
+
+            if explanation:
+                q["explanation"] = clean_explanation(explanation)
+
+        return questions
+    raise ValueError(
+        "Failed to parse quiz:\n"
+        "Did the message make a formatting mistake? If not, "
+        "consider telling the LLM to use the tool and submitting a bug report.\n"
+        f"Questions: {len(questions)}.\n"
+        f"Answers found: {len(best_matches)}.\n"
+        f"Closest answers: {best_matches}.\n"
+    )
+
+
 # =========================================================
 # HELPERS
 # =========================================================
@@ -594,6 +689,151 @@ def clean_text(text: str, strip_refs: bool, strip_end_brackets: bool):
         text,
     )
     return text.strip().replace("\r", "")
+
+
+def _remove_unmatched_delimiters(text: str) -> str:
+    """Remove unmatched (), [], {} delimiters without touching valid pairs."""
+    pairs = {")": "(", "]": "[", "}": "{"}
+    openings = set(pairs.values())
+
+    stack: list[tuple[str, int]] = []
+    remove: set[int] = set()
+
+    for i, char in enumerate(text):
+        if char in openings:
+            stack.append((char, i))
+
+        elif char in pairs:
+            if stack and stack[-1][0] == pairs[char]:
+                stack.pop()
+            else:
+                remove.add(i)
+
+    # Anything left open was unmatched.
+    remove.update(i for _, i in stack)
+
+    if not remove:
+        return text
+
+    return "".join(char for i, char in enumerate(text) if i not in remove)
+
+
+def _remove_unmatched_bold(text: str) -> str:
+    """
+    Remove unmatched ** markers.
+
+    IMPORTANT:
+    Single '*' is never touched, because it may be valid Markdown
+    such as *Why:*.
+    """
+    markers = list(re.finditer(r"\*\*", text))
+
+    if len(markers) % 2 == 0:
+        return text
+
+    # Pair markers from left to right. The final marker is unmatched.
+    marker = markers[-1]
+
+    return text[: marker.start()] + text[marker.end() :]
+
+
+def _normalize_bullet(text: str) -> str:
+    """
+    Convert a malformed Markdown bullet:
+
+        * *Why:* Venus...
+
+    into:
+
+        - *Why:* Venus...
+
+    The *Why:* emphasis is preserved.
+    """
+    return re.sub(
+        r"(?m)^([ \t]*)\*[ \t]+(\*[^*\r\n]+\*)",
+        r"\1- \2",
+        text,
+    )
+
+
+def clean_explanation(text: str) -> str:
+    text = text.strip()
+
+    while True:
+        previous = text
+
+        # Remove terminal punctuation temporarily so wrappers
+        body = text
+        suffix = ""
+
+        while body and body[-1] in ".!?;:":
+            suffix = body[-1] + suffix
+            body = body[:-1].rstrip()
+
+        # Remove obvious artifacts at the outermost beginning.
+        body = re.sub(
+            r"^(?:\*\*|[)\]}>|]+)\s*",
+            "",
+            body,
+        ).strip()
+
+        # Remove wrappers ONLY when they surround the entire remaining text
+        wrappers = (
+            ('"', '"'),
+            ("(", ")"),
+            ("[", "]"),
+            ("{", "}"),
+            ("**", "**"),
+        )
+
+        for opening, closing in wrappers:
+            if (
+                len(body) >= len(opening) + len(closing)
+                and body.startswith(opening)
+                and body.endswith(closing)
+            ):
+                body = body[len(opening) : -len(closing)].strip()
+                break
+
+        text = body + suffix
+
+        # Remove unmatched brackets anywhere in the text.
+        cleaned = _remove_unmatched_delimiters(text)
+
+        if cleaned != text:
+            text = cleaned
+            continue
+
+        # Remove unmatched ** anywhere in the text.
+        cleaned = _remove_unmatched_bold(text)
+
+        if cleaned != text:
+            text = cleaned
+            continue
+
+        # Normalize malformed Markdown bullets.
+        cleaned = _normalize_bullet(text)
+
+        if cleaned != text:
+            text = cleaned
+            continue
+
+        # Nothing changed -> all recursive cleanup is finished.
+        if text == previous:
+            break
+
+    # Add terminal punctuation.
+    lines = []
+
+    for line in text.splitlines():
+        line = line.rstrip()
+
+        if line and line[-1] not in ".!?;:)]}":
+            line += "."
+
+        lines.append(line)
+
+    return "\n".join(lines).strip()
 
 
 # =========================
@@ -700,6 +940,7 @@ def wrap_html(quiz, enable_mathjax: bool, light_theme, dark_theme):
     <div id="question-scroll">
         <p id="question"></p>
         <div id="options"></div>
+        <div id="explanation"></div>
     </div>
 </div>
 
@@ -786,8 +1027,11 @@ def wrap_html(quiz, enable_mathjax: bool, light_theme, dark_theme):
             <p><strong>Answer Position:</strong></p>
             <input type="text" id="editor-answer-number" inputmode="numeric"></input>
         </div>
+        <p><strong>Explanation:</strong></p>
+        <div id="editor-explanation"></div>
         <p><strong>Choices:</strong></p>
         <div id="editor-distractors"></div>
+
     </div>
 </div>
 
@@ -1034,6 +1278,15 @@ button:disabled {{
     content: " ✗";
     font-weight: bold;
 }}
+
+#explanation {{
+    display: none;
+    margin-top: 1rem;
+    padding: 0.75rem;
+    background: var(--btn);
+    border-radius: 0.5rem;
+}}
+
 .navigation-scroll {{
     overflow-x: auto;
     overflow-y: hidden;
@@ -1472,7 +1725,7 @@ async function toggleFullscreen() {
         try {
             await root.requestFullscreen();
             return;
-        } catch {}
+        } catch { }
     } else if (root.webkitRequestFullscreen) {
         root.webkitRequestFullscreen();
         return;
@@ -1633,7 +1886,7 @@ function renderMath(text) {
         return `<code>${expr}</code>`;
     });
 }
-function renderInlineMarkdown(text) {
+function renderMarkdown(text) {
     if (!text) return "";
 
     const protectedParts = [];
@@ -1714,16 +1967,13 @@ function renderInlineMarkdown(text) {
     return renderMath(text);
 }
 
-function renderMarkdown(text) {
-    if (!text) return "";
-    return renderInlineMarkdown(text);
-}
 
 async function renderQuiz() {
     const questionBox = document.querySelector(".question-box");
     const questionText = questionBox.querySelector("#question");
     const optionsContainer = document.getElementById("options");
     const navigationContainer = questionBox.querySelector("#navigation");
+    const explanationEl = document.getElementById("explanation");
 
     if (!quiz.questions || quiz.questions.length === 0) {
         document.getElementById("question").textContent =
@@ -1735,6 +1985,10 @@ async function renderQuiz() {
     questionText.innerHTML = renderMarkdown(
         quiz.questions[currentQuestionIndex].question,
     );
+
+    // Clear explanation
+    explanationEl.textContent = "";
+    explanationEl.style.display = "none";
 
     // Clear and rebuild options
     optionsContainer.innerHTML = "";
@@ -1837,23 +2091,19 @@ function handleAnswer(index, button) {
     if (index === currentQuestion.correct_index) {
         button.classList.add("correct");
         button.disabled = true;
-
         answerRevealed = true;
         if (wrongAnswerCount === 0) {
             questionResults[currentQuestionIndex] = CORRECT;
             saveStats();
         }
-
         optionButtons.forEach((btn) => (btn.disabled = true));
+        showExplanation(currentQuestion);
     } else {
         button.classList.add("wrong");
         button.disabled = true;
-
         questionResults[currentQuestionIndex] = WRONG;
         saveStats();
-
         wrongAnswerCount++;
-
         if (wrongAnswerCount === currentQuestion.options.length - 1) {
             revealAnswer();
         }
@@ -1862,19 +2112,35 @@ function handleAnswer(index, button) {
 
 function revealAnswer() {
     answerRevealed = true;
-
     if (questionResults[currentQuestionIndex] === UNANSWERED) {
         questionResults[currentQuestionIndex] = SKIPPED;
         saveStats();
     }
     const currentQuestion = quiz.questions[currentQuestionIndex];
     const optionsContainer = document.getElementById("options");
-
     // Get all buttons in the current question
     const buttons = optionsContainer.querySelectorAll("button");
-
     // Highlight the correct answer
     buttons[currentQuestion.correct_index].classList.add("correct");
+    showExplanation(currentQuestion);
+}
+
+function showExplanation(question) {
+    const explanationEl = document.getElementById("explanation");
+
+    if (question.explanation) {
+        explanationEl.innerHTML = renderMarkdown(question.explanation);
+        explanationEl.style.display = "block";
+
+        if (mathReady && window.MathJax) {
+            MathJax.typesetPromise([explanationEl]).catch(err =>
+                console.error("MathJax typesetting failed:", err)
+            );
+        }
+    } else {
+        explanationEl.innerHTML = "";
+        explanationEl.style.display = "none";
+    }
 }
 
 // Download as HTML.
@@ -1927,7 +2193,7 @@ function saveTimer() {
                 start: timerStart,
             }),
         );
-    } catch {}
+    } catch { }
 }
 
 function updateTimer() {
@@ -2130,7 +2396,7 @@ function saveStats() {
                 startDate: defaultStartDate,
             }),
         );
-    } catch {}
+    } catch { }
 }
 
 function restartQuiz() {
@@ -2198,8 +2464,8 @@ function showCorrectionSheet() {
             questionResults[index] === SKIPPED
                 ? "Skipped"
                 : userIndex !== null
-                  ? question.options[userIndex]
-                  : "Unanswered";
+                    ? question.options[userIndex]
+                    : "Unanswered";
 
         const article = document.createElement("article");
 
@@ -2217,6 +2483,13 @@ function showCorrectionSheet() {
     <strong>Correct answer:</strong>
     ${renderMarkdown(correctAnswer)}
 </p>
+
+${question.explanation ? `
+<p>
+    <strong>Explanation:</strong>
+    ${renderMarkdown(question.explanation)}
+</p>
+` : ""}
 `;
 
         container.appendChild(article);
@@ -2243,14 +2516,22 @@ function openEditor() {
 
     const titleField = document.getElementById("editor-title");
     const questionField = document.getElementById("editor-question");
+    const explanationField = document.getElementById("editor-explanation");
     const editorAnswer = document.getElementById("editor-answer-number");
     const optionsContainer = document.getElementById("editor-distractors");
 
     const question = quiz.questions[currentQuestionIndex];
 
     // Set initial values
-    titleField.innerHTML = `<textarea>${quiz.title}</textarea>`;
-    questionField.innerHTML = `<textarea>${question.question}</textarea>`;
+    titleField.innerHTML = `<textarea></textarea>`;
+    titleField.querySelector("textarea").value = quiz.title;
+
+    questionField.innerHTML = `<textarea></textarea>`;
+    questionField.querySelector("textarea").value = question.question;
+
+    explanationField.innerHTML = `<textarea></textarea>`;
+    explanationField.querySelector("textarea").value = question.explanation || "";
+
     editorAnswer.value = question.correct_index + 1;
 
     optionsContainer.innerHTML = "";
@@ -2390,6 +2671,10 @@ function saveEdit() {
         optionsContainer.querySelectorAll("textarea"),
     ).map((ta) => ta.value);
 
+
+    const newExplanationText =
+        document.querySelector("#editor-explanation textarea").value;
+
     // Track whether the title was changed
     const titleChanged = quiz.title !== newTitleText;
     quiz.title = newTitleText;
@@ -2399,6 +2684,7 @@ function saveEdit() {
     quiz.questions[currentQuestionIndex].question = newQuestionText;
     quiz.questions[currentQuestionIndex].correct_index = newIndex;
     quiz.questions[currentQuestionIndex].options = updatedOptions;
+    quiz.questions[currentQuestionIndex].explanation = newExplanationText;
 
     // Persist the actual changes (locally)
     if (saveLocalEdit(currentQuestionIndex, titleChanged)) {

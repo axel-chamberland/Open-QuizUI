@@ -11,7 +11,8 @@
                     "Edges and cycles",
                     "Nodes and weights"
                 ],
-                "correct_index": 1
+                "correct_index": 1,
+                "explanation": "Vertices and edges."
             },
             {
                 "question": "In graph theory, what is a \"loop\" (boucle)?",
@@ -21,7 +22,8 @@
                     "A subgraph that is maximal and connected",
                     "A type of edge that connects two different graphs"
                 ],
-                "correct_index": 1
+                "correct_index": 1,
+                "explanation": "A cycle of length 1."
             },
             {
                 "question": "Which of the following is a defining characteristic of a \"Tree\" (Arbre)?",
@@ -31,7 +33,8 @@
                     "It is an acyclic graph where $|V| = |E| + 1$",
                     "It is a directed graph that is always strongly connected"
                 ],
-                "correct_index": 2
+                "correct_index": 2,
+                "explanation": "$|V| = |E| + 1$ and it is acyclic."
             },
             {
                 "question": "If you are working with a \"sparse\" graph (where the number of edges $|E|$ is much smaller than $|V|^2$), which representation is recommended?",
@@ -41,7 +44,8 @@
                     "Dictionary of Dictionaries",
                     "Complete Matrix"
                 ],
-                "correct_index": 1
+                "correct_index": 1,
+                "explanation": "Adjacency list."
             },
             {
                 "question": "Which traversal algorithm is specifically noted for its ability to find the shortest path between two vertices using the minimum number of edges?",
@@ -51,7 +55,8 @@
                     "Dijkstra's Algorithm",
                     "Prim's Algorithm"
                 ],
-                "correct_index": 1
+                "correct_index": 1,
+                "explanation": "Breadth-First Search."
             }
         ]
     ]

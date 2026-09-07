@@ -11,7 +11,8 @@
                     "Mars",
                     "Neptune"
                 ],
-                "correct_index": 1
+                "correct_index": 1,
+                "explanation": "Venus.\n- *Why:* Venus rotates on its axis incredibly slowly. It takes about 243 Earth days to complete one full rotation (a day), but only about 225 Earth days to travel all the way around the Sun (a year)."
             },
             {
                 "question": "Which country is completely surrounded by South Africa?",
@@ -21,7 +22,8 @@
                     "Botswana",
                     "Namibia"
                 ],
-                "correct_index": 0
+                "correct_index": 0,
+                "explanation": "Lesotho.\n- *Why:* Lesotho is an enclaved country completely landlocked within the borders of South Africa. While Eswatini shares most of its border with South Africa, it also borders Mozambique."
             },
             {
                 "question": "What is the active ingredient in chili peppers that gives them their heat?",
@@ -31,7 +33,8 @@
                     "Capsaicin",
                     "Curcumin"
                 ],
-                "correct_index": 2
+                "correct_index": 2,
+                "explanation": "Capsaicin.\n- *Why:* Capsaicin binds to pain receptors in our mouths that normally detect heat, tricking our brains into feeling a burning sensation. (Piperine is found in black pepper, and allyl isothiocyanate is in wasabi/mustard)."
             },
             {
                 "question": "In what year did the Berlin Wall fall, signaling the symbolic collapse of the Iron Curtain?",
@@ -41,7 +44,8 @@
                     "1991",
                     "1993"
                 ],
-                "correct_index": 1
+                "correct_index": 1,
+                "explanation": "1989.\n- *Why:* The gates of the Berlin Wall were opened on November 9, 1989, leading to the reunification of Germany and the eventual formal dissolution of the Soviet Union in late 1991."
             },
             {
                 "question": "Which organ in the human body is responsible for producing insulin?",
@@ -51,7 +55,8 @@
                     "Pancreas",
                     "Spleen"
                 ],
-                "correct_index": 2
+                "correct_index": 2,
+                "explanation": "Pancreas.\n- *Why:* Specialized cells in the pancreas (called beta cells in the islets of Langerhans) produce insulin to help regulate glucose levels in your bloodstream."
             }
         ]
     ]

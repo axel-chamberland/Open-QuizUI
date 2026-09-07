@@ -11,7 +11,8 @@
                     "Vanguard 1",
                     "Telstar"
                 ],
-                "correct_index": 1
+                "correct_index": 1,
+                "explanation": "Sputnik 1 \u2014 Launched by the Soviet Union in 1957, it was the first artificial satellite to orbit Earth."
             },
             {
                 "question": "Who was the first human to walk in space?",
@@ -21,7 +22,8 @@
                     "Buzz Aldrin",
                     "Neil Armstrong"
                 ],
-                "correct_index": 1
+                "correct_index": 1,
+                "explanation": "Alexei Leonov \u2014 A Soviet cosmonaut, he performed the first spacewalk in 1965."
             },
             {
                 "question": "Which spacecraft carried the first humans to land on the Moon?",
@@ -31,7 +33,8 @@
                     "Apollo 11",
                     "Apollo 13"
                 ],
-                "correct_index": 2
+                "correct_index": 2,
+                "explanation": "Apollo 11 \u2014 Landed on the Moon in July 1969, with Neil Armstrong and Buzz Aldrin walking on the surface."
             },
             {
                 "question": "What is the name of NASA's rover currently exploring Mars' Jezero Crater (landed 2021)?",
@@ -41,7 +44,8 @@
                     "Perseverance",
                     "Sojourner"
                 ],
-                "correct_index": 2
+                "correct_index": 2,
+                "explanation": "Perseverance \u2014 Landed in Jezero Crater in February 2021 to search for signs of ancient microbial life."
             },
             {
                 "question": "Which space telescope, launched in 2021, is designed to observe the universe primarily in infrared?",
@@ -51,7 +55,8 @@
                     "Kepler Space Telescope",
                     "Spitzer Space Telescope"
                 ],
-                "correct_index": 1
+                "correct_index": 1,
+                "explanation": "James Webb Space Telescope \u2014 Launched December 2021, it observes mainly in infrared to peer through dust and see distant galaxies."
             },
             {
                 "question": "What was the first reusable orbital-class rocket booster to land successfully after launch?",
@@ -61,7 +66,8 @@
                     "Saturn V",
                     "New Shepard"
                 ],
-                "correct_index": 0
+                "correct_index": 0,
+                "explanation": "Falcon 9 (SpaceX) \u2014 First landed a booster successfully in December 2015, paving the way for routine reusability."
             },
             {
                 "question": "Which country was the first to land a spacecraft on the far side of the Moon?",
@@ -71,7 +77,8 @@
                     "China",
                     "India"
                 ],
-                "correct_index": 2
+                "correct_index": 2,
+                "explanation": "China \u2014 Its Chang'e 4 mission landed on the Moon's far side in January 2019, a first in spaceflight history."
             }
         ]
     ]
