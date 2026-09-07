@@ -963,13 +963,15 @@ def wrap_html(
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{quiz["title"][:60]}</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{quiz["title"][:60]}</title>
 
-<style>
-{style.format(light_theme=light_theme, dark_theme=dark_theme)}
-</style>
+    <link rel="icon" href="https://raw.githubusercontent.com/axel-chamberland/Open-QuizUI/main/src/openquizui/action_logo.svg">
+
+    <style>
+    {style.format(light_theme=light_theme, dark_theme=dark_theme)}
+    </style>
 </head>
 
 <body>
