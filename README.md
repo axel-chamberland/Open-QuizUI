@@ -11,6 +11,7 @@ Open-QuizUI is a tool / action function for displaying interactive multiple-choi
 * Edit any question after quiz generation using the editor
 * Results/stats page at the end with corrections
 * Use one of many colour schemes or make your own
+* Optional per-question explanations shown after answering
 * Fits nicely on small screens
 
 ¹ MathJax must be enabled in the function's vavles (settings) for LaTeX expressions to render.
