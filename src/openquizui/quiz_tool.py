@@ -99,7 +99,7 @@ class Tools:
         )
         enable_explanations: bool = Field(
             default=False,
-            description="Include explanations for each question. Disabled by default as it requires the models to generate extra content",
+            description="Instructs the model to include an explanations for each question. Disabled by default as it requires the models to generate extra content.",
         )
         dark_mode: int = Field(
             default=-1,
