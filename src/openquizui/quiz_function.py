@@ -504,7 +504,7 @@ def infer_title(lines, before_line):
                 scored.append((2, bold_text))
                 continue
 
-        clean = re.sub(r"[#*_`>-]", "", s).strip()
+        clean = re.sub(r"^[#*_`>\s-]+|[#*_`\s]+$", "", s).strip()
         if (
             clean
             and len(clean) > 5
