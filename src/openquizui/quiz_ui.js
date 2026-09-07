@@ -48,9 +48,6 @@ const navigationContainer = questionBox.querySelector("#navigation");
 const questionNumber = document.getElementById("question-number");
 const results = document.getElementById("results");
 
-// Update title
-document.getElementById("title").textContent = quiz.title;
-
 // Update max question count
 const questionCount = document.getElementById("question-count");
 
