@@ -119,6 +119,11 @@ class Action:
             description="Disabled by default for privacy and performance. Enable LaTeX/math rendering with MathJax. Requires Internet access to load the MathJax library from a CDN. When disabled or offline, LaTeX expressions are displayed as plain text.",
         )
 
+        enable_explanations: bool = Field(
+            default=True,
+            description="Attempt to include an explanation for each questions if one exists",
+        )
+
         strip_references: bool = Field(
             default=False,
             description="Remove reference-style link definitions: [id]: url",
@@ -186,7 +191,7 @@ class Action:
             if not text:
                 raise ValueError("No content received")
 
-            title, questions = parse_quiz(text)
+            title, questions = parse_quiz(text, self.valves.enable_explanations)
 
             if self.valves.shuffle_choices:
                 shuffle_options(questions)
@@ -264,6 +269,7 @@ ANSWER_PATTERNS = [
 
 def parse_quiz(
     text: str,
+    explanations: bool,
 ) -> tuple[str, list[dict]]:
 
     lines = [line.strip() for line in text.split("\n")]
@@ -284,7 +290,7 @@ def parse_quiz(
     # Parse answer key (anywhere in the text)
     # -------------------------
 
-    questions = answer_parser(text, questions, question_lines)
+    questions = answer_parser(text, questions, question_lines, explanations)
 
     return title, questions
 
@@ -518,6 +524,7 @@ def answer_parser(
     text: str,
     questions: list[dict],
     question_lines: list[int],
+    explanations: bool,
 ) -> list[dict]:
     """
     Resolve each question's correct_index and optional explanation.
@@ -531,8 +538,6 @@ def answer_parser(
       - the next question line
       - the end of the text
     """
-
-    lines = text.splitlines()
 
     if len(question_lines) != len(questions):
         raise ValueError(
@@ -580,11 +585,6 @@ def answer_parser(
         if not valid:
             continue
 
-        # ---------------------------------------------------------
-        # This is the winning pattern.
-        # Its answer matches are authoritative.
-        # ---------------------------------------------------------
-
         # Get the line number where each answer starts.
         answer_lines = [text.count("\n", 0, match.start()) for match in answer_matches]
 
@@ -592,6 +592,9 @@ def answer_parser(
             zip(questions, answer_matches, answer_lines)
         ):
             q["correct_index"] = ord(answer_match.group(1).upper()) - ord("A")
+
+            if not explanations:
+                continue
 
             # The next question always starts at the beginning of its line.
             next_question_line = (
@@ -605,7 +608,7 @@ def answer_parser(
             )
 
             # The next answer normally starts on its own line, but it might
-            # be on the SAME line as the current answer. Therefore, use the
+            # be on the same line as the current answer. Therefore, use the
             # actual character position of the next answer instead of its line.
             next_answer_pos = (
                 answer_matches[i + 1].start() if i + 1 < len(answer_matches) else None
