@@ -126,7 +126,7 @@ async function toggleFullscreen() {
         try {
             await root.requestFullscreen();
             return;
-        } catch { }
+        } catch {}
     } else if (root.webkitRequestFullscreen) {
         root.webkitRequestFullscreen();
         return;
@@ -290,6 +290,7 @@ function renderMath(text) {
         return `<code>${expr}</code>`;
     });
 }
+
 function renderMarkdown(text) {
     if (!text) return "";
 
@@ -325,7 +326,7 @@ function renderMarkdown(text) {
     ]);
 
     text = text.replace(
-        /<\/?([A-Za-z][A-Za-z0-9-]*)(?:\s[^>]*)?>/g,
+        /<\/?(\p{L}[\p{L}\p{N}-]*)(?:\s[^>]*)?>/gu,
         (match, tagName, offset, wholeText) => {
             const tag = tagName.toLowerCase();
 
@@ -345,7 +346,7 @@ function renderMarkdown(text) {
             }
 
             // For normal elements, require a matching closing tag.
-            const closingTag = new RegExp(`</${tag}\\s*>`, "i");
+            const closingTag = new RegExp(`</${tag}\\s*>`, "iu");
 
             if (closingTag.test(wholeText.slice(offset + match.length))) {
                 return match;
@@ -370,7 +371,6 @@ function renderMarkdown(text) {
 
     return renderMath(text);
 }
-
 
 async function renderQuiz() {
     const questionBox = document.querySelector(".question-box");
@@ -537,8 +537,8 @@ function showExplanation(question) {
         explanationEl.style.display = "block";
 
         if (mathReady && window.MathJax) {
-            MathJax.typesetPromise([explanationEl]).catch(err =>
-                console.error("MathJax typesetting failed:", err)
+            MathJax.typesetPromise([explanationEl]).catch((err) =>
+                console.error("MathJax typesetting failed:", err),
             );
         }
     } else {
@@ -597,7 +597,7 @@ function saveTimer() {
                 start: timerStart,
             }),
         );
-    } catch { }
+    } catch {}
 }
 
 function updateTimer() {
@@ -800,7 +800,7 @@ function saveStats() {
                 startDate: defaultStartDate,
             }),
         );
-    } catch { }
+    } catch {}
 }
 
 function restartQuiz() {
@@ -868,8 +868,8 @@ function showCorrectionSheet() {
             questionResults[index] === SKIPPED
                 ? "Skipped"
                 : userIndex !== null
-                    ? question.options[userIndex]
-                    : "Unanswered";
+                  ? question.options[userIndex]
+                  : "Unanswered";
 
         const article = document.createElement("article");
 
@@ -888,12 +888,16 @@ function showCorrectionSheet() {
     ${renderMarkdown(correctAnswer)}
 </p>
 
-${question.explanation ? `
+${
+    question.explanation
+        ? `
 <p>
     <strong>Explanation:</strong>
     ${renderMarkdown(question.explanation)}
 </p>
-` : ""}
+`
+        : ""
+}
 `;
 
         container.appendChild(article);
@@ -934,7 +938,8 @@ function openEditor() {
     questionField.querySelector("textarea").value = question.question;
 
     explanationField.innerHTML = `<textarea></textarea>`;
-    explanationField.querySelector("textarea").value = question.explanation || "";
+    explanationField.querySelector("textarea").value =
+        question.explanation || "";
 
     editorAnswer.value = question.correct_index + 1;
 
@@ -987,10 +992,11 @@ function copyToClipboard(text, successMessage) {
 }
 
 function showManualCopyPrompt(text) {
-    showEditorAlert("Clipboard access isn't available here. You may select and copy the text from the console.");
+    showEditorAlert(
+        "Clipboard access isn't available here. You may select and copy the text from the console.",
+    );
     console.log(text);
 }
-
 
 function copyQuiz() {
     copyToClipboard(formatQuizAsText(), "Quiz copied to clipboard.");
@@ -1134,9 +1140,9 @@ function saveEdit() {
         optionsContainer.querySelectorAll("textarea"),
     ).map((ta) => ta.value);
 
-
-    const newExplanationText =
-        document.querySelector("#editor-explanation textarea").value;
+    const newExplanationText = document.querySelector(
+        "#editor-explanation textarea",
+    ).value;
 
     // Track whether the title was changed
     const titleChanged = quiz.title !== newTitleText;
