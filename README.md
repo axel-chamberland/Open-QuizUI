@@ -8,8 +8,9 @@ Open-QuizUI is a tool / action function for displaying interactive multiple-choi
 * Render MathJax for LaTeX expressions¹
 * Full-screen / focus mode²
 * Separate light/dark themes
-* Save a quiz and share it as an HTML file
+* Save a quiz and share it as an HTML file (works outside Open WebUI)
 * Edit any question after quiz generation using the editor
+* Embed anything with HTML (images, videos, iframes, etc.)
 * Results/stats page at the end with corrections
 * Use one of many colour schemes or make your own
 * Optional per-question explanations shown after answering
