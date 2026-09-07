@@ -1481,6 +1481,27 @@ function renderMarkdown(text) {
         return `\uE000${index}\uE001`;
     }
 
+    function escapeHtml(value) {
+        return value
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#39;");
+    }
+
+    // Protect fenced code blocks first.
+    // Everything inside a fenced block is treated literally.
+    text = text.replace(/```(?:[^\n`]*)\n([\s\S]*?)```/g, (_, content) =>
+        protect(`<pre><code>${escapeHtml(content)}</code></pre>`),
+    );
+
+    // Protect inline code.
+    // Everything between backticks is treated literally.
+    text = text.replace(/`([^`]*?)`/g, (_, content) =>
+        protect(`<code>${escapeHtml(content)}</code>`),
+    );
+
     // Protect math from Markdown processing.
     text = text.replace(/\$\$[\s\S]*?\$\$/g, protect);
     text = text.replace(/\$(?!\$)[\s\S]*?\$(?!\$)/g, protect);
@@ -1537,12 +1558,12 @@ function renderMarkdown(text) {
     );
 
     // Markdown.
+    // Code spans and code blocks are already protected.
     text = text
         .replace(/\*\*(.*?)\*\*/g, "<b>$1</b>")
-        .replace(/\*(.*?)\*/g, "<i>$1</i>")
-        .replace(/`([^]+?)`/g, "<code>$1</code>");
+        .replace(/\*(.*?)\*/g, "<i>$1</i>");
 
-    // Restore math.
+    // Restore protected content.
     text = text.replace(
         /\uE000(\d+)\uE001/g,
         (_, index) => protectedParts[Number(index)],

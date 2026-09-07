@@ -6,7 +6,6 @@ description: Converts a multiple choice quiz message into an interactive HTML qu
 version: 2.0
 """
 
-import base64
 import json
 import random
 import re
@@ -358,7 +357,7 @@ def question_parser(lines) -> tuple[list[dict], list[int]]:
         if choice_match:
             value = choice_match.group(2)
 
-            value = re.sub(r"\*\*(.*?)\*\*", r"\1", value)
+            value = re.sub(r"(?<![\w`])\*\*(.*?)\*\*(?![\w`])", r"\1", value)
             value = re.sub(r"\[source:.*?\]", "", value)
             value = value.strip()
 
@@ -670,8 +669,16 @@ def answer_parser(
 def clean_text(text: str, strip_refs: bool, strip_end_brackets: bool):
     """
     Remove thinking blocks and reference links,
-    and convert markdown links and embedded to HTML links
+    and convert markdown links and embedded images to HTML.
+    Code spans and fenced code blocks are protected from processing.
     """
+
+    protected_parts = []
+
+    def protect(match):
+        protected_parts.append(match.group(0))
+        return f"\ue000{len(protected_parts) - 1}\ue001"
+
     # Delete reasoning/tool-call blocks entirely (tag + body)
     text = re.sub(
         r'<details\s+type=["\'](?:reasoning|tool_calls)["\'][^<>]*>.*?</details>',
@@ -679,34 +686,74 @@ def clean_text(text: str, strip_refs: bool, strip_end_brackets: bool):
         text,
         flags=re.DOTALL | re.IGNORECASE,
     )
-    # For any remaining <details> (plain spoiler/answer-key blocks),
-    # unwrap: drop the <summary>...</summary> label, keep the rest of the body
-    text = re.sub(r"<summary>.*?</summary>", "", text, flags=re.DOTALL | re.IGNORECASE)
-    text = re.sub(r"</?details[^<>\n]*>", "", text, flags=re.IGNORECASE)
+
+    # For any remaining <details>, unwrap them.
+    text = re.sub(
+        r"<summary>.*?</summary>",
+        "",
+        text,
+        flags=re.DOTALL | re.IGNORECASE,
+    )
+    text = re.sub(
+        r"</?details[^<>\n]*>",
+        "",
+        text,
+        flags=re.IGNORECASE,
+    )
+
+    # Protect fenced code blocks first.
+    text = re.sub(
+        r"```[\s\S]*?```",
+        protect,
+        text,
+    )
+
+    # Protect inline code spans.
+    text = re.sub(
+        r"`[^`\n]*`",
+        protect,
+        text,
+    )
 
     # Remove reference-style link definitions: [id]: url
     if strip_refs:
-        text = re.sub(r"\s*\[\d+\](?!.*[^\W\d_])", "", text, flags=re.MULTILINE)
+        text = re.sub(
+            r"\s*\[\d+\](?!.*[^\W\d_])",
+            "",
+            text,
+            flags=re.MULTILINE,
+        )
 
-    # LLMs will sometimes give the answer inline in brackets, or a hint that gives off the answer
+    # Remove answer/hint brackets at the end.
     if strip_end_brackets:
-        text = re.sub(r"\s*\[[^\]]*\](?=[^\W\d_]*$)", "", text, flags=re.MULTILINE)
+        text = re.sub(
+            r"\s*\[[^\]]*\](?=[^\W\d_]*$)",
+            "",
+            text,
+            flags=re.MULTILINE,
+        )
 
-    # Convert Markdown images to HTML images
-    # ![alt text](https://example.com/image.png)
+    # Convert Markdown images to HTML images.
     text = re.sub(
         r"!\[([^\]]*)\]\(([^)\s]+)\)",
         r'<img src="\2" alt="\1">',
         text,
     )
 
-    # Convert Markdown links to HTML links
-    # [text](https://example.com)
+    # Convert Markdown links to HTML links.
     text = re.sub(
         r"\[([^\]]+)\]\(([^)\s]+)\)",
         r'<a href="\2" target="_blank" rel="noopener noreferrer">\1</a>',
         text,
     )
+
+    # Restore protected code.
+    text = re.sub(
+        r"\uE000(\d+)\uE001",
+        lambda m: protected_parts[int(m.group(1))],
+        text,
+    )
+
     return text.strip().replace("\r", "")
 
 
@@ -1984,6 +2031,27 @@ function renderMarkdown(text) {
         return `\uE000${index}\uE001`;
     }
 
+    function escapeHtml(value) {
+        return value
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#39;");
+    }
+
+    // Protect fenced code blocks first.
+    // Everything inside a fenced block is treated literally.
+    text = text.replace(/```(?:[^\n`]*)\n([\s\S]*?)```/g, (_, content) =>
+        protect(`<pre><code>${escapeHtml(content)}</code></pre>`),
+    );
+
+    // Protect inline code.
+    // Everything between backticks is treated literally.
+    text = text.replace(/`([^`]*?)`/g, (_, content) =>
+        protect(`<code>${escapeHtml(content)}</code>`),
+    );
+
     // Protect math from Markdown processing.
     text = text.replace(/\$\$[\s\S]*?\$\$/g, protect);
     text = text.replace(/\$(?!\$)[\s\S]*?\$(?!\$)/g, protect);
@@ -2040,12 +2108,12 @@ function renderMarkdown(text) {
     );
 
     // Markdown.
+    // Code spans and code blocks are already protected.
     text = text
         .replace(/\*\*(.*?)\*\*/g, "<b>$1</b>")
-        .replace(/\*(.*?)\*/g, "<i>$1</i>")
-        .replace(/`([^]+?)`/g, "<code>$1</code>");
+        .replace(/\*(.*?)\*/g, "<i>$1</i>");
 
-    // Restore math.
+    // Restore protected content.
     text = text.replace(
         /\uE000(\d+)\uE001/g,
         (_, index) => protectedParts[Number(index)],
