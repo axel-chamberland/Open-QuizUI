@@ -3,7 +3,7 @@ title: QuizUI
 author: Axel Chamberland
 git_url: https://github.com/axel-chamberland/OpenQuizUI
 description: Converts a multiple choice quiz message into an interactive HTML quiz
-version: 2.0
+version: 2.0.1
 """
 
 import json
@@ -2239,7 +2239,6 @@ function goTo(question_index) {
 }
 
 function handleAnswer(index, button) {
-    questionAnswers[currentQuestionIndex] = index;
     saveStats();
     if (index === currentQuestion.correct_index) {
         button.classList.add("correct");
@@ -2247,6 +2246,7 @@ function handleAnswer(index, button) {
         answerRevealed = true;
         if (wrongAnswerCount === 0) {
             questionResults[currentQuestionIndex] = CORRECT;
+            questionAnswers[currentQuestionIndex] = index;
             saveStats();
         }
         optionButtons.forEach((btn) => (btn.disabled = true));
@@ -2255,6 +2255,10 @@ function handleAnswer(index, button) {
         button.classList.add("wrong");
         button.disabled = true;
         questionResults[currentQuestionIndex] = WRONG;
+
+        if (questionAnswers[currentQuestionIndex] === null) {
+            questionAnswers[currentQuestionIndex] = index;
+        }
         saveStats();
         wrongAnswerCount++;
         if (wrongAnswerCount === currentQuestion.options.length - 1) {
