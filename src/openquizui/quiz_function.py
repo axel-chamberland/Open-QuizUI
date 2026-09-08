@@ -115,16 +115,16 @@ class Action:
         )
         enable_mathjax: bool = Field(
             default=False,
-            description="Disabled by default for privacy and performance. Enable LaTeX/math rendering with MathJax. Requires Internet access to load the MathJax library from a CDN. When disabled or offline, LaTeX expressions are displayed as plain text.",
+            description="Disabled by default for privacy. Enable LaTeX/math rendering with MathJax. Requires Internet access to load the MathJax library from a CDN. When disabled or offline, LaTeX expressions are displayed as plain text.",
         )
 
         enable_explanations: bool = Field(
             default=True,
-            description="Attempt to include an explanation for each questions if one exists",
+            description="Attempt to include an explanation for each question if one exists",
         )
 
         strip_references: bool = Field(
-            default=False,
+            default=True,
             description="Remove reference-style link definitions: [id]: url",
         )
 
