@@ -14,8 +14,8 @@ If the quiz isn't appearing, check the following:
 
 * Check that the questions and answer choices follow the supported formatting.
 * The parser relies on specific **keywords, structure, and formatting** to identify questions and answer choices.
-* Models can sometimes make small syntax errors that prevent a question from being detected. Consider editing the message manually.
-* A small formatting difference can prevent a question from being recognized.
+* Models can sometimes make small syntax errors in those keywords that prevent a question from being detected. Consider editing the message manually.
+* A small formatting difference may prevent a question from being recognized.
 * If the formatting appears correct but the question still isn't detected, consider [opening an issue](https://github.com/axel-chamberland/Open-QuizUI) with the message that caused the problem.
 * If the format isn't currently supported, the example can help add support for that formatting in a future update.
 
