@@ -37,9 +37,9 @@ B. <Choice>
 
 ```
 
-Keep the questions, choices, and answer key in the same message. Most standard formats are supported. If the Action fails to parse a particular format, consider opening an issue and providing the raw message.
+Keep the questions, choices, and answer key in the same message. Most standard formats are supported. See [Troubleshoot](Troubleshooting.md#questions-or-answers-arent-being-detected-by-the-action-function) if the action function fails. If the Action fails to parse a particular format, consider opening an issue and providing the raw message.
 
-Any text between an answer key item and the next answer key item (or the next question) is treated as that question's explanation:
+Any text between an answer key item and the next answer key item (or the next question) is treated as that question's explanation.
 
 ## Taking a Quiz
 
