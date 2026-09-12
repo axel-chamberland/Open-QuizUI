@@ -10,7 +10,7 @@ export function showExplanation(question) {
         explanationEl.style.display = "block";
 
 
-        if (state.mathReady && window.MathJax) {
+        if (state.mathReady) {
             window.MathJax.typesetPromise([explanationEl]).catch((err) =>
                 console.error("MathJax typesetting failed:", err),
             );

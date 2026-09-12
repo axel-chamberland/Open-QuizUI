@@ -1,8 +1,10 @@
+import { state } from "../state";
+
 function renderMath(text, mathReady) {
     if (!text) return "";
 
     return text.replace(/\$(.+?)\$/g, (match, expr) => {
-        if (mathReady && window.MathJax) {
+        if (mathReady) {
             return match;
         }
         return `<code>${expr}</code>`;
@@ -18,7 +20,7 @@ function escapeHtml(value) {
         .replace(/'/g, "&#39;");
 }
 
-export function renderMarkdown(text) {
+export function renderMarkdown(text, mathReady) {
     if (!text) return "";
 
     const protectedParts = [];
