@@ -1,12 +1,14 @@
 import { state } from "../state.js";
 
 // Download as HTML.
-export function downloadQuizHTML(filename = state.quiz.title) {
+export function downloadQuizHTML() {
     // quiz is the current runtime-modified quiz
     const appData = {
         enableMathJax: state.mathReady,
         quiz: state.quiz,
     };
+
+    const filename = state.quiz.title;
 
     // Clone the document so the live page is not modified.
     const documentClone = document.documentElement.cloneNode(true);

@@ -1,6 +1,7 @@
 import { state } from "../state.js";
 import { renderQuiz } from "./mcq.js";
 import { saveLocalEdit } from "../persistence/quiz_edits.js";
+import { setQuizTitle } from "../quiz.js";
 
 document
     .getElementById("editor-answer-number")

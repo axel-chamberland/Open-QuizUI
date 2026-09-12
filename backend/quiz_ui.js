@@ -576,6 +576,8 @@ ${question.explanation ? `
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
+
+        console.log("download filename:", filename, typeof filename);
         a.download = filename.endsWith(".html") ? filename : filename + ".html";
         document.body.appendChild(a);
         a.click();
