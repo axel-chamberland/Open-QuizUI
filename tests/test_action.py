@@ -2,7 +2,7 @@ import os
 import json
 import pytest
 
-from openquizui.quiz_function import clean_text, parse_quiz
+from backend.quiz_function import clean_text, parse_quiz
 
 TEST_DIR = "tests/test_files"
 

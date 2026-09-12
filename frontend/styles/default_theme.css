@@ -1,0 +1,33 @@
+:root {
+    color-scheme: light dark;
+    --bg: oklch(100% 0 0);
+    --btn: oklch(94% 0 0);
+    --text: oklch(20% 0 0);
+    --border: oklch(85% 0 0);
+
+    --success: #0fff93;
+    --danger: #ff4545;
+    --skipped: #ffb800;
+    --unanswered: #8a8a8a;
+
+    --correct_bg: color-mix(in srgb, var(--success) 30%, var(--btn));
+    --wrong_bg: color-mix(in srgb, var(--danger) 30%, var(--btn));
+}
+
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: oklch(20% 0 0);
+        --btn: oklch(24% 0 0);
+        --text: oklch(94% 0 0);
+        --border: oklch(85% 0 0);
+
+        --success: #00ff00;
+        --danger: #ff0000;
+        --skipped: #ffcc00;
+        --unanswered: #999999;
+
+        --correct_bg: color-mix(in srgb, var(--success) 30%, var(--btn));
+        --wrong_bg: color-mix(in srgb, var(--danger) 30%, var(--btn));
+    }
+}

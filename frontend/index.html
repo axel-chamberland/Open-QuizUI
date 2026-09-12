@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title id="page-title">Open-QuizUI</title>
+
+    <link rel="icon" href="https://raw.githubusercontent.com/axel-chamberland/Open-QuizUI/main/src/openquizui/action_logo.svg">
+
+    <link rel="stylesheet" href="./styles/default_theme.css">
+    <link rel="stylesheet" href="./styles/base.css">
+</head>
+
+<body class="app-loading">
+<svg style="display: none;">
+    <symbol id="icon-reveal" viewBox="0 0 24 24">
+        <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z"/>
+        <circle cx="12" cy="12" r="2.5"/>
+    </symbol>
+
+    <symbol id="icon-fullscreen" viewBox="0 0 24 24">
+        <path d="M8 3H3v5M16 3h5v5M8 21H3v-5M16 21h5v-5"/>
+    </symbol>
+
+    <symbol id="icon-download" viewBox="0 0 24 24">
+        <path d="M12 3v12m0 0 5-5m-5 5-5-5M4 21h16"/>
+    </symbol>
+
+    <symbol id="icon-timer" viewBox="0 0 24 24">
+        <circle cx="12" cy="13" r="8"/>
+        <path d="M12 9v4l3 2M9 3h6"/>
+    </symbol>
+
+    <symbol id="icon-editor" viewBox="0 0 24 24">
+        <rect x="5" y="4" width="14" height="17" rx="2"/>
+        <path d="M9 3h6v3H9z"/>
+        <path d="M8 11h8M8 15h5"/>
+    </symbol>
+
+    <symbol id="icon-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+    </symbol>
+
+    <symbol id="icon-copy-all" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+        <polyline points="2 17 12 22 22 17"></polyline>
+        <polyline points="2 12 12 17 22 12"></polyline>
+    </symbol>
+
+    <symbol id="icon-save" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+        <polyline points="17 21 17 13 7 13 7 21"></polyline>
+        <polyline points="7 3 7 8 15 8"></polyline>
+    </symbol>
+
+    <symbol id="icon-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+    </symbol>
+</svg>
+
+<div class="question-box">
+    <div class="title-bar">
+        <h1 id="title">Open-QuizUI</h1>
+        <span id="timer">00:00</span>
+    </div>
+    <div class="navigation-scroll">
+
+    <div id="navigation">
+
+        <button id="prev-button" aria-label="Previous question">&lt;</button>
+
+        <div id="question-selector">
+            <input id="question-number" type="text" inputmode="numeric" value="1">
+            <span class="separator">/</span>
+            <span id="question-count">1</span>
+        </div>
+
+        <button id="next-button" aria-label="Next question">&gt;</button>
+
+        <button id="reveal-button" title="Reveal answer" aria-label="Reveal answer">
+            <svg><use href="#icon-reveal"></use></svg>
+        </button>
+
+        <button id="maximize-button" title="Toggle Fullscreen" aria-label="Fullscreen">
+            <svg><use href="#icon-fullscreen"></use></svg>
+        </button>
+
+        <button id="download-button" title="Download quiz" aria-label="Download quiz">
+            <svg><use href="#icon-download"></use></svg>
+        </button>
+
+        <button id="timer-toggle" title="Toggle timer" aria-label="Toggle timer">
+            <svg><use href="#icon-timer"></use></svg>
+        </button>
+
+        <button id="copy-all-button" title="Copy quiz" aria-label="Copy quiz">
+            <svg><use href="#icon-copy-all"></use></svg>
+        </button>
+
+        <button id="copy-question-button" title="Copy question" aria-label="Copy question">
+            <svg><use href="#icon-copy"></use></svg>
+        </button>
+        <button id="editor-button" title="Edit question" aria-label="Edit question">
+            <svg><use href="#icon-editor"></use></svg>
+        </button>
+
+    </div>
+    </div>
+    <div id="question-scroll">
+        <p id="question"></p>
+        <div id="options"></div>
+        <div id="explanation"></div>
+    </div>
+</div>
+
+
+<div id="results" style="display: none;">
+    <div class=navigation-scroll>
+        <div id="results-navigation">
+            <button id="results-back-button" title="Back to quiz" aria-label="Back to quiz">&lt;</button>
+
+            <button id="results-maximize-button" title="Toggle Fullscreen" aria-label="Fullscreen">
+                <svg><use href="#icon-fullscreen"></use></svg>
+            </button>
+
+            <button id="results-download-button" title="Download quiz" aria-label="Download quiz">
+                <svg><use href="#icon-download"></use></svg>
+            </button>
+
+            <button id="results-copy-all-button" title="Copy quiz" aria-label="Copy quiz">
+                <svg><use href="#icon-copy-all"></use></svg>
+            </button>
+        </div>
+    </div>
+    <div id="results-scroll">
+
+        <div id="time"></div>
+        <div id="averageTime"></div>
+
+        <div class="stat-row">
+            <div id="correct"></div>
+            <div id="wrong"></div>
+        </div>
+        <div class="stat-row">
+            <div id="skipped"></div>
+            <div id="unanswered"></div>
+        </div>
+
+        <div class="stat-row">
+            <div id="score"></div>
+            <div id="accuracy"></div>
+        </div>
+
+
+        <div id="statsChart"></div>
+
+        <button id="restart-button" aria-label="Restart quiz">Restart Quiz</button>
+        <div id="restart-confirm" style="display: none;">
+            <span>Restart quiz?</span>
+            <button id="confirm-restart-button" aria-label="Confirm restart">Yes</button>
+            <button id="cancel-restart-button" aria-label="Cancel restart">No</button>
+        </div>
+
+    <section class="correction-sheet">
+        <h2>Correction</h2>
+        <div id="question-corrections"></div>
+    </section>
+    </div>
+
+</div>
+
+
+<div id="editor" style="display: none;">
+    <h1>Question Editor</h1>
+    <div class="navigation-scroll" id="editor-navigation">
+        <button id="editor-save-button" title="Save changes" aria-label="Save changes" data-tooltip="Save changes">
+            <svg><use href="#icon-save"></use></svg>
+        </button>
+        <button title="Copy quiz" aria-label="Copy quiz">
+            <svg><use href="#icon-copy-all"></use></svg>
+        </button>
+        <button id="editor-copy-button" title="Copy question" aria-label="Copy question">
+            <svg><use href="#icon-copy"></use></svg>
+        </button>
+        <button id="editor-maximize-button" title="Fullscreen" aria-label="Fullscreen">
+            <svg><use href="#icon-fullscreen"></use></svg>
+        </button>
+        <button id="editor-close-button" title="Close editor" aria-label="Close editor" data-tooltip="Close editor">
+            <svg><use href="#icon-close"></use></svg>
+        </button>
+    </div>
+    <div id="editor-close" class="editor-prompt">
+        <p id="editor-prompt-message"></p>
+        <div class="button-row">
+            <button id="editor-prompt-yes">yes</button>
+            <button id="editor-prompt-no">no</button>
+        </div>
+    </div>
+    <p>
+        <strong>Limitation:</strong>
+        Changes are stored in your browser.<br>
+        Download the modified quiz as a new HTML file to keep your changes permanently.
+    </p>
+    <div id="editor-scroll">
+        <p><strong>Title:</strong></p>
+        <div id="editor-title"></div>
+        <p><strong>Question:</strong></p>
+        <div id="editor-question"></div>
+        <div class="answer-position">
+            <p><strong>Answer Position:</strong></p>
+            <input type="text" id="editor-answer-number" inputmode="numeric">        </div>
+        <p><strong>Explanation:</strong></p>
+        <div id="editor-explanation"></div>
+        <p><strong>Choices:</strong></p>
+        <div id="editor-distractors"></div>
+
+    </div>
+</div>
+
+<script id="app-data" type="application/json">
+{
+    "enableMathJax": true,
+    "quiz": {
+        "title": "Open-QuizUI Feature Showcase",
+        "questions": [
+            {
+                "question": "If the quadratic equation\n$$\n2x^2 - 5x - 3 = 0\n$$\nhas roots $x_1$ and $x_2$, which expression gives the **sum of the roots**?",
+                "options": [
+                    "$\\displaystyle -\\frac{3}{2}$",
+                    "$\\displaystyle \\frac{5}{2}$",
+                    "$\\displaystyle \\frac{3}{2}$",
+                    "$\\displaystyle -\\frac{5}{2}$"
+                ],
+                "correct_index": 1,
+                "explanation": "For $ax^2 + bx + c = 0$, the sum of the roots is $\\displaystyle x_1+x_2=-\\frac{b}{a}$. Here, $a=2$ and $b=-5$, so $\\displaystyle x_1+x_2=-\\frac{-5}{2}=\\frac{5}{2}$."
+            },
+            {
+                "question": "Which planet is the largest in our Solar System?\n<img src=\"https://as2.ftcdn.net/jpg/04/64/25/05/1000_F_464250544_yLEaWgvrClpIxAQH3ji2ZqJxqJhswZu5fq.webp\">",
+                "options": [
+                    "Saturn",
+                    "Earth",
+                    "Neptune",
+                    "Jupiter"
+                ],
+                "correct_index": 3,
+                "explanation": "Jupiter is the largest planet in our Solar System."
+            },
+            {
+                "question": "Watch the following video and identify the sorting algorithm being demonstrated.\n<iframe width=\"560\" height=\"315\" src=\"https://www.youtube-nocookie.com/embed/Dv4qLJcxus8?si=NoqPc8A69mlPTtN3\" title=\"YouTube video player\" frameborder=\"0\" allow=\"accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share\" referrerpolicy=\"strict-origin-when-cross-origin\" allowfullscreen></iframe>",
+                "options": [
+                    "Bubble sort",
+                    "Quick sort",
+                    "Merge sort",
+                    "Selection sort"
+                ],
+                "correct_index": 0,
+                "explanation": "Bubble sort repeatedly compares adjacent elements and swaps them when they are in the wrong order. *You can embed YouTube and other sites that support embedding.* Note that this may not work due to site or browser restrictions."
+            },
+            {
+                "question": "Which Markdown syntax makes text **bold**?",
+                "options": [
+                    "`~~text~~`",
+                    "`_text_`",
+                    "`*text*`",
+                    "`**text**`"
+                ],
+                "correct_index": 3,
+                "explanation": "Markdown uses `**text**` to make text **bold**."
+            },
+            {
+                "question": "Which of the following HTML elements creates a hyperlink?",
+                "options": [
+                    "`<link>`",
+                    "`<img>`",
+                    "`<a>`",
+                    "`<video>`"
+                ],
+                "correct_index": 2,
+                "explanation": "The HTML `<a>` element creates a hyperlink to another resource. See <a href=\"https://github.com/axel-chamberland/Open-QuizUI/blob/main/docs/Formatting.md\" target=\"_blank\" rel=\"noopener noreferrer\">Open-QuizUI Formatting</a> for more cool stuff."
+            },
+            {
+                "question": "How can Open-QuizUI be added to Open WebUI?",
+                "options": [
+                    "As either a Tool or an Action Function",
+                    "Only as a browser extension",
+                    "Only as a standalone website",
+                    "Only by modifying Open WebUI's source code"
+                ],
+                "correct_index": 0,
+                "explanation": "Open-QuizUI can be added to Open WebUI as either a Tool or an Action Function."
+            },
+            {
+                "question": "When is the Action Function recommended instead of the Tool?",
+                "options": [
+                    "When using a larger model that supports advanced tool calling",
+                    "When using a lighter model or generating a large quiz where JSON tool calling may be less practical or when you want to edit a quiz persistently.",
+                    "When creating smaller quizzes that require structured JSON output",
+                    "When Open WebUI does not support Action Functions"
+                ],
+                "correct_index": 1,
+                "explanation": "The Action Function is useful with lighter models that may not handle tool calling as reliably, and for large quizzes where requiring structured JSON tool calls can be less practical. It is also useful for editing a quiz permanently in Open WebUI: if using the tool, you can click the \"copy all\" button and then paste the quiz by editing any LLM message: you've converted the tool's output into the action's input which you can modify!"
+            },
+            {
+                "question": "What should you do if an Open-QuizUI Action Function fails to recognize the quiz format?",
+                "options": [
+                    "Delete the function",
+                    "Reinstall Open WebUI",
+                    "Disable JavaScript",
+                    "Manually correct the formatting or ask the LLM to regenerate the quiz in the expected format"
+                ],
+                "correct_index": 3,
+                "explanation": "If the LLM produces an unsupported format, the quiz can be corrected manually (or by an LLM), or the LLM can be asked to render the quiz using the tool."
+            },
+            {
+                "question": "What happens when a quiz is finished?",
+                "options": [
+                    "Going to the next page shows the user's score and corrections",
+                    "The chat conversation is permanently deleted",
+                    "The quiz automatically starts over",
+                    "The answers are deleted immediately"
+                ],
+                "correct_index": 0,
+                "explanation": "After completing a quiz, Open-QuizUI displays a results page with the user's score and corrections. A button allows the user to restart the quiz."
+            },
+            {
+                "question": "Which statement best describes Open-QuizUI?",
+                "options": [
+                    "A programming IDE for Open WebUI",
+                    "A file-management interface for Open WebUI",
+                    "An interactive multiple-choice quiz interface for Open WebUI",
+                    "A replacement for the Open WebUI chat interface"
+                ],
+                "correct_index": 2,
+                "explanation": "Open-QuizUI provides an interactive multiple-choice HTML quiz interface for Open WebUI."
+            }
+        ]
+    }
+}
+
+</script>
+
+<script type="module" src="./src/main.js"></script>
+
+</body>
+</html>
