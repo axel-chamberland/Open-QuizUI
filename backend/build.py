@@ -83,11 +83,12 @@ def build(python_file, output_file):
     python = python.split("def wrap_html(", 1)[0]
 
     if "import json" not in python:
-        python = "import json\n\n" + python
+        imports = "import json\n"
 
     python += f'''def wrap_html(
     quiz, enable_mathjax: bool, light_theme="default_light", dark_theme="default_dark"
 ):
+    {imports}
     payload = {{"enableMathJax": bool(enable_mathjax), "quiz": quiz}}
 
     app_data = json.dumps(payload, ensure_ascii=False)
