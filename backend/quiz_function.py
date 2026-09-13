@@ -10,6 +10,7 @@ import random
 import re
 
 import markdown
+import regex
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, Field
 
@@ -146,6 +147,19 @@ class Action:
             description="change the dark mode theme to a different theme. to define a new theme, you can add a theme at the top of the code where the templates are. Defaults: default_dark. high_contrast, tokyonight",
         )
 
+        question_pattern: str = Field(
+            default=r"question|bonus|q(?!\p{L})",
+            description="Regex pattern for detecting question labels; use | for OR.",
+        )
+        answer_pattern: str = Field(
+            default="answer|correct answer|réponse|bonne réponse|réponse correcte|r|a",
+            description="Regex pattern for detecting answer labels; use | for OR.",
+        )
+        choice_pattern: str = Field(
+            default=r"\p{L}",
+            description="Regex for the multiple-choice option identifier.",
+        )
+
     def __init__(self):
         self.valves = self.Valves()
 
@@ -190,7 +204,13 @@ class Action:
             if not text:
                 raise ValueError("No content received")
 
-            title, questions = parse_quiz(text, self.valves.enable_explanations)
+            title, questions = parse_quiz(
+                text,
+                self.valves.enable_explanations,
+                self.valves.question_pattern,
+                self.valves.answer_pattern,
+                self.valves.choice_pattern,
+            )
 
             if self.valves.shuffle_choices:
                 shuffle_options(questions)
@@ -243,32 +263,35 @@ class Action:
 # Asterix could also be stripped them from lines to simplify the regex.
 ANSWER_PATTERNS = [
     # Numbered list: 1. B
-    r"^\s*\*{0,2}\d+\s*\*{0,2}\s*[\.\):-]\s*\*{0,2}([A-Z])\*{0,2}(?=\s*(?:,|$))",
+    r"^\s*\*{0,2}\d+\s*\*{0,2}\s*[\.\):-]\s*\*{0,2}({CHOICE_PATTERN})\*{0,2}(?=\s*(?:,|$))",
     # Numbered list: 1. B (less strict)
-    r"^\s*\*{0,2}\d+\s*\*{0,2}\s*[\.\):-]\s*\*{0,2}([A-Z])\*{0,2}\b",
+    r"^\s*\*{0,2}\d+\s*\*{0,2}\s*[\.\):-]\s*\*{0,2}({CHOICE_PATTERN})\*{0,2}\b",
     # Réponse : B / Answer: B / Correct answer: B or even **Answer** or **R:** or R:
-    r"^\s*\*{0,2}(?:réponse|answer|correct answer|r|a)\s*\*{0,2}\s*[:\-]?\s*\*{0,2}\s*([A-Z])\b",
+    r"^\s*\*{0,2}(?:{ANSWER_PATTERN})\s*\*{0,2}\s*[:\-]?\s*\*{0,2}\s*({CHOICE_PATTERN})\b",
     # In Bullet Point
-    r"^\s*[*\-]?\s*\*{0,2}\s*(?:r|answer|réponse|correct answer)\s*\*{0,2}\s*[:\-]?\s*\*{0,2}\s*([A-Z])\b",
+    r"^\s*[*\-]?\s*\*{0,2}\s*(?:{ANSWER_PATTERN})\s*\*{0,2}\s*[:\-]?\s*\*{0,2}\s*({CHOICE_PATTERN})\b",
     # **Q1 Answer:** **c) ...** / **Q1 Answer:** **c)** trailing text
-    r"^\s*\*{0,2}\s*q\s*\d+\s*(?:r|answer|réponse|correct answer)\s*\*{0,2}\s*[:\-]?\s*\*{0,2}\s*\*{0,2}\s*([A-Z])\b",
-    # Question 1 : B
-    r"^\s*question\s*\d+.*?([A-Z])\b",
+    r"^\s*\*{0,2}\s*q\s*\d+\s*(?:{ANSWER_PATTERN})\s*\*{0,2}\s*[:\-]?\s*\*{0,2}\s*\*{0,2}\s*({CHOICE_PATTERN})\b",
     # Numbered bulk: 1.A, 2.B, 3.C, 4.B, 5.A and optional | and ) delimiters
-    r"\b\d+\s*\*{0,2}\s*[\.\):-]\s*\*{0,2}\s*([A-Z])\s*\)?(?=\s*(?:\||,|$|\s+\d+\s*[\.\):-]))",
+    r"\b\d+\s*\*{0,2}\s*[\.\):-]\s*\*{0,2}\s*({CHOICE_PATTERN})\s*\)?(?=\s*(?:\||,|$|\s+\d+\s*[\.\):-]))",
     # Adding a space as option:
-    r"\b\d+\s*\*{0,2}\s*[-.):\s]\s*\*{0,2}\s*([A-Z])\s*\)?(?=\s*(?:\||,|$|\s+\d+\s*[-.):\s]))",
+    r"\b\d+\s*\*{0,2}\s*[-.):\s]\s*\*{0,2}\s*({CHOICE_PATTERN})\s*\)?(?=\s*(?:\||,|$|\s+\d+\s*[-.):\s]))",
     # In Table
-    r"^\|\s*\*{0,2}\d+\*{0,2}\s*\|\s*\*{0,2}([A-Z])\*{0,2}(?=\s*\|)",
+    r"^\|\s*\*{0,2}\d+\*{0,2}\s*\|\s*\*{0,2}({CHOICE_PATTERN})\*{0,2}(?=\s*\|)",
     # Numbered list with trailing text: 1. **B** (Vertices and edges) [1]
     # Excludes numbered questions containing '?'
-    r"^\s*\*{0,2}\d+\s*\*{0,2}\s*[\.\):-]\s*\*{0,2}([A-Z])\*{0,2}(?=\s+[^?\n]+$)",
+    r"^\s*\*{0,2}\d+\s*\*{0,2}\s*[\.\):-]\s*\*{0,2}({CHOICE_PATTERN})\*{0,2}(?=\s+[^?\n]+$)",
+    # Question 1 : B
+    r"^\s*question\s*\d+.*?({CHOICE_PATTERN})\b",
 ]
 
 
 def parse_quiz(
     text: str,
     explanations: bool,
+    question_pattern=r"question|bonus|q(?!\p{L})",
+    answer_pattern="answer|correct answer|réponse|bonne réponse|r|a",
+    choice_pattern=r"\p{L}",
 ) -> tuple[str, list[dict]]:
 
     lines = [line.strip() for line in text.split("\n")]
@@ -279,7 +302,7 @@ def parse_quiz(
 
     questions, question_lines = question_parser(lines)
 
-    # -------------------------
+    # -------------------------{CHOICE_PATTERN}
     # Attempt to Infer Title
     # -------------------------
 
@@ -289,7 +312,9 @@ def parse_quiz(
     # Parse answer key (anywhere in the text)
     # -------------------------
 
-    questions = answer_parser(text, questions, question_lines, explanations)
+    questions = answer_parser(
+        text, questions, question_lines, explanations, answer_pattern, choice_pattern
+    )
 
     # Convert paragraphs and markdown tables to HTML per-question (question, options, explanation),
     for q in questions:
@@ -303,7 +328,9 @@ def parse_quiz(
     return title, questions
 
 
-def question_parser(lines) -> tuple[list[dict], list[int]]:
+def question_parser(
+    lines, question_pattern=r"question|bonus|q(?!\p{L})", choice_pattern=r"\p{L}"
+) -> tuple[list[dict], list[int]]:
     """
     Formats:
     #Question 1: ...
@@ -317,19 +344,24 @@ def question_parser(lines) -> tuple[list[dict], list[int]]:
     Supports if description is on following lines
     """
 
-    question_re = re.compile(
-        r"(?:#{1,6}\s*)?"  # Optional Markdown Header (#)
-        r"(?:\*\*)?"  # Optional bold question (**)
-        # The Label/Number
-        r"(?:(?:question|q(?![a-zÀ-ÿ])|bonus)\s*([0-9]+)?|([0-9]+)(?=\*{0,2}(?:[\s.:\)\-]|$)))"
-        r"\s*[:.\-]?\s*"  # Separator (: . -)
-        r"(?:\*\*)?"  # Skip bold end of question, if it exists
-        r"(.*?)(?:\*\*)?$",  # actual question text, excluding ** if it exists
-        re.IGNORECASE,
+    question_re = regex.compile(
+        (
+            r"(?:#{1,6}\s*)?"  # Optional Markdown Header (#)
+            r"(?:\*\*)?"  # Optional bold question (**)
+            # The Label/Number
+            r"(?:(?:{QUESTION_LABELS})\s*([0-9]+)?|([0-9]+)(?=\*{0,2}(?:[\s.:\)\-]|$)))"
+            r"\s*[:.\-]?\s*"  # Separator (: . -)
+            r"(?:\*\*)?"  # Skip bold end of question, if it exists
+            r"(.*?)(?:\*\*)?$"  # actual question text, excluding ** if it exists
+        ).replace("{QUESTION_LABELS}", question_pattern),
+        regex.IGNORECASE,
     )
-    choice_re = re.compile(
-        r"^\s*[-*•]?\s*([A-Z])[\)\.\-]\s*(.+)$",
-        re.IGNORECASE,
+
+    choice_re = regex.compile(
+        (r"^\s*[-*•]?\s*({CHOICE_PATTERN})[\)\.\-]\s*(.+)$").replace(
+            "{CHOICE_PATTERN}", choice_pattern
+        ),
+        regex.IGNORECASE,
     )
 
     questions = []
@@ -532,6 +564,8 @@ def answer_parser(
     questions: list[dict],
     question_lines: list[int],
     explanations: bool,
+    answer_pattern="answer|correct answer|réponse|bonne réponse|r|a",
+    choice_pattern=r"\p{L}",
 ) -> list[dict]:
     """
     Resolve each question's correct_index and optional explanation.
@@ -561,11 +595,14 @@ def answer_parser(
     best_matches = []
 
     for pattern in ANSWER_PATTERNS:
+        clean_pattern = pattern.replace("{ANSWER_PATTERN}", answer_pattern).replace(
+            "{CHOICE_PATTERN}", choice_pattern
+        )
         answer_matches = list(
-            re.finditer(
-                pattern,
+            regex.finditer(
+                clean_pattern,
                 text,
-                re.IGNORECASE | re.MULTILINE,
+                regex.IGNORECASE | regex.MULTILINE,
             )
         )
 
