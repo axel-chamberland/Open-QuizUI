@@ -1575,7 +1575,7 @@ th {
 
 <div class="question-box">
     <div class="title-bar">
-        <h1 id="title">Open-QuizUI</h1>
+        <h1 id="title">Quiz</h1>
         <span id="timer">00:00</span>
     </div>
     <div class="navigation-scroll">
@@ -2781,7 +2781,6 @@ try {
   }
 } catch {
 }
-document.title = quiz.title.slice(0, 60);
 initializeState(quiz);
 loadStats();
 loadQuizEdits(state);
@@ -2792,6 +2791,7 @@ async function initializeQuiz() {
   if (state.mathReady && window.MathJax?.startup?.promise) {
     await window.MathJax.startup.promise;
   }
+  setQuizTitle(quiz.title);
   renderQuiz();
   initializeEvents();
   initHeightReporting();

@@ -6,6 +6,7 @@ import { loadMathJax } from "./shared/mathjax.js";
 import { renderQuiz } from "./rendering/mcq.js";
 import { state } from "./state.js";
 import { initHeightReporting } from "./ui/reportHeight.js";
+import { setQuizTitle } from "./quiz.js";
 
 const appData = JSON.parse(
     document.getElementById("app-data").textContent
@@ -29,8 +30,6 @@ try {
     // This is fine, since it means that pseudo-fullscreen did not modify anything that needs to be reset
 }
 
-document.title = quiz.title.slice(0, 60);
-
 initializeState(quiz);
 loadStats();
 loadQuizEdits(state);
@@ -48,6 +47,7 @@ async function initializeQuiz() {
         await window.MathJax.startup.promise;
     }
 
+    setQuizTitle(quiz.title)
     renderQuiz();
     initializeEvents();
     initHeightReporting();
