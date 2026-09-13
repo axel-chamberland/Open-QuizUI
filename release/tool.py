@@ -922,6 +922,24 @@ table {
     margin-inline: auto;
 }
 
+/* Tables */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+}
+
+th,
+td {
+    padding: 0.5rem;
+    border: 1px solid var(--border);
+    text-align: left;
+}
+
+th {
+    background: var(--btn);
+}
+
 </style>
 </head>
 

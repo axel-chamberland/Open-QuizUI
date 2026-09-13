@@ -1,118 +1,118 @@
 {
-    "content": "Open-QuizUI Feature Showcase\n\nQuestion 1: If the quadratic equation\n$$\n2x^2 - 5x - 3 = 0\n$$\nhas roots $x_1$ and $x_2$, which expression gives the **sum of the roots**?\n\nA. $\\displaystyle -\\frac{3}{2}$\nB. $\\displaystyle \\frac{5}{2}$\nC. $\\displaystyle \\frac{3}{2}$\nD. $\\displaystyle -\\frac{5}{2}$\n\nQuestion 2: Which planet is the largest in our Solar System?\n<img src=\"https://as2.ftcdn.net/jpg/04/64/25/05/1000_F_464250544_yLEaWgvrClpIxAQH3ji2ZqJxqJhswZu5fq.webp\">\n\nA. Saturn\nB. Earth\nC. Neptune\nD. Jupiter\n\nQuestion 3: Watch the following video and identify the sorting algorithm being demonstrated.\n<iframe width=\"560\" height=\"315\" src=\"https://www.youtube-nocookie.com/embed/Dv4qLJcxus8?si=NoqPc8A69mlPTtN3\" title=\"YouTube video player\" frameborder=\"0\" allow=\"accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share\" referrerpolicy=\"strict-origin-when-cross-origin\" allowfullscreen></iframe>\n\nA. Bubble sort\nB. Quick sort\nC. Merge sort\nD. Selection sort\n\nQuestion 4: Which Markdown syntax makes text **bold**?\n\nA. `~~text~~`\nB. `_text_`\nC. `*text*`\nD. `**text**`\n\nQuestion 5: Which of the following HTML elements creates a hyperlink?\n\nA. `<link>`\nB. `<img>`\nC. `<a>`\nD. `<video>`\n\nQuestion 6: How can Open-QuizUI be added to Open WebUI?\n\nA. As either a Tool or an Action Function\nB. Only as a browser extension\nC. Only as a standalone website\nD. Only by modifying Open WebUI's source code\n\nQuestion 7: When is the Action Function recommended instead of the Tool?\n\nA. When using a larger model that supports advanced tool calling\nB. When using a lighter model or generating a large quiz where JSON tool calling may be less practical or when you want to edit a quiz persistently.\nC. When creating smaller quizzes that require structured JSON output\nD. When Open WebUI does not support Action Functions\n\nQuestion 8: What should you do if an Open-QuizUI Action Function fails to recognize the quiz format?\n\nA. Delete the function\nB. Reinstall Open WebUI\nC. Disable JavaScript\nD. Manually correct the formatting or ask the LLM to regenerate the quiz in the expected format\n\nQuestion 9: What happens when a quiz is finished?\n\nA. Going to the next page shows the user's score and corrections\nB. The chat conversation is permanently deleted\nC. The quiz automatically starts over\nD. The answers are deleted immediately\n\nQuestion 10: Which statement best describes Open-QuizUI?\n\nA. A programming IDE for Open WebUI\nB. A file-management interface for Open WebUI\nC. An interactive multiple-choice quiz interface for Open WebUI\nD. A replacement for the Open WebUI chat interface\n\nAnswer Key:\n\n| Question | Correct Answer | Explanation |\n| --- | --- | --- |\n| 1 | B | For $ax^2 + bx + c = 0$, the sum of the roots is $\\displaystyle x_1+x_2=-\\frac{b}{a}$. Here, $a=2$ and $b=-5$, so $\\displaystyle x_1+x_2=-\\frac{-5}{2}=\\frac{5}{2}$. |\n| 2 | D | Jupiter is the largest planet in our Solar System. |\n| 3 | A | Bubble sort repeatedly compares adjacent elements and swaps them when they are in the wrong order. *You can embed YouTube and other sites that support embedding.* Note that this may not work due to site or browser restrictions. |\n| 4 | D | Markdown uses `**text**` to make text **bold**. |\n| 5 | C | The HTML `<a>` element creates a hyperlink to another resource. See <a href=\"https://github.com/axel-chamberland/Open-QuizUI/blob/main/docs/Formatting.md\" target=\"_blank\" rel=\"noopener noreferrer\">Open-QuizUI Formatting</a> for more cool stuff. |\n| 6 | A | Open-QuizUI can be added to Open WebUI as either a Tool or an Action Function. |\n| 7 | B | The Action Function is useful with lighter models that may not handle tool calling as reliably, and for large quizzes where requiring structured JSON tool calls can be less practical. It is also useful for editing a quiz permanently in Open WebUI: if using the tool, you can click the \"copy all\" button and then paste the quiz by editing any LLM message: you've converted the tool's output into the action's input which you can modify! |\n| 8 | D | If the LLM produces an unsupported format, the quiz can be corrected manually (or by an LLM), or the LLM can be asked to render the quiz using the tool. |\n| 9 | A | After completing a quiz, Open-QuizUI displays a results page with the user's score and corrections. A button allows the user to restart the quiz. |\n| 10 | C | Open-QuizUI provides an interactive multiple-choice HTML quiz interface for Open WebUI. |",
-    "expected": [
-        "Open-QuizUI Feature Showcase",
-        [
-            {
-                "question": "If the quadratic equation\n$$\n2x^2 - 5x - 3 = 0\n$$\nhas roots $x_1$ and $x_2$, which expression gives the **sum of the roots**?",
-                "options": [
-                    "$\\displaystyle -\\frac{3}{2}$",
-                    "$\\displaystyle \\frac{5}{2}$",
-                    "$\\displaystyle \\frac{3}{2}$",
-                    "$\\displaystyle -\\frac{5}{2}$"
-                ],
-                "correct_index": 1,
-                "explanation": "For $ax^2 + bx + c = 0$, the sum of the roots is $\\displaystyle x_1+x_2=-\\frac{b}{a}$. Here, $a=2$ and $b=-5$, so $\\displaystyle x_1+x_2=-\\frac{-5}{2}=\\frac{5}{2}$."
-            },
-            {
-                "question": "Which planet is the largest in our Solar System?\n<img src=\"https://as2.ftcdn.net/jpg/04/64/25/05/1000_F_464250544_yLEaWgvrClpIxAQH3ji2ZqJxqJhswZu5fq.webp\">",
-                "options": [
-                    "Saturn",
-                    "Earth",
-                    "Neptune",
-                    "Jupiter"
-                ],
-                "correct_index": 3,
-                "explanation": "Jupiter is the largest planet in our Solar System."
-            },
-            {
-                "question": "Watch the following video and identify the sorting algorithm being demonstrated.\n<iframe width=\"560\" height=\"315\" src=\"https://www.youtube-nocookie.com/embed/Dv4qLJcxus8?si=NoqPc8A69mlPTtN3\" title=\"YouTube video player\" frameborder=\"0\" allow=\"accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share\" referrerpolicy=\"strict-origin-when-cross-origin\" allowfullscreen></iframe>",
-                "options": [
-                    "Bubble sort",
-                    "Quick sort",
-                    "Merge sort",
-                    "Selection sort"
-                ],
-                "correct_index": 0,
-                "explanation": "Bubble sort repeatedly compares adjacent elements and swaps them when they are in the wrong order. *You can embed YouTube and other sites that support embedding.* Note that this may not work due to site or browser restrictions."
-            },
-            {
-                "question": "Which Markdown syntax makes text **bold**?",
-                "options": [
-                    "`~~text~~`",
-                    "`_text_`",
-                    "`*text*`",
-                    "`**text**`"
-                ],
-                "correct_index": 3,
-                "explanation": "Markdown uses `**text**` to make text **bold**."
-            },
-            {
-                "question": "Which of the following HTML elements creates a hyperlink?",
-                "options": [
-                    "`<link>`",
-                    "`<img>`",
-                    "`<a>`",
-                    "`<video>`"
-                ],
-                "correct_index": 2,
-                "explanation": "The HTML `<a>` element creates a hyperlink to another resource. See <a href=\"https://github.com/axel-chamberland/Open-QuizUI/blob/main/docs/Formatting.md\" target=\"_blank\" rel=\"noopener noreferrer\">Open-QuizUI Formatting</a> for more cool stuff."
-            },
-            {
-                "question": "How can Open-QuizUI be added to Open WebUI?",
-                "options": [
-                    "As either a Tool or an Action Function",
-                    "Only as a browser extension",
-                    "Only as a standalone website",
-                    "Only by modifying Open WebUI's source code"
-                ],
-                "correct_index": 0,
-                "explanation": "Open-QuizUI can be added to Open WebUI as either a Tool or an Action Function."
-            },
-            {
-                "question": "When is the Action Function recommended instead of the Tool?",
-                "options": [
-                    "When using a larger model that supports advanced tool calling",
-                    "When using a lighter model or generating a large quiz where JSON tool calling may be less practical or when you want to edit a quiz persistently.",
-                    "When creating smaller quizzes that require structured JSON output",
-                    "When Open WebUI does not support Action Functions"
-                ],
-                "correct_index": 1,
-                "explanation": "The Action Function is useful with lighter models that may not handle tool calling as reliably, and for large quizzes where requiring structured JSON tool calls can be less practical. It is also useful for editing a quiz permanently in Open WebUI: if using the tool, you can click the \"copy all\" button and then paste the quiz by editing any LLM message: you've converted the tool's output into the action's input which you can modify!"
-            },
-            {
-                "question": "What should you do if an Open-QuizUI Action Function fails to recognize the quiz format?",
-                "options": [
-                    "Delete the function",
-                    "Reinstall Open WebUI",
-                    "Disable JavaScript",
-                    "Manually correct the formatting or ask the LLM to regenerate the quiz in the expected format"
-                ],
-                "correct_index": 3,
-                "explanation": "If the LLM produces an unsupported format, the quiz can be corrected manually (or by an LLM), or the LLM can be asked to render the quiz using the tool."
-            },
-            {
-                "question": "What happens when a quiz is finished?",
-                "options": [
-                    "Going to the next page shows the user's score and corrections",
-                    "The chat conversation is permanently deleted",
-                    "The quiz automatically starts over",
-                    "The answers are deleted immediately"
-                ],
-                "correct_index": 0,
-                "explanation": "After completing a quiz, Open-QuizUI displays a results page with the user's score and corrections. A button allows the user to restart the quiz."
-            },
-            {
-                "question": "Which statement best describes Open-QuizUI?",
-                "options": [
-                    "A programming IDE for Open WebUI",
-                    "A file-management interface for Open WebUI",
-                    "An interactive multiple-choice quiz interface for Open WebUI",
-                    "A replacement for the Open WebUI chat interface"
-                ],
-                "correct_index": 2,
-                "explanation": "Open-QuizUI provides an interactive multiple-choice HTML quiz interface for Open WebUI."
-            }
-        ]
+  "content": "Open-QuizUI Feature Showcase\n\nQuestion 1: If the quadratic equation\n$$\n2x^2 - 5x - 3 = 0\n$$\nhas roots $x_1$ and $x_2$, which expression gives the **sum of the roots**?\n\nA. $\\displaystyle -\\frac{3}{2}$\nB. $\\displaystyle \\frac{5}{2}$\nC. $\\displaystyle \\frac{3}{2}$\nD. $\\displaystyle -\\frac{5}{2}$\n\nQuestion 2: Which planet is the largest in our Solar System?\n<img src=\"https://as2.ftcdn.net/jpg/04/64/25/05/1000_F_464250544_yLEaWgvrClpIxAQH3ji2ZqJxqJhswZu5fq.webp\">\n\nA. Saturn\nB. Earth\nC. Neptune\nD. Jupiter\n\nQuestion 3: Watch the following video and identify the sorting algorithm being demonstrated.\n<iframe width=\"560\" height=\"315\" src=\"https://www.youtube-nocookie.com/embed/Dv4qLJcxus8?si=NoqPc8A69mlPTtN3\" title=\"YouTube video player\" frameborder=\"0\" allow=\"accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share\" referrerpolicy=\"strict-origin-when-cross-origin\" allowfullscreen></iframe>\n\nA. Bubble sort\nB. Quick sort\nC. Merge sort\nD. Selection sort\n\nQuestion 4: Which Markdown syntax makes text **bold**?\n\nA. `~~text~~`\nB. `_text_`\nC. `*text*`\nD. `**text**`\n\nQuestion 5: Which of the following HTML elements creates a hyperlink?\n\nA. `<link>`\nB. `<img>`\nC. `<a>`\nD. `<video>`\n\nQuestion 6: How can Open-QuizUI be added to Open WebUI?\n\nA. As either a Tool or an Action Function\nB. Only as a browser extension\nC. Only as a standalone website\nD. Only by modifying Open WebUI's source code\n\nQuestion 7: When is the Action Function recommended instead of the Tool?\n\nA. When using a larger model that supports advanced tool calling\nB. When using a lighter model or generating a large quiz where JSON tool calling may be less practical or when you want to edit a quiz persistently.\nC. When creating smaller quizzes that require structured JSON output\nD. When Open WebUI does not support Action Functions\n\nQuestion 8: What should you do if an Open-QuizUI Action Function fails to recognize the quiz format?\n\nA. Delete the function\nB. Reinstall Open WebUI\nC. Disable JavaScript\nD. Manually correct the formatting or ask the LLM to regenerate the quiz in the expected format\n\nQuestion 9: What happens when a quiz is finished?\n\nA. Going to the next page shows the user's score and corrections\nB. The chat conversation is permanently deleted\nC. The quiz automatically starts over\nD. The answers are deleted immediately\n\nQuestion 10: Which statement best describes Open-QuizUI?\n\nA. A programming IDE for Open WebUI\nB. A file-management interface for Open WebUI\nC. An interactive multiple-choice quiz interface for Open WebUI\nD. A replacement for the Open WebUI chat interface\n\nAnswer Key:\n\n| Question | Correct Answer | Explanation |\n| --- | --- | --- |\n| 1 | B | For $ax^2 + bx + c = 0$, the sum of the roots is $\\displaystyle x_1+x_2=-\\frac{b}{a}$. Here, $a=2$ and $b=-5$, so $\\displaystyle x_1+x_2=-\\frac{-5}{2}=\\frac{5}{2}$. |\n| 2 | D | Jupiter is the largest planet in our Solar System. |\n| 3 | A | Bubble sort repeatedly compares adjacent elements and swaps them when they are in the wrong order. *You can embed YouTube and other sites that support embedding.* Note that this may not work due to site or browser restrictions. |\n| 4 | D | Markdown uses `**text**` to make text **bold**. |\n| 5 | C | The HTML `<a>` element creates a hyperlink to another resource. See <a href=\"https://github.com/axel-chamberland/Open-QuizUI/blob/main/docs/Formatting.md\" target=\"_blank\" rel=\"noopener noreferrer\">Open-QuizUI Formatting</a> for more cool stuff. |\n| 6 | A | Open-QuizUI can be added to Open WebUI as either a Tool or an Action Function. |\n| 7 | B | The Action Function is useful with lighter models that may not handle tool calling as reliably, and for large quizzes where requiring structured JSON tool calls can be less practical. It is also useful for editing a quiz permanently in Open WebUI: if using the tool, you can click the \"copy all\" button and then paste the quiz by editing any LLM message: you've converted the tool's output into the action's input which you can modify! |\n| 8 | D | If the LLM produces an unsupported format, the quiz can be corrected manually (or by an LLM), or the LLM can be asked to render the quiz using the tool. |\n| 9 | A | After completing a quiz, Open-QuizUI displays a results page with the user's score and corrections. A button allows the user to restart the quiz. |\n| 10 | C | Open-QuizUI provides an interactive multiple-choice HTML quiz interface for Open WebUI. |",
+  "expected": [
+    "Open-QuizUI Feature Showcase",
+    [
+      {
+        "question": "<p>If the quadratic equation\n$$\n2x^2 - 5x - 3 = 0\n$$\nhas roots $x_1$ and $x_2$, which expression gives the <strong>sum of the roots</strong>?</p>",
+        "options": [
+          "<p>$\\displaystyle -\\frac{3}{2}$</p>",
+          "<p>$\\displaystyle \\frac{5}{2}$</p>",
+          "<p>$\\displaystyle \\frac{3}{2}$</p>",
+          "<p>$\\displaystyle -\\frac{5}{2}$</p>"
+        ],
+        "correct_index": 1,
+        "explanation": "<p>For $ax^2 + bx + c = 0$, the sum of the roots is $\\displaystyle x_1+x_2=-\\frac{b}{a}$. Here, $a=2$ and $b=-5$, so $\\displaystyle x_1+x_2=-\\frac{-5}{2}=\\frac{5}{2}$.</p>"
+      },
+      {
+        "question": "<p>Which planet is the largest in our Solar System?\n<img src=\"https://as2.ftcdn.net/jpg/04/64/25/05/1000_F_464250544_yLEaWgvrClpIxAQH3ji2ZqJxqJhswZu5fq.webp\"></p>",
+        "options": [
+          "<p>Saturn</p>",
+          "<p>Earth</p>",
+          "<p>Neptune</p>",
+          "<p>Jupiter</p>"
+        ],
+        "correct_index": 3,
+        "explanation": "<p>Jupiter is the largest planet in our Solar System.</p>"
+      },
+      {
+        "question": "<p>Watch the following video and identify the sorting algorithm being demonstrated.</p>\n<iframe width=\"560\" height=\"315\" src=\"https://www.youtube-nocookie.com/embed/Dv4qLJcxus8?si=NoqPc8A69mlPTtN3\" title=\"YouTube video player\" frameborder=\"0\" allow=\"accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share\" referrerpolicy=\"strict-origin-when-cross-origin\" allowfullscreen></iframe>",
+        "options": [
+          "<p>Bubble sort</p>",
+          "<p>Quick sort</p>",
+          "<p>Merge sort</p>",
+          "<p>Selection sort</p>"
+        ],
+        "correct_index": 0,
+        "explanation": "<p>Bubble sort repeatedly compares adjacent elements and swaps them when they are in the wrong order. <em>You can embed YouTube and other sites that support embedding.</em> Note that this may not work due to site or browser restrictions.</p>"
+      },
+      {
+        "question": "<p>Which Markdown syntax makes text <strong>bold</strong>?</p>",
+        "options": [
+          "<p>`~~text~~`</p>",
+          "<p>`_text_`</p>",
+          "<p>`*text*`</p>",
+          "<p>`**text**`</p>"
+        ],
+        "correct_index": 3,
+        "explanation": "<p>Markdown uses `**text**` to make text <strong>bold</strong>.</p>"
+      },
+      {
+        "question": "<p>Which of the following HTML elements creates a hyperlink?</p>",
+        "options": [
+          "<p>`<link>`</p>",
+          "<p>`<img>`</p>",
+          "<p>`<a>`</p>",
+          "<p>`<video>`</p>"
+        ],
+        "correct_index": 2,
+        "explanation": "<p>The HTML `<a>` element creates a hyperlink to another resource. See <a href=\"https://github.com/axel-chamberland/Open-QuizUI/blob/main/docs/Formatting.md\" target=\"_blank\" rel=\"noopener noreferrer\">Open-QuizUI Formatting</a> for more cool stuff.</p>"
+      },
+      {
+        "question": "<p>How can Open-QuizUI be added to Open WebUI?</p>",
+        "options": [
+          "<p>As either a Tool or an Action Function</p>",
+          "<p>Only as a browser extension</p>",
+          "<p>Only as a standalone website</p>",
+          "<p>Only by modifying Open WebUI's source code</p>"
+        ],
+        "correct_index": 0,
+        "explanation": "<p>Open-QuizUI can be added to Open WebUI as either a Tool or an Action Function.</p>"
+      },
+      {
+        "question": "<p>When is the Action Function recommended instead of the Tool?</p>",
+        "options": [
+          "<p>When using a larger model that supports advanced tool calling</p>",
+          "<p>When using a lighter model or generating a large quiz where JSON tool calling may be less practical or when you want to edit a quiz persistently.</p>",
+          "<p>When creating smaller quizzes that require structured JSON output</p>",
+          "<p>When Open WebUI does not support Action Functions</p>"
+        ],
+        "correct_index": 1,
+        "explanation": "<p>The Action Function is useful with lighter models that may not handle tool calling as reliably, and for large quizzes where requiring structured JSON tool calls can be less practical. It is also useful for editing a quiz permanently in Open WebUI: if using the tool, you can click the \"copy all\" button and then paste the quiz by editing any LLM message: you've converted the tool's output into the action's input which you can modify!</p>"
+      },
+      {
+        "question": "<p>What should you do if an Open-QuizUI Action Function fails to recognize the quiz format?</p>",
+        "options": [
+          "<p>Delete the function</p>",
+          "<p>Reinstall Open WebUI</p>",
+          "<p>Disable JavaScript</p>",
+          "<p>Manually correct the formatting or ask the LLM to regenerate the quiz in the expected format</p>"
+        ],
+        "correct_index": 3,
+        "explanation": "<p>If the LLM produces an unsupported format, the quiz can be corrected manually (or by an LLM), or the LLM can be asked to render the quiz using the tool.</p>"
+      },
+      {
+        "question": "<p>What happens when a quiz is finished?</p>",
+        "options": [
+          "<p>Going to the next page shows the user's score and corrections</p>",
+          "<p>The chat conversation is permanently deleted</p>",
+          "<p>The quiz automatically starts over</p>",
+          "<p>The answers are deleted immediately</p>"
+        ],
+        "correct_index": 0,
+        "explanation": "<p>After completing a quiz, Open-QuizUI displays a results page with the user's score and corrections. A button allows the user to restart the quiz.</p>"
+      },
+      {
+        "question": "<p>Which statement best describes Open-QuizUI?</p>",
+        "options": [
+          "<p>A programming IDE for Open WebUI</p>",
+          "<p>A file-management interface for Open WebUI</p>",
+          "<p>An interactive multiple-choice quiz interface for Open WebUI</p>",
+          "<p>A replacement for the Open WebUI chat interface</p>"
+        ],
+        "correct_index": 2,
+        "explanation": "<p>Open-QuizUI provides an interactive multiple-choice HTML quiz interface for Open WebUI.</p>"
+      }
     ]
+  ]
 }

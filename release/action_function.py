@@ -5,12 +5,13 @@ title: QuizUI
 author: Axel Chamberland
 git_url: https://github.com/axel-chamberland/OpenQuizUI
 description: Converts a multiple choice quiz message into an interactive HTML quiz
-version: 2.0.1
+version: 2.0.2
 """
 
 import random
 import re
 
+import markdown
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, Field
 
@@ -184,7 +185,7 @@ class Action:
                 text = message["output"][-1]["content"][-1]["text"] if message else ""
 
             # Remove HTML tags, reasoning blocks and other artifacts
-            text = clean_text(
+            text = clean_message(
                 text, self.valves.strip_references, self.valves.strip_ending_brackets
             )
 
@@ -292,6 +293,15 @@ def parse_quiz(
 
     questions = answer_parser(text, questions, question_lines, explanations)
 
+    # Convert paragraphs and markdown tables to HTML per-question (question, options, explanation),
+    for q in questions:
+        q["question"] = _markdown_without_inline_code(q.get("question", ""))
+        q["options"] = [
+            _markdown_without_inline_code(opt) for opt in q.get("options", [])
+        ]
+        if "explanation" in q:
+            q["explanation"] = _markdown_without_inline_code(q["explanation"])
+
     return title, questions
 
 
@@ -331,13 +341,12 @@ def question_parser(lines) -> tuple[list[dict], list[int]]:
     current_question_line = None
 
     for line_no, line in enumerate(lines):
-        if not line:
-            continue
+        question_match = question_re.match(line) if line else None
 
-        question_match = question_re.match(line)
         if question_match:
             # Finish the previous question.
             if current_question and len(current_question["options"]) >= 2:
+                current_question["question"] = current_question["question"].rstrip("\n")
                 questions.append(current_question)
                 question_lines.append(current_question_line)
 
@@ -359,9 +368,7 @@ def question_parser(lines) -> tuple[list[dict], list[int]]:
         if choice_match:
             value = choice_match.group(2)
 
-            value = re.sub(r"(?<![\w`])\*\*(.*?)\*\*(?![\w`])", r"\1", value)
-            value = re.sub(r"\[source:.*?\]", "", value)
-            value = value.strip()
+            value = clean_text(value, False)
 
             current_question["options"].append(value)
 
@@ -379,6 +386,7 @@ def question_parser(lines) -> tuple[list[dict], list[int]]:
 
     # Finish the final question.
     if current_question and len(current_question["options"]) >= 2:
+        current_question["question"] = current_question["question"].rstrip("\n")
         questions.append(current_question)
         question_lines.append(current_question_line)
 
@@ -645,7 +653,7 @@ def answer_parser(
                 )[0].strip()
 
             if explanation:
-                explanation = clean_explanation(explanation)
+                explanation = clean_text(explanation)
 
                 # Only add the explanation if cleanup left actual text.
                 if explanation:
@@ -668,7 +676,7 @@ def answer_parser(
 # =========================================================
 
 
-def clean_text(text: str, strip_refs: bool, strip_end_brackets: bool):
+def clean_message(text: str, strip_refs: bool, strip_end_brackets: bool):
     """
     Remove thinking blocks and reference links,
     and convert markdown links and embedded images to HTML.
@@ -824,7 +832,7 @@ def _normalize_bullet(text: str) -> str:
     )
 
 
-def clean_explanation(text: str) -> str:
+def clean_text(text: str, add_period=True) -> str:
     text = text.strip()
 
     while True:
@@ -893,22 +901,41 @@ def clean_explanation(text: str) -> str:
     # Remove a trailing Markdown table delimiter.
     text = re.sub(r"\s*\|\s*$", "", text).strip()
 
-    # Add terminal punctuation.
-    lines = []
-
-    for line in text.splitlines():
-        line = line.rstrip()
-
-        if line and line[-1] not in ".!?;:)]}":
-            line += "."
-
-        lines.append(line)
-
     # If nothing but punctuation/whitespace remains, there is no explanation.
     if not re.search(r"[^\W_]", text, re.UNICODE):
         return ""
 
-    return "\n".join(lines).strip()
+    # Add terminal punctuation.
+    if add_period:
+        lines = []
+
+        for line in text.splitlines():
+            line = line.rstrip()
+
+            if line and line[-1] not in ".!?;:)]}":
+                line += "."
+
+            lines.append(line)
+
+        text = "\n".join(lines).strip()
+
+    return text
+
+
+def _markdown_without_inline_code(text):
+    code = []
+
+    def protect(match):
+        code.append(match.group(0))
+        return f"\x00CODE{len(code) - 1}\x00"
+
+    text = re.sub(r"`[^`]*`", protect, text)
+    text = markdown.markdown(text, extensions=["tables"])
+
+    for i, value in enumerate(code):
+        text = text.replace(f"\x00CODE{i}\x00", value)
+
+    return text
 
 
 # =========================
@@ -1474,6 +1501,24 @@ table {
     max-width: 100%;
     object-fit: contain;
     margin-inline: auto;
+}
+
+/* Tables */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+}
+
+th,
+td {
+    padding: 0.5rem;
+    border: 1px solid var(--border);
+    text-align: left;
+}
+
+th {
+    background: var(--btn);
 }
 
 </style>

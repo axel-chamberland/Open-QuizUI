@@ -1,63 +1,63 @@
 {
-    "content": "Here is a multiple-choice quiz about World War I.\n\n### World War I History Quiz\n\n| Question Number | Correct Letter | Explanation |\n| :--- | :--- | :--- |\n| 1 | A | The assassination of Archduke Franz Ferdinand of Austria-Hungary is often cited as the immediate cause of the war. |\n| 2 | B | The League of Nations was established after the war to promote peace and international cooperation. |\n| 3 | C | Trench warfare was a defining characteristic of the fighting during World War I. |\n| 4 | D | The Treaty of Versailles was the primary peace treaty signed at the end of World War I. |\n| 5 | A | The \"Great War\" is often referred to as \"Great\" because of its massive scale and impact on the global order. |\n\n\n1. **Which event is considered the immediate cause of World War I?**\n    * A) The assassination of Archduke Franz Ferdinand\n    * B) The sinking of the Lusitania\n    * C) The invasion of Belgium\n    * D) The formation of the Triple Entente\n\n2. ** Which organization was formed after the war to promote international cooperation?**\n    * A) League of Nations\n    * B) Treaty of Versailles\n    * C) United Nations\n    * D) European Union\n\n3. ** What was the primary style of warfare during World War I?**\n    * A) Trench warfare\n    * B) Guerrilla warfare\n    * C) Naval warfare\n    * D) Aerial warfare\n\n4. ** Which treaty was signed at the end of World War I?**\n    * A) Treaty of Berlin\n    * B) Treaty of Versailles\n    * C) Treaty of Trianon\n    * D) Treaty of Neuilly\n\n5. ** Why is World War I often referred to as the \"Great War\"?**\n    * A) Because of its massive scale and global impact.\n    * B) Because it involved many different countries.\n    * C) Because it lasted for many years.\n    * D) Because it changed the history of Europe.",
-    "expected": [
-        "World War I History Quiz",
-        [
-            {
-                "question": "Which event is considered the immediate cause of World War I?",
-                "options": [
-                    "The assassination of Archduke Franz Ferdinand",
-                    "The sinking of the Lusitania",
-                    "The invasion of Belgium",
-                    "The formation of the Triple Entente"
-                ],
-                "correct_index": 0,
-                "explanation": "The assassination of Archduke Franz Ferdinand of Austria-Hungary is often cited as the immediate cause of the war."
-            },
-            {
-                "question": "Which organization was formed after the war to promote international cooperation?",
-                "options": [
-                    "League of Nations",
-                    "Treaty of Versailles",
-                    "United Nations",
-                    "European Union"
-                ],
-                "correct_index": 1,
-                "explanation": "The League of Nations was established after the war to promote peace and international cooperation."
-            },
-            {
-                "question": "What was the primary style of warfare during World War I?",
-                "options": [
-                    "Trench warfare",
-                    "Guerrilla warfare",
-                    "Naval warfare",
-                    "Aerial warfare"
-                ],
-                "correct_index": 2,
-                "explanation": "Trench warfare was a defining characteristic of the fighting during World War I."
-            },
-            {
-                "question": "Which treaty was signed at the end of World War I?",
-                "options": [
-                    "Treaty of Berlin",
-                    "Treaty of Versailles",
-                    "Treaty of Trianon",
-                    "Treaty of Neuilly"
-                ],
-                "correct_index": 3,
-                "explanation": "The Treaty of Versailles was the primary peace treaty signed at the end of World War I."
-            },
-            {
-                "question": "Why is World War I often referred to as the \"Great War\"?",
-                "options": [
-                    "Because of its massive scale and global impact.",
-                    "Because it involved many different countries.",
-                    "Because it lasted for many years.",
-                    "Because it changed the history of Europe."
-                ],
-                "correct_index": 0,
-                "explanation": "The \"Great War\" is often referred to as \"Great\" because of its massive scale and impact on the global order."
-            }
-        ]
+  "content": "Here is a multiple-choice quiz about World War I.\n\n### World War I History Quiz\n\n| Question Number | Correct Letter | Explanation |\n| :--- | :--- | :--- |\n| 1 | A | The assassination of Archduke Franz Ferdinand of Austria-Hungary is often cited as the immediate cause of the war. |\n| 2 | B | The League of Nations was established after the war to promote peace and international cooperation. |\n| 3 | C | Trench warfare was a defining characteristic of the fighting during World War I. |\n| 4 | D | The Treaty of Versailles was the primary peace treaty signed at the end of World War I. |\n| 5 | A | The \"Great War\" is often referred to as \"Great\" because of its massive scale and impact on the global order. |\n\n\n1. **Which event is considered the immediate cause of World War I?**\n    * A) The assassination of Archduke Franz Ferdinand\n    * B) The sinking of the Lusitania\n    * C) The invasion of Belgium\n    * D) The formation of the Triple Entente\n\n2. ** Which organization was formed after the war to promote international cooperation?**\n    * A) League of Nations\n    * B) Treaty of Versailles\n    * C) United Nations\n    * D) European Union\n\n3. ** What was the primary style of warfare during World War I?**\n    * A) Trench warfare\n    * B) Guerrilla warfare\n    * C) Naval warfare\n    * D) Aerial warfare\n\n4. ** Which treaty was signed at the end of World War I?**\n    * A) Treaty of Berlin\n    * B) Treaty of Versailles\n    * C) Treaty of Trianon\n    * D) Treaty of Neuilly\n\n5. ** Why is World War I often referred to as the \"Great War\"?**\n    * A) Because of its massive scale and global impact.\n    * B) Because it involved many different countries.\n    * C) Because it lasted for many years.\n    * D) Because it changed the history of Europe.",
+  "expected": [
+    "World War I History Quiz",
+    [
+      {
+        "question": "<p>Which event is considered the immediate cause of World War I?</p>",
+        "options": [
+          "<p>The assassination of Archduke Franz Ferdinand</p>",
+          "<p>The sinking of the Lusitania</p>",
+          "<p>The invasion of Belgium</p>",
+          "<p>The formation of the Triple Entente</p>"
+        ],
+        "correct_index": 0,
+        "explanation": "<p>The assassination of Archduke Franz Ferdinand of Austria-Hungary is often cited as the immediate cause of the war.</p>"
+      },
+      {
+        "question": "<p>Which organization was formed after the war to promote international cooperation?</p>",
+        "options": [
+          "<p>League of Nations</p>",
+          "<p>Treaty of Versailles</p>",
+          "<p>United Nations</p>",
+          "<p>European Union</p>"
+        ],
+        "correct_index": 1,
+        "explanation": "<p>The League of Nations was established after the war to promote peace and international cooperation.</p>"
+      },
+      {
+        "question": "<p>What was the primary style of warfare during World War I?</p>",
+        "options": [
+          "<p>Trench warfare</p>",
+          "<p>Guerrilla warfare</p>",
+          "<p>Naval warfare</p>",
+          "<p>Aerial warfare</p>"
+        ],
+        "correct_index": 2,
+        "explanation": "<p>Trench warfare was a defining characteristic of the fighting during World War I.</p>"
+      },
+      {
+        "question": "<p>Which treaty was signed at the end of World War I?</p>",
+        "options": [
+          "<p>Treaty of Berlin</p>",
+          "<p>Treaty of Versailles</p>",
+          "<p>Treaty of Trianon</p>",
+          "<p>Treaty of Neuilly</p>"
+        ],
+        "correct_index": 3,
+        "explanation": "<p>The Treaty of Versailles was the primary peace treaty signed at the end of World War I.</p>"
+      },
+      {
+        "question": "<p>Why is World War I often referred to as the \"Great War\"?</p>",
+        "options": [
+          "<p>Because of its massive scale and global impact.</p>",
+          "<p>Because it involved many different countries.</p>",
+          "<p>Because it lasted for many years.</p>",
+          "<p>Because it changed the history of Europe.</p>"
+        ],
+        "correct_index": 0,
+        "explanation": "<p>The \"Great War\" is often referred to as \"Great\" because of its massive scale and impact on the global order.</p>"
+      }
     ]
+  ]
 }
