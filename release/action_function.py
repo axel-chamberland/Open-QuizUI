@@ -1,5 +1,3 @@
-import json
-
 """
 title: QuizUI
 author: Axel Chamberland
@@ -1023,6 +1021,8 @@ def shuffle_options(questions: list[dict]):
 def wrap_html(
     quiz, enable_mathjax: bool, light_theme="default_light", dark_theme="default_dark"
 ):
+    import json
+
     payload = {"enableMathJax": bool(enable_mathjax), "quiz": quiz}
 
     app_data = json.dumps(payload, ensure_ascii=False)
@@ -1927,6 +1927,167 @@ function renderMarkdown(text, mathReady) {
   );
   return renderMath(text, mathReady);
 }
+function toMarkdown(text) {
+  if (!text) return "";
+  text = renderMarkdown(text, true);
+  const container = document.createElement("div");
+  container.innerHTML = text;
+  function convert(node) {
+    if (node.nodeType === Node.TEXT_NODE) {
+      return node.textContent;
+    }
+    if (node.nodeType !== Node.ELEMENT_NODE) {
+      return "";
+    }
+    const tag = node.tagName.toLowerCase();
+    const content = [...node.childNodes].map(convert).join("");
+    switch (tag) {
+      // Text formatting
+      case "strong":
+      case "b":
+        return `**${content}**`;
+      case "em":
+      case "i":
+        return `*${content}*`;
+      case "u":
+        return `<u>${content}</u>`;
+      case "s":
+      case "strike":
+      case "del":
+        return `~~${content}~~`;
+      // Paragraphs
+      case "p":
+        return `${content}
+
+`;
+      case "br":
+        return "\n";
+      case "hr":
+        return "\n\n---\n\n";
+      // Links
+      case "a": {
+        const href = node.getAttribute("href");
+        if (!href && !content.trim()) {
+          return "<a>";
+        }
+        if (!href) {
+          return content;
+        }
+        const title = node.getAttribute("title");
+        const titlePart = title ? ` "${title}"` : "";
+        return `[${content}](${href}${titlePart})`;
+      }
+      // Images
+      case "img": {
+        const src = node.getAttribute("src");
+        if (!src) {
+          return "<img>";
+        }
+        const alt = node.getAttribute("alt") || "";
+        const title = node.getAttribute("title");
+        const titlePart = title ? ` "${title}"` : "";
+        return `![${alt}](${src}${titlePart})`;
+      }
+      // Code
+      case "code":
+        if (node.parentElement?.tagName.toLowerCase() === "pre") {
+          return content;
+        }
+        return `\`${content.replace(/`/g, "\\`")}\``;
+      case "pre": {
+        const code = node.querySelector(":scope > code");
+        const value = code ? code.textContent : node.textContent;
+        return `
+
+\`\`\`
+${value.replace(/\n+$/, "")}
+\`\`\`
+
+`;
+      }
+      // Lists
+      case "ul":
+        return "\n\n" + [...node.children].filter(
+          (child) => child.tagName.toLowerCase() === "li"
+        ).map((child) => `- ${convert(child).trim()}`).join("\n") + "\n\n";
+      case "ol":
+        return "\n\n" + [...node.children].filter(
+          (child) => child.tagName.toLowerCase() === "li"
+        ).map(
+          (child, index) => `${index + 1}. ${convert(child).trim()}`
+        ).join("\n") + "\n\n";
+      case "li":
+        return content;
+      // Tables
+      case "table":
+        return convertTable(node);
+      // Blockquote
+      case "blockquote":
+        return "\n\n" + content.trim().split("\n").map((line) => `> ${line}`).join("\n") + "\n\n";
+      // Headings
+      case "h1":
+      case "h2":
+      case "h3":
+      case "h4":
+      case "h5":
+      case "h6": {
+        const level = Number(tag[1]);
+        return `
+
+${"#".repeat(level)} ${content.trim()}
+
+`;
+      }
+      // Media with no Markdown equivalent
+      case "video":
+      case "audio":
+      case "iframe":
+        return node.outerHTML;
+      // Other elements: preserve their contents
+      default:
+        return content;
+    }
+  }
+  function convertTable(table) {
+    const rows = [...table.querySelectorAll(":scope > tbody > tr, :scope > tr")];
+    if (!rows.length) {
+      return "";
+    }
+    const data = rows.map(
+      (row) => [...row.children].filter(
+        (cell) => ["th", "td"].includes(cell.tagName.toLowerCase())
+      ).map(
+        (cell) => convert(cell).trim().replace(/\|/g, "\\|").replace(/\n+/g, " ")
+      )
+    );
+    if (!data.length) {
+      return "";
+    }
+    const columnCount = Math.max(...data.map((row) => row.length));
+    const header = Array.from(
+      { length: columnCount },
+      (_, i) => data[0][i] || ""
+    );
+    const separator = Array.from(
+      { length: columnCount },
+      () => "---"
+    );
+    const body = data.slice(1).map(
+      (row) => Array.from(
+        { length: columnCount },
+        (_, i) => row[i] || ""
+      )
+    );
+    return [
+      "",
+      `| ${header.join(" | ")} |`,
+      `| ${separator.join(" | ")} |`,
+      ...body.map((row) => `| ${row.join(" | ")} |`),
+      ""
+    ].join("\n");
+  }
+  return [...container.childNodes].map(convert).join("").replace(/[ \t]+\n/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
+}
 
 // frontend/src/rendering/mcq.js
 function showExplanation(question) {
@@ -2030,12 +2191,17 @@ function formatTime(seconds) {
 }
 function formatQuestionAsText(question, index) {
   const lines = [];
-  lines.push(`Question ${index + 1}: ${question.question}`);
+  const questionText = toMarkdown(
+    question.question
+  );
+  lines.push(`Question ${index + 1}: ${questionText}`);
   lines.push("");
-  question.options.forEach((option, i) => {
+  for (const [i, option] of question.options.entries()) {
     const letter = String.fromCharCode(65 + i);
-    lines.push(`${letter}. ${option}`);
-  });
+    lines.push(
+      `${letter}. ${toMarkdown(option)}`
+    );
+  }
   return lines.join("\n");
 }
 function formatAnswerKey(questions) {
@@ -2045,22 +2211,39 @@ function formatAnswerKey(questions) {
     "| Question | Correct Answer | Explanation |",
     "| --- | --- | --- |"
   ];
-  questions.forEach((question, index) => {
-    const correctLetter = String.fromCharCode(65 + question.correct_index);
-    const escapeTableCell = (text) => String(text ?? "").replace(/\|/g, "\\|").replace(/\n/g, " ");
-    lines.push(
-      `| ${index + 1} | ${correctLetter} | ${escapeTableCell(question.explanation || "")} |`
+  const escapeTableCell = (text) => String(text ?? "").replace(/\|/g, "\\|").replace(/\n/g, " ");
+  for (const [index, question] of questions.entries()) {
+    const correctLetter = String.fromCharCode(
+      65 + question.correct_index
     );
-  });
+    const explanation = toMarkdown(
+      question.explanation || ""
+    );
+    lines.push(
+      `| ${index + 1} | ${correctLetter} | ${escapeTableCell(explanation)} |`
+    );
+  }
   return lines.join("\n");
 }
 function formatQuizAsText(quiz2) {
-  const lines = [quiz2.title, ""];
-  quiz2.questions.forEach((question, index) => {
-    lines.push(formatQuestionAsText(question, index));
+  const lines = [
+    toMarkdown(quiz2.title),
+    ""
+  ];
+  for (const [index, question] of quiz2.questions.entries()) {
+    lines.push(
+      formatQuestionAsText(
+        question,
+        index
+      )
+    );
     lines.push("");
-  });
-  lines.push(formatAnswerKey(quiz2.questions));
+  }
+  lines.push(
+    formatAnswerKey(
+      quiz2.questions
+    )
+  );
   return lines.join("\n").trim();
 }
 
@@ -2371,24 +2554,32 @@ function downloadQuizHTML() {
 }
 
 // frontend/src/shared/clipboard.js
-function copyQuestion() {
+async function copyQuestion() {
   const question = state.quiz.questions[state.currentQuestionIndex];
-  const text = [
-    formatQuestionAsText(question, state.currentQuestionIndex),
-    "",
-    formatAnswerKey([question])
-  ].join("\n");
-  copyToClipboard(text, "Question copied to clipboard.");
+  const quiz2 = {
+    title: state.quiz.title,
+    questions: [question]
+  };
+  await copyToClipboard(
+    formatQuizAsText(
+      quiz2
+    )
+  );
 }
-function copyQuiz() {
-  copyToClipboard(formatQuizAsText(state.quiz), "Quiz copied to clipboard.");
+async function copyQuiz() {
+  await copyToClipboard(
+    formatQuizAsText(
+      state.quiz
+    )
+  );
 }
 async function copyToClipboard(text) {
   if (navigator.clipboard?.writeText) {
     try {
       await navigator.clipboard.writeText(text);
       return true;
-    } catch {
+    } catch (error) {
+      console.error("Failed to copy:", error);
     }
   }
   return false;

@@ -1,21 +1,28 @@
 import { state } from "../state.js";
-import { formatQuizAsText, formatQuestionAsText, formatAnswerKey } from "./formatting.js";
+import { formatQuizAsText } from "./formatting.js";
 
 
-export function copyQuestion() {
+export async function copyQuestion() {
     const question = state.quiz.questions[state.currentQuestionIndex];
 
-    const text = [
-        formatQuestionAsText(question, state.currentQuestionIndex),
-        "",
-        formatAnswerKey([question]),
-    ].join("\n");
+    const quiz = {
+        title: state.quiz.title,
+        questions: [question],
+    };
 
-    copyToClipboard(text, "Question copied to clipboard.");
+    await copyToClipboard(
+        formatQuizAsText(
+            quiz,
+        ),
+    );
 }
 
-export function copyQuiz() {
-    copyToClipboard(formatQuizAsText(state.quiz), "Quiz copied to clipboard.");
+export async function copyQuiz() {
+    await copyToClipboard(
+        formatQuizAsText(
+            state.quiz,
+        ),
+    );
 }
 
 async function copyToClipboard(text) {
@@ -23,10 +30,10 @@ async function copyToClipboard(text) {
         try {
             await navigator.clipboard.writeText(text);
             return true;
-        } catch { }
+        } catch (error) {
+            console.error("Failed to copy:", error);
+        }
     }
 
     return false;
 }
-
-

@@ -1,3 +1,4 @@
+import { toMarkdown } from "./markdown.js";
 
 export function formatTime(seconds) {
     const minutes = Math.floor(seconds / 60);
@@ -9,13 +10,20 @@ export function formatTime(seconds) {
 export function formatQuestionAsText(question, index) {
     const lines = [];
 
-    lines.push(`Question ${index + 1}: ${question.question}`);
+    const questionText = toMarkdown(
+        question.question,
+    );
+
+    lines.push(`Question ${index + 1}: ${questionText}`);
     lines.push("");
 
-    question.options.forEach((option, i) => {
+    for (const [i, option] of question.options.entries()) {
         const letter = String.fromCharCode(65 + i);
-        lines.push(`${letter}. ${option}`);
-    });
+
+        lines.push(
+            `${letter}. ${toMarkdown(option)}`,
+        );
+    }
 
     return lines.join("\n");
 }
@@ -28,32 +36,49 @@ export function formatAnswerKey(questions) {
         "| --- | --- | --- |",
     ];
 
-    questions.forEach((question, index) => {
-        const correctLetter = String.fromCharCode(65 + question.correct_index);
+    const escapeTableCell = (text) =>
+        String(text ?? "")
+            .replace(/\|/g, "\\|")
+            .replace(/\n/g, " ");
 
-        const escapeTableCell = (text) =>
-            String(text ?? "")
-                .replace(/\|/g, "\\|")
-                .replace(/\n/g, " ");
+    for (const [index, question] of questions.entries()) {
+        const correctLetter = String.fromCharCode(
+            65 + question.correct_index,
+        );
+
+        const explanation = toMarkdown(
+            question.explanation || "",
+        );
 
         lines.push(
-            `| ${index + 1} | ${correctLetter} | ${escapeTableCell(question.explanation || "")} |`,
+            `| ${index + 1} | ${correctLetter} | ${escapeTableCell(explanation)} |`,
         );
-    });
+    }
 
     return lines.join("\n");
 }
 
 export function formatQuizAsText(quiz) {
-    const lines = [quiz.title, ""];
+    const lines = [
+        toMarkdown(quiz.title),
+        "",
+    ];
 
-    quiz.questions.forEach((question, index) => {
-        lines.push(formatQuestionAsText(question, index));
+    for (const [index, question] of quiz.questions.entries()) {
+        lines.push(
+            formatQuestionAsText(
+                question,
+                index,
+            ),
+        );
         lines.push("");
-    });
+    }
 
-    lines.push(formatAnswerKey(quiz.questions));
+    lines.push(
+        formatAnswerKey(
+            quiz.questions,
+        ),
+    );
 
     return lines.join("\n").trim();
 }
-
