@@ -1,5 +1,3 @@
-import { state } from "../state";
-
 function renderMath(text, mathReady) {
     if (!text) return "";
 
@@ -25,9 +23,6 @@ export function renderMarkdown(text, mathReady) {
 
     const protectedParts = [];
 
-    // backtick, built at runtime to avoid breanking the embedded HTML in Open WebUI
-    const BT = String.fromCharCode(96);
-
     function protect(value) {
         const index = protectedParts.length;
         protectedParts.push(value);
@@ -36,23 +31,17 @@ export function renderMarkdown(text, mathReady) {
 
     // Protect fenced code blocks first.
     // Everything inside a fenced block is treated literally.
-
-    const fence = BT + BT + BT;
-    const fenceRegex = new RegExp(
-        fence + "(?:[^\\n" + BT + "]*)\\n([\\s\\S]*?)" + fence,
-        "g",
-    );
-    text = text.replace(fenceRegex, (_, content) =>
+    text = text.replace(/```(?:[^\n`]*)\n([\s\S]*?)```/g, (_, content) =>
         protect(`<pre><code>${escapeHtml(content)}</code></pre>`),
     );
 
     // Protect inline code.
     // Everything between backticks is treated literally.
-    const inlineRegex = new RegExp(BT + "([^" + BT + "]*?)" + BT, "g");
-    text = text.replace(inlineRegex, (_, content) =>
+    text = text.replace(/`([^`]*?)`/g, (_, content) =>
         protect(`<code>${escapeHtml(content)}</code>`),
-    );    // Protect math from Markdown processing.
+    );
 
+    // Protect math from Markdown processing.
     text = text.replace(/\$\$[\s\S]*?\$\$/g, protect);
     text = text.replace(/\$(?!\$)[\s\S]*?\$(?!\$)/g, protect);
 

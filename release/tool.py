@@ -1243,24 +1243,17 @@ function escapeHtml(value) {
 function renderMarkdown(text, mathReady) {
   if (!text) return "";
   const protectedParts = [];
-  const BT = String.fromCharCode(96);
   function protect(value) {
     const index = protectedParts.length;
     protectedParts.push(value);
     return `\uE000${index}\uE001`;
   }
-  const fence = BT + BT + BT;
-  const fenceRegex = new RegExp(
-    fence + "(?:[^\\n" + BT + "]*)\\n([\\s\\S]*?)" + fence,
-    "g"
-  );
   text = text.replace(
-    fenceRegex,
+    /```(?:[^\n`]*)\n([\s\S]*?)```/g,
     (_, content) => protect(`<pre><code>${escapeHtml(content)}</code></pre>`)
   );
-  const inlineRegex = new RegExp(BT + "([^" + BT + "]*?)" + BT, "g");
   text = text.replace(
-    inlineRegex,
+    /`([^`]*?)`/g,
     (_, content) => protect(`<code>${escapeHtml(content)}</code>`)
   );
   text = text.replace(/\$\$[\s\S]*?\$\$/g, protect);
