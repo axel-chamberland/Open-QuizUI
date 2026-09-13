@@ -1483,6 +1483,9 @@ textarea {
     border: 1px solid var(--border);
     font-size: 1rem;
     field-sizing: content;
+    width: 100%;
+    max-width: 100%;
+    resize: vertical;
 }
 
 textarea:focus {
@@ -1497,7 +1500,6 @@ textarea:focus {
 }
 
 #editor-distractors textarea {
-    width: 80%;
     height: auto;
 }
 
