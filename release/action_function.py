@@ -10,6 +10,7 @@ version: 2.0.2
 
 import random
 import re
+from typing import Literal
 
 import markdown
 import regex
@@ -136,17 +137,23 @@ class Action:
             description="LLMs will sometimes give the answer inline in [brackets], or a hint that gives off the answer. This may interfere with some questions.",
         )
 
-        dark_mode: int = Field(
-            default=-1,
-            description="-1: Let browser decide. 0: Light mode. 1: Dark mode",
+        theme_mode: Literal["browser", "light", "dark"] = Field(
+            default="browser",
         )
-        light_theme: str = Field(
+
+        light_theme: Literal[tuple(THEMES)] = Field(
             default="default_light",
-            description="change the dark mode theme to a different theme. to define a new theme, you can add a theme at the top of the code where the templates are. Defaults: default_light, soft_pastel",
+            description=(
+                "Change the light mode theme. "
+                "To define a new theme, add it to the THEMES dictionary at the top of the code. "
+            ),
         )
-        dark_theme: str = Field(
+        dark_theme: Literal[tuple(THEMES)] = Field(
             default="default_dark",
-            description="change the dark mode theme to a different theme. to define a new theme, you can add a theme at the top of the code where the templates are. Defaults: default_dark. high_contrast, tokyonight",
+            description=(
+                "Change the dark mode theme. "
+                "To define a new theme, add it to the THEMES dictionary at the top of the code. "
+            ),
         )
 
         question_pattern: str = Field(
@@ -224,9 +231,9 @@ class Action:
             option_dark = self.valves.dark_theme
             option_light = self.valves.light_theme
 
-            if self.valves.dark_mode == 0:
+            if self.valves.theme_mode == "light":
                 option_dark = option_light
-            elif self.valves.dark_mode == 1:
+            elif self.valves.theme_mode == "dark":
                 option_light = option_dark
 
             dark_theme = THEMES.get(option_dark, THEMES["default_dark"])

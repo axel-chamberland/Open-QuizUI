@@ -75,10 +75,10 @@ async def test_generate_quiz_missing_keys(quiz_tool):
 
 @pytest.mark.asyncio
 async def test_generate_quiz_theme_light(quiz_tool):
-    """Test that setting dark_mode to 0 applies the light theme CSS."""
+    """Test that setting dark_mode to light applies the light theme CSS."""
     title = "Light Mode Quiz"
     questions = [{"question": "Is it light?", "answer": "Yes", "distractors": ["No"]}]
-    quiz_tool.valves.dark_mode = 0
+    quiz_tool.valves.theme_mode = "light"
 
     response = await quiz_tool.generate_quiz(title, questions)
 
@@ -92,10 +92,10 @@ async def test_generate_quiz_theme_light(quiz_tool):
 
 @pytest.mark.asyncio
 async def test_generate_quiz_theme_dark(quiz_tool):
-    """Test that setting dark_mode to 1 applies the dark theme CSS."""
+    """Test that setting dark_mode to dark applies the dark theme CSS."""
     title = "Dark Mode Quiz"
     questions = [{"question": "Is it dark?", "answer": "Yes", "distractors": ["No"]}]
-    quiz_tool.valves.dark_mode = 1
+    quiz_tool.valves.theme_mode = "dark"
 
     response = await quiz_tool.generate_quiz(title, questions)
 
