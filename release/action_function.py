@@ -1099,6 +1099,11 @@ body {
     order: 1;
 }
 
+
+h1 {
+    font-size: 1.2rem
+}
+
 .title-bar {
     display: flex;
     align-items: center;
@@ -1158,7 +1163,7 @@ button {
     cursor: pointer;
     text-align: center;
     color: var(--text);
-    font-size: 1.1em;
+    font-size: 1.1rem;
 }
 
 button svg {
@@ -1476,7 +1481,7 @@ textarea {
     color: var(--text);
     background: var(--bg);
     border: 1px solid var(--border);
-    font-size: 1em;
+    font-size: 1rem;
     field-sizing: content;
 }
 
@@ -1531,7 +1536,7 @@ textarea:focus {
     color: var(--text);
     background: var(--bg);
     border: 1px solid var(--border);
-    font-size: 1em;
+    font-size: 1rem;
     text-align: center;
 }
 
