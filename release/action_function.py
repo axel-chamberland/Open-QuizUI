@@ -1145,14 +1145,8 @@ h1 {
 
 #options {
     display: grid;
-    grid-template-columns: 1;
     max-width: 100%;
     gap: 0.75rem;
-}
-
-:is(:fullscreen, .pseudo-fullscreen-active) #options {
-    flex: 1;
-    min-height: 0;
 }
 
 button {
