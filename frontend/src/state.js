@@ -6,49 +6,45 @@ export const WRONG = 2;
 export const SKIPPED = 3;
 
 export const state = {
-    mathReady: false,
+  mathReady: false,
 
-    quiz: null,
+  quiz: null,
 
-    wrongAnswerCount: 0,
+  wrongAnswerCount: 0,
 
-    optionButtons: [],
-    currentQuestion: null,
+  optionButtons: [],
+  currentQuestion: null,
 
-    answerRevealed: false,
-    currentQuestionIndex: 0,
+  answerRevealed: false,
+  currentQuestionIndex: 0,
 
-    questionResults: [],
-    questionAnswers: [],
+  questionResults: [],
+  questionAnswers: [],
 
-    defaultStartDate: Date.now(),
+  defaultStartDate: Date.now(),
 
-    quizStorageKey: null,
+  quizStorageKey: null,
 
-    timer: {
-        visible: false,
-        start: null,
-        elapsed: 0,
-        interval: null,
-    },
-
-
+  timer: {
+    visible: false,
+    start: null,
+    elapsed: 0,
+    interval: null,
+  },
 };
 
 export function initializeState(quiz) {
-    state.quiz = quiz;
-    state.quizStorageKey = hashQuiz(quiz);
-    state.currentQuestionIndex = getStoredQuestionIndex(state.quizStorageKey);
-    state.currentQuestion = null;
-    state.optionButtons = [];
-    state.wrongAnswerCount = 0;
-    state.answerRevealed = false;
+  state.quiz = quiz;
+  state.quizStorageKey = hashQuiz(quiz);
+  state.currentQuestionIndex = getStoredQuestionIndex(state.quizStorageKey);
+  state.currentQuestion = null;
+  state.optionButtons = [];
+  state.wrongAnswerCount = 0;
+  state.answerRevealed = false;
 
-    state.questionResults = new Array(quiz.questions.length)
-        .fill(UNANSWERED);
+  state.questionResults = new Array(quiz.questions.length).fill(UNANSWERED);
 
-    state.questionAnswers = new Array(quiz.questions.length)
-        .fill(null);
+  state.questionAnswers = new Array(quiz.questions.length).fill(null);
 
-    state.defaultStartDate = Date.now();
+  state.defaultStartDate = Date.now();
 }

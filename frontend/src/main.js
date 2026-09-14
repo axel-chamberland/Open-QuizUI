@@ -8,9 +8,7 @@ import { state } from "./state.js";
 import { initHeightReporting } from "./ui/reportHeight.js";
 import { setQuizTitle } from "./quiz.js";
 
-const appData = JSON.parse(
-    document.getElementById("app-data").textContent
-);
+const appData = JSON.parse(document.getElementById("app-data").textContent);
 
 export const ENABLE_MATHJAX = appData.enableMathJax;
 export const quiz = appData.quiz;
@@ -19,21 +17,18 @@ export const quiz = appData.quiz;
 // This mainly happens when you call the action function on another device while being in pseudo-fullscreen,
 // causing the iframe to reset without exiting pseudo-fullscreen
 try {
-    if (
-        window.top.document.body.classList.contains("pseudo-fullscreen-active")
-    ) {
-        window.top.location.reload();
-    }
+  if (window.top.document.body.classList.contains("pseudo-fullscreen-active")) {
+    window.top.location.reload();
+  }
 } catch {
-    // The iframe may not be permitted to access the top document
-    // when origin restrictions are disabled.
-    // This is fine, since it means that pseudo-fullscreen did not modify anything that needs to be reset
+  // The iframe may not be permitted to access the top document
+  // when origin restrictions are disabled.
+  // This is fine, since it means that pseudo-fullscreen did not modify anything that needs to be reset
 }
 
 initializeState(quiz);
 loadStats();
 loadQuizEdits(state);
-
 
 // Update max question count
 const questionCount = document.getElementById("question-count");
@@ -43,23 +38,22 @@ questionCount.textContent = quiz.questions.length;
 const questionNumber = document.getElementById("question-number");
 questionNumber.value = state.currentQuestionIndex + 1;
 
-
 async function initializeQuiz() {
-    await loadMathJax(ENABLE_MATHJAX);
+  await loadMathJax(ENABLE_MATHJAX);
 
-    if (state.mathReady && window.MathJax?.startup?.promise) {
-        await window.MathJax.startup.promise;
-    }
+  if (state.mathReady && window.MathJax?.startup?.promise) {
+    await window.MathJax.startup.promise;
+  }
 
-    setQuizTitle(quiz.title)
-    renderQuiz();
-    initializeEvents();
-    initHeightReporting();
+  setQuizTitle(quiz.title);
+  renderQuiz();
+  initializeEvents();
+  initHeightReporting();
 }
 
 if (document.readyState === "loading") {
-    window.addEventListener("load", initializeQuiz, { once: true });
+  window.addEventListener("load", initializeQuiz, { once: true });
 } else {
-    initializeQuiz();
-    document.body.classList.remove("app-loading");
+  initializeQuiz();
+  document.body.classList.remove("app-loading");
 }
