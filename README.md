@@ -41,10 +41,10 @@ Open-QuizUI is a tool / action function for displaying interactive multiple-choi
 
 ## Usage
 
-There are two ways to use Open-QuizUI:
+There are two ways to use Open QuizUI:
 
-* **Tool:** Add the tool code through **Workspace → Tools → New Tool**.
-* **Action Function:** Add the function code through **Admin Panel → Functions → New Function**.
+- **Tool:** Add `release/tool.py` through **Workspace → Tools → New Tool**.
+- **Action Function:** Add `release/action_function.py` through **Admin Panel → Functions → New Function**.
 
 Both options work, but the **action function is recommended for larger quizzes**. It allows the LLM to write quizzes naturally instead of having to follow a specific structure for tool calling.
 
