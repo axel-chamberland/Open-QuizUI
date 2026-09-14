@@ -2,16 +2,24 @@
 
 ## Repository Structure
 
-The project is written in Python and uses a `pyproject.toml` file for project metadata, dependencies, and test configuration.
+The project consists of a Python backend and a JavaScript frontend. The `release/` directory contains generated Open WebUI functions.
 
 ```text
 Open-QuizUI/
-├── src/
-│   └── openquizui/    # Main source code
-├── tests/             # Test suite
-├── examples/          # Examples
-├── pyproject.toml     # Project configuration and dependencies
-└── README.md
+├── backend/             # Python backend and Open WebUI integration
+├── frontend/            # JavaScript frontend
+│   ├── assets/          # Frontend assets
+│   ├── src/             # Frontend source code
+│   ├── styles/          # Frontend styles
+│   └── index.html       # Frontend entry point
+├── release/             # Generated Open WebUI functions
+│   ├── action_function.py
+│   └── tool.py
+├── tests/               # Test suite
+├── examples/            # Examples
+├── pyproject.toml       # Python project configuration and dependencies
+├── package.json         # JavaScript development dependencies
+└── package-lock.json    # Locked JavaScript dependencies
 ```
 
 ## Local Development
@@ -24,6 +32,8 @@ cd Open-QuizUI
 ```
 
 The project requires **Python 3.11 or 3.12**, matching the versions currently supported by Open WebUI.
+
+### Python
 
 It is recommended to use a virtual environment for development:
 
@@ -51,7 +61,19 @@ Install the project and its dependencies:
 pip install -e .
 ```
 
-The dependencies are defined in `pyproject.toml`, so there is no separate `requirements.txt` file to maintain.
+The Python dependencies are defined in `pyproject.toml`; there is no separate `requirements.txt` file to maintain.
+
+### JavaScript
+
+The frontend uses Node.js for development and build tooling.
+
+Install the JavaScript dependencies from the repository root:
+
+```bash
+npm install
+```
+
+The dependencies are defined in `package.json` and the exact dependency tree is locked in `package-lock.json`.
 
 ## Tests
 

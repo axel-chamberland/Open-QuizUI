@@ -1,173 +1,173 @@
 {
-    "content": "<details type=\"reasoning\" done=\"true\" duration=\"1\">\n<summary>Thought for 1 seconds</summary>\n&gt; The user is asking me to create a 15-question quiz about data structures in French, with answers included. This doesn&#x27;t require searching the web or fetching URLs - I can generate this content directly based on my knowledge of computer science and data structures.\n&gt; \n&gt; I&#x27;ll create a comprehensive quiz covering various types of data structures (arrays, linked lists, stacks, queues, trees, graphs, hash tables) in French as requested.\n</details>\nVoici un quiz complet sur les structures de données avec 15 questions et leurs réponses :\n\n## Quiz : Structures de Données\n\n### Partie A - Questions à choix multiples\n\n**Q1.** Quelle est la complexité temporelle moyenne d'une opération SEARCH dans une Hash Map ?\na) **O(1)**\nb) *O(log n)*\nc) $a \\leftarrow b$  O(n)\nd) O(n²)\n*   **R :** a) (O(1)) - En moyenne, les accès sont constants\n\n**Q2.** Dans quel type de structure de données l'élément en dernier entré est le premier à sortir ?\na) File d'attente (Queue)\nb) Pile (Stack)\nc) Liste chaînée simple\nd) Arbre binaire\n*   **R :** b) (Pile/Stack/LIFO - Last In First Out)\n\n**Q3.** Quelle opération est la plus lente dans une liste chaînée comparée à un tableau ?\na) Accès par index\nb) Insertion en tête\nc) Suppression du premier élément\nd) Parcourir tous les éléments\n*   **R :** a) (Accès O(n) vs O(1))\n\n**Q4.** Quelle structure de données est utilisée pour implémenter un algorithme d'inversage ?\na) File d'attente doublement chaînée\nb) Pile et File d'attente simultanées\nc) Arbre B\nd) Hash Table\n*   **R :** b) (Utilise 2 piles ou une pile + queue inversée pour invertir le contenu sans modifier la structure originale.\n\n**Q5.** Quel est l'inconvénient principal des tables de hachage ?\na) Elles ne supportent pas les suppressions\nb) Les collisions peuvent dégrader la performance à O(n) dans certains cas\nc) La mémoire est sous-utilisée même si on stocke peu d'éléments\nd) Elles nécessitent une connaissance du nombre exact d'opérations avant création\n*   **R :** b) (Les mauvaises fonctions de hachage ou les collisions fréquentes dégradent la performance.\n\n**Q6.** Dans un arbre B, qu'est-ce que M représente ?\na) La hauteur minimale de l'arbre\nb) Le nombre maximum d'enfants pour nœud intérieur\nc) Le facteur d'équilibrage global de l'arbre\nd) La charge moyenne du disque dur lors des insertions/suppressions.\n*   **R :** b) (M = nombre max d'enfants par noeud interne, M-1 nombres max clés internes.)\n\n**Q7.** Quelle opération est O(√n dans le pire cas pour un arbre B ?\na) Recherche d'une clé spécifique\nb) Insertion ou suppression de nœuds en fonction du nombre d'éléments à traiter.\nc) Parcourir toutes les feuilles en profondeur.\nd) Mise à jour racine après insertion/suppression massives.\n*   **R :** b) (L'équilibrage prend O(√n) quand le nombre de clés dépasse un certain seuil.)\n\n**Q8.** Dans quelle structure peut-on trouver une paire de nombres dont la somme est égale à une valeur cible en temps optimal ?\na) Liste chaînée non triée\nb) Tableau avec deux pointeurs (left/right pointer technique).\nc) Hash Table pour stocker les complémentaires.\nd) Arbre binaire binomial ou arbre AVL.\n*   **R :** c) (On garde la somme dans le hash et on cherche O(1)).\n\n**Q9.** Quel type de structure convient mieux à un navigateur d'historique ?\na) File d'attente FIFO seule  \nb) Liste chaînée doublement avec gestion des états précédent/suivant.\nc) Pile LIFO simple pour les actions annulables.\nd) Arbre B multi-niveaux hiérarchisé par session utilisateur.\n*   **R :** c) (La pile implémente parfaitement le \"undo\" classique navigateur.)\n\n**Q10.** Quelle opération est O(√n dans un tas binaire ?\na) Recherche d'un élément spécifique arbitraire  \nb) Insertion en fonction du nombre total de clés stockées.\nc) Extraction de l'élément minimum/maximum racine après suppression massive.\nd) Parcourir toutes les feuilles pour trouver une valeur cible donnée par niveau maximal autorisé.\n*   **R :** c) (L'équilibrage prend O(√n) quand le nombre de clés dépasse un certain seuil.)\n\n**Q11.** Dans quel cas l'arbre B redimensionne-t-il sa taille ?\na) Lorsqu'une feuille contient M/2+1 éléments au maximum  \nb) Lorsque la racine devient inapte à supporter plus d'enfants internes.\nc) Quand on doit supprimer un nœud contenant une clé interne uniquement.\nd) Si le facteur d'équilibrage global dépasse 50% du nombre maximal théorique possible de clés stockées dans l'arbre B actuel.\n*   **R :** b) (La racine devient inapte après insertion massive, donc redimensionne son aire.)\n\n**Q12.** Quelle opération est O(√n dans le pire cas pour un arbre AVL ?\na) Recherche d'une clé spécifique  \nb) Insertion ou suppression de nœuds en fonction du nombre d'éléments à traiter.\nc) Parcourir toutes les feuilles en profondeur.\nd) Mise à jour racine après insertion/suppression massives.\n*   **R :** b) (L'équilibrage prend O(√n) quand le nombre de clés dépasse un certain seuil.)\n\n**Q13.** Dans quelle structure peut-on trouver une paire de nombres dont la somme est égale à une valeur cible en temps optimal ?\na) Liste chaînée non triée  \nb) Tableau avec deux pointeurs (left/right pointer technique).\nc) Hash Table pour stocker les complémentaires.\nd) Arbre binaire binomial ou arbre AVL.\n*   **R :** c) (On garde la somme dans le hash et on cherche O(1)).\n\n**Q14.** Quelle opération est O(log n) dans un tas binaire ?\na) Recherche d'un élément spécifique arbitraire  \nb) Insertion en fonction du nombre total de clés stockées.\nc) Extraction de l'élément minimum/maximum racine après suppression massive.\nd) Parcourir toutes les feuilles pour trouver une valeur cible donnée par niveau maximal autorisé.\n*   **R :** a) (La recherche prend O(log n)).\n\n**Q15.** Quelle opération est constante en temps dans un tas binaire ?\na) Recherche d'un élément spécifique arbitraire  \nb) Insertion ou suppression de racine après ajustement massifs.\nc) Extraction de l'élément minimum/maximum racine après suppression massive.\nd) Parcourir toutes les feuilles pour trouver une valeur cible donnée par niveau maximal autorisé.\n*   **R :** d) (L'extraction prend O(1)).\n\n---\n\n### Récapitulatif des complexités clés :\n\n| Structure | Opération | Complexité Moyenne | Pire Cas |\n|-----------|-----------|---------------------|----------|\n| Hash Table | Search/Insert/Delete | O(1) | O(n) (collisions fréquentes) |\n| Liste chaînée simple | Access par index | O(n) | O(n) |\n| Pile (Stack) | Push/Pop | O(1) | O(1) |\n| File d'attente FIFO | Enqueue/Dequeue | O(1) | O(1) |\n| Tas binaire | Min/Max extraction | O(log n) | O(n) |\n\n---\n\n**Score :** Comptez vos bonnes réponses sur 15.\n- **0-7 :** Débutant, revoir les bases des structures de données  \n- **8-12 :** Intermédiaire, bonne compréhension générale  \n- **13-15 :** Avancé/excellent niveau technique !\n\nSouhaitez-vous que je développe l'une en particulier ?",
-    "expected": [
-        "Quiz : Structures de Donn\u00e9es",
-        [
-            {
-                "question": "Quelle est la complexit\u00e9 temporelle moyenne d'une op\u00e9ration SEARCH dans une Hash Map ?",
-                "options": [
-                    "O(1)",
-                    "*O(log n)*",
-                    "$a \\leftarrow b$  O(n)",
-                    "O(n\u00b2)"
-                ],
-                "correct_index": 0,
-                "explanation": "(O(1)) - En moyenne, les acc\u00e8s sont constants."
-            },
-            {
-                "question": "Dans quel type de structure de donn\u00e9es l'\u00e9l\u00e9ment en dernier entr\u00e9 est le premier \u00e0 sortir ?",
-                "options": [
-                    "File d'attente (Queue)",
-                    "Pile (Stack)",
-                    "Liste cha\u00een\u00e9e simple",
-                    "Arbre binaire"
-                ],
-                "correct_index": 1,
-                "explanation": "Pile/Stack/LIFO - Last In First Out."
-            },
-            {
-                "question": "Quelle op\u00e9ration est la plus lente dans une liste cha\u00een\u00e9e compar\u00e9e \u00e0 un tableau ?",
-                "options": [
-                    "Acc\u00e8s par index",
-                    "Insertion en t\u00eate",
-                    "Suppression du premier \u00e9l\u00e9ment",
-                    "Parcourir tous les \u00e9l\u00e9ments"
-                ],
-                "correct_index": 0,
-                "explanation": "Acc\u00e8s O(n) vs O(1)"
-            },
-            {
-                "question": "Quelle structure de donn\u00e9es est utilis\u00e9e pour impl\u00e9menter un algorithme d'inversage ?",
-                "options": [
-                    "File d'attente doublement cha\u00een\u00e9e",
-                    "Pile et File d'attente simultan\u00e9es",
-                    "Arbre B",
-                    "Hash Table"
-                ],
-                "correct_index": 1,
-                "explanation": "Utilise 2 piles ou une pile + queue invers\u00e9e pour invertir le contenu sans modifier la structure originale."
-            },
-            {
-                "question": "Quel est l'inconv\u00e9nient principal des tables de hachage ?",
-                "options": [
-                    "Elles ne supportent pas les suppressions",
-                    "Les collisions peuvent d\u00e9grader la performance \u00e0 O(n) dans certains cas",
-                    "La m\u00e9moire est sous-utilis\u00e9e m\u00eame si on stocke peu d'\u00e9l\u00e9ments",
-                    "Elles n\u00e9cessitent une connaissance du nombre exact d'op\u00e9rations avant cr\u00e9ation"
-                ],
-                "correct_index": 1,
-                "explanation": "Les mauvaises fonctions de hachage ou les collisions fr\u00e9quentes d\u00e9gradent la performance."
-            },
-            {
-                "question": "Dans un arbre B, qu'est-ce que M repr\u00e9sente ?",
-                "options": [
-                    "La hauteur minimale de l'arbre",
-                    "Le nombre maximum d'enfants pour n\u0153ud int\u00e9rieur",
-                    "Le facteur d'\u00e9quilibrage global de l'arbre",
-                    "La charge moyenne du disque dur lors des insertions/suppressions."
-                ],
-                "correct_index": 1,
-                "explanation": "M = nombre max d'enfants par noeud interne, M-1 nombres max cl\u00e9s internes."
-            },
-            {
-                "question": "Quelle op\u00e9ration est O(\u221an dans le pire cas pour un arbre B ?",
-                "options": [
-                    "Recherche d'une cl\u00e9 sp\u00e9cifique",
-                    "Insertion ou suppression de n\u0153uds en fonction du nombre d'\u00e9l\u00e9ments \u00e0 traiter.",
-                    "Parcourir toutes les feuilles en profondeur.",
-                    "Mise \u00e0 jour racine apr\u00e8s insertion/suppression massives."
-                ],
-                "correct_index": 1,
-                "explanation": "L'\u00e9quilibrage prend O(\u221an) quand le nombre de cl\u00e9s d\u00e9passe un certain seuil."
-            },
-            {
-                "question": "Dans quelle structure peut-on trouver une paire de nombres dont la somme est \u00e9gale \u00e0 une valeur cible en temps optimal ?",
-                "options": [
-                    "Liste cha\u00een\u00e9e non tri\u00e9e",
-                    "Tableau avec deux pointeurs (left/right pointer technique).",
-                    "Hash Table pour stocker les compl\u00e9mentaires.",
-                    "Arbre binaire binomial ou arbre AVL."
-                ],
-                "correct_index": 2,
-                "explanation": "On garde la somme dans le hash et on cherche O(1)."
-            },
-            {
-                "question": "Quel type de structure convient mieux \u00e0 un navigateur d'historique ?",
-                "options": [
-                    "File d'attente FIFO seule",
-                    "Liste cha\u00een\u00e9e doublement avec gestion des \u00e9tats pr\u00e9c\u00e9dent/suivant.",
-                    "Pile LIFO simple pour les actions annulables.",
-                    "Arbre B multi-niveaux hi\u00e9rarchis\u00e9 par session utilisateur."
-                ],
-                "correct_index": 2,
-                "explanation": "La pile impl\u00e9mente parfaitement le \"undo\" classique navigateur."
-            },
-            {
-                "question": "Quelle op\u00e9ration est O(\u221an dans un tas binaire ?",
-                "options": [
-                    "Recherche d'un \u00e9l\u00e9ment sp\u00e9cifique arbitraire",
-                    "Insertion en fonction du nombre total de cl\u00e9s stock\u00e9es.",
-                    "Extraction de l'\u00e9l\u00e9ment minimum/maximum racine apr\u00e8s suppression massive.",
-                    "Parcourir toutes les feuilles pour trouver une valeur cible donn\u00e9e par niveau maximal autoris\u00e9."
-                ],
-                "correct_index": 2,
-                "explanation": "L'\u00e9quilibrage prend O(\u221an) quand le nombre de cl\u00e9s d\u00e9passe un certain seuil."
-            },
-            {
-                "question": "Dans quel cas l'arbre B redimensionne-t-il sa taille ?",
-                "options": [
-                    "Lorsqu'une feuille contient M/2+1 \u00e9l\u00e9ments au maximum",
-                    "Lorsque la racine devient inapte \u00e0 supporter plus d'enfants internes.",
-                    "Quand on doit supprimer un n\u0153ud contenant une cl\u00e9 interne uniquement.",
-                    "Si le facteur d'\u00e9quilibrage global d\u00e9passe 50% du nombre maximal th\u00e9orique possible de cl\u00e9s stock\u00e9es dans l'arbre B actuel."
-                ],
-                "correct_index": 1,
-                "explanation": "La racine devient inapte apr\u00e8s insertion massive, donc redimensionne son aire."
-            },
-            {
-                "question": "Quelle op\u00e9ration est O(\u221an dans le pire cas pour un arbre AVL ?",
-                "options": [
-                    "Recherche d'une cl\u00e9 sp\u00e9cifique",
-                    "Insertion ou suppression de n\u0153uds en fonction du nombre d'\u00e9l\u00e9ments \u00e0 traiter.",
-                    "Parcourir toutes les feuilles en profondeur.",
-                    "Mise \u00e0 jour racine apr\u00e8s insertion/suppression massives."
-                ],
-                "correct_index": 1,
-                "explanation": "L'\u00e9quilibrage prend O(\u221an) quand le nombre de cl\u00e9s d\u00e9passe un certain seuil."
-            },
-            {
-                "question": "Dans quelle structure peut-on trouver une paire de nombres dont la somme est \u00e9gale \u00e0 une valeur cible en temps optimal ?",
-                "options": [
-                    "Liste cha\u00een\u00e9e non tri\u00e9e",
-                    "Tableau avec deux pointeurs (left/right pointer technique).",
-                    "Hash Table pour stocker les compl\u00e9mentaires.",
-                    "Arbre binaire binomial ou arbre AVL."
-                ],
-                "correct_index": 2,
-                "explanation": "On garde la somme dans le hash et on cherche O(1)."
-            },
-            {
-                "question": "Quelle op\u00e9ration est O(log n) dans un tas binaire ?",
-                "options": [
-                    "Recherche d'un \u00e9l\u00e9ment sp\u00e9cifique arbitraire",
-                    "Insertion en fonction du nombre total de cl\u00e9s stock\u00e9es.",
-                    "Extraction de l'\u00e9l\u00e9ment minimum/maximum racine apr\u00e8s suppression massive.",
-                    "Parcourir toutes les feuilles pour trouver une valeur cible donn\u00e9e par niveau maximal autoris\u00e9."
-                ],
-                "correct_index": 0,
-                "explanation": "La recherche prend O(log n)."
-            },
-            {
-                "question": "Quelle op\u00e9ration est constante en temps dans un tas binaire ?",
-                "options": [
-                    "Recherche d'un \u00e9l\u00e9ment sp\u00e9cifique arbitraire",
-                    "Insertion ou suppression de racine apr\u00e8s ajustement massifs.",
-                    "Extraction de l'\u00e9l\u00e9ment minimum/maximum racine apr\u00e8s suppression massive.",
-                    "Parcourir toutes les feuilles pour trouver une valeur cible donn\u00e9e par niveau maximal autoris\u00e9."
-                ],
-                "correct_index": 3,
-                "explanation": "L'extraction prend O(1)."
-            }
-        ]
+  "content": "<details type=\"reasoning\" done=\"true\" duration=\"1\">\n<summary>Thought for 1 seconds</summary>\n&gt; The user is asking me to create a 15-question quiz about data structures in French, with answers included. This doesn&#x27;t require searching the web or fetching URLs - I can generate this content directly based on my knowledge of computer science and data structures.\n&gt; \n&gt; I&#x27;ll create a comprehensive quiz covering various types of data structures (arrays, linked lists, stacks, queues, trees, graphs, hash tables) in French as requested.\n</details>\nVoici un quiz complet sur les structures de données avec 15 questions et leurs réponses :\n\n## Quiz : Structures de Données\n\n### Partie A - Questions à choix multiples\n\n**Q1.** Quelle est la complexité temporelle moyenne d'une opération SEARCH dans une Hash Map ?\na) **O(1)**\nb) *O(log n)*\nc) $a \\leftarrow b$  O(n)\nd) O(n²)\n*   **R :** a) (O(1)) - En moyenne, les accès sont constants\n\n**Q2.** Dans quel type de structure de données l'élément en dernier entré est le premier à sortir ?\na) File d'attente (Queue)\nb) Pile (Stack)\nc) Liste chaînée simple\nd) Arbre binaire\n*   **R :** b) (Pile/Stack/LIFO - Last In First Out)\n\n**Q3.** Quelle opération est la plus lente dans une liste chaînée comparée à un tableau ?\na) Accès par index\nb) Insertion en tête\nc) Suppression du premier élément\nd) Parcourir tous les éléments\n*   **R :** a) (Accès O(n) vs O(1))\n\n**Q4.** Quelle structure de données est utilisée pour implémenter un algorithme d'inversage ?\na) File d'attente doublement chaînée\nb) Pile et File d'attente simultanées\nc) Arbre B\nd) Hash Table\n*   **R :** b) (Utilise 2 piles ou une pile + queue inversée pour invertir le contenu sans modifier la structure originale.\n\n**Q5.** Quel est l'inconvénient principal des tables de hachage ?\na) Elles ne supportent pas les suppressions\nb) Les collisions peuvent dégrader la performance à O(n) dans certains cas\nc) La mémoire est sous-utilisée même si on stocke peu d'éléments\nd) Elles nécessitent une connaissance du nombre exact d'opérations avant création\n*   **R :** b) (Les mauvaises fonctions de hachage ou les collisions fréquentes dégradent la performance.\n\n**Q6.** Dans un arbre B, qu'est-ce que M représente ?\na) La hauteur minimale de l'arbre\nb) Le nombre maximum d'enfants pour nœud intérieur\nc) Le facteur d'équilibrage global de l'arbre\nd) La charge moyenne du disque dur lors des insertions/suppressions.\n*   **R :** b) (M = nombre max d'enfants par noeud interne, M-1 nombres max clés internes.)\n\n**Q7.** Quelle opération est O(√n dans le pire cas pour un arbre B ?\na) Recherche d'une clé spécifique\nb) Insertion ou suppression de nœuds en fonction du nombre d'éléments à traiter.\nc) Parcourir toutes les feuilles en profondeur.\nd) Mise à jour racine après insertion/suppression massives.\n*   **R :** b) (L'équilibrage prend O(√n) quand le nombre de clés dépasse un certain seuil.)\n\n**Q8.** Dans quelle structure peut-on trouver une paire de nombres dont la somme est égale à une valeur cible en temps optimal ?\na) Liste chaînée non triée\nb) Tableau avec deux pointeurs (left/right pointer technique).\nc) Hash Table pour stocker les complémentaires.\nd) Arbre binaire binomial ou arbre AVL.\n*   **R :** c) (On garde la somme dans le hash et on cherche O(1)).\n\n**Q9.** Quel type de structure convient mieux à un navigateur d'historique ?\na) File d'attente FIFO seule  \nb) Liste chaînée doublement avec gestion des états précédent/suivant.\nc) Pile LIFO simple pour les actions annulables.\nd) Arbre B multi-niveaux hiérarchisé par session utilisateur.\n*   **R :** c) (La pile implémente parfaitement le \"undo\" classique navigateur.)\n\n**Q10.** Quelle opération est O(√n dans un tas binaire ?\na) Recherche d'un élément spécifique arbitraire  \nb) Insertion en fonction du nombre total de clés stockées.\nc) Extraction de l'élément minimum/maximum racine après suppression massive.\nd) Parcourir toutes les feuilles pour trouver une valeur cible donnée par niveau maximal autorisé.\n*   **R :** c) (L'équilibrage prend O(√n) quand le nombre de clés dépasse un certain seuil.)\n\n**Q11.** Dans quel cas l'arbre B redimensionne-t-il sa taille ?\na) Lorsqu'une feuille contient M/2+1 éléments au maximum  \nb) Lorsque la racine devient inapte à supporter plus d'enfants internes.\nc) Quand on doit supprimer un nœud contenant une clé interne uniquement.\nd) Si le facteur d'équilibrage global dépasse 50% du nombre maximal théorique possible de clés stockées dans l'arbre B actuel.\n*   **R :** b) (La racine devient inapte après insertion massive, donc redimensionne son aire.)\n\n**Q12.** Quelle opération est O(√n dans le pire cas pour un arbre AVL ?\na) Recherche d'une clé spécifique  \nb) Insertion ou suppression de nœuds en fonction du nombre d'éléments à traiter.\nc) Parcourir toutes les feuilles en profondeur.\nd) Mise à jour racine après insertion/suppression massives.\n*   **R :** b) (L'équilibrage prend O(√n) quand le nombre de clés dépasse un certain seuil.)\n\n**Q13.** Dans quelle structure peut-on trouver une paire de nombres dont la somme est égale à une valeur cible en temps optimal ?\na) Liste chaînée non triée  \nb) Tableau avec deux pointeurs (left/right pointer technique).\nc) Hash Table pour stocker les complémentaires.\nd) Arbre binaire binomial ou arbre AVL.\n*   **R :** c) (On garde la somme dans le hash et on cherche O(1)).\n\n**Q14.** Quelle opération est O(log n) dans un tas binaire ?\na) Recherche d'un élément spécifique arbitraire  \nb) Insertion en fonction du nombre total de clés stockées.\nc) Extraction de l'élément minimum/maximum racine après suppression massive.\nd) Parcourir toutes les feuilles pour trouver une valeur cible donnée par niveau maximal autorisé.\n*   **R :** a) (La recherche prend O(log n)).\n\n**Q15.** Quelle opération est constante en temps dans un tas binaire ?\na) Recherche d'un élément spécifique arbitraire  \nb) Insertion ou suppression de racine après ajustement massifs.\nc) Extraction de l'élément minimum/maximum racine après suppression massive.\nd) Parcourir toutes les feuilles pour trouver une valeur cible donnée par niveau maximal autorisé.\n*   **R :** d) (L'extraction prend O(1)).\n\n---\n\n### Récapitulatif des complexités clés :\n\n| Structure | Opération | Complexité Moyenne | Pire Cas |\n|-----------|-----------|---------------------|----------|\n| Hash Table | Search/Insert/Delete | O(1) | O(n) (collisions fréquentes) |\n| Liste chaînée simple | Access par index | O(n) | O(n) |\n| Pile (Stack) | Push/Pop | O(1) | O(1) |\n| File d'attente FIFO | Enqueue/Dequeue | O(1) | O(1) |\n| Tas binaire | Min/Max extraction | O(log n) | O(n) |\n\n---\n\n**Score :** Comptez vos bonnes réponses sur 15.\n- **0-7 :** Débutant, revoir les bases des structures de données  \n- **8-12 :** Intermédiaire, bonne compréhension générale  \n- **13-15 :** Avancé/excellent niveau technique !\n\nSouhaitez-vous que je développe l'une en particulier ?",
+  "expected": [
+    "Quiz : Structures de Données",
+    [
+      {
+        "question": "<p>Quelle est la complexité temporelle moyenne d'une opération SEARCH dans une Hash Map ?</p>",
+        "options": [
+          "<p>O(1)</p>",
+          "<p><em>O(log n)</em></p>",
+          "<p>$a \\leftarrow b$  O(n)</p>",
+          "<p>O(n²)</p>"
+        ],
+        "correct_index": 0,
+        "explanation": "<p>(O(1)) - En moyenne, les accès sont constants.</p>"
+      },
+      {
+        "question": "<p>Dans quel type de structure de données l'élément en dernier entré est le premier à sortir ?</p>",
+        "options": [
+          "<p>File d'attente (Queue)</p>",
+          "<p>Pile (Stack)</p>",
+          "<p>Liste chaînée simple</p>",
+          "<p>Arbre binaire</p>"
+        ],
+        "correct_index": 1,
+        "explanation": "<p>Pile/Stack/LIFO - Last In First Out.</p>"
+      },
+      {
+        "question": "<p>Quelle opération est la plus lente dans une liste chaînée comparée à un tableau ?</p>",
+        "options": [
+          "<p>Accès par index</p>",
+          "<p>Insertion en tête</p>",
+          "<p>Suppression du premier élément</p>",
+          "<p>Parcourir tous les éléments</p>"
+        ],
+        "correct_index": 0,
+        "explanation": "<p>Accès O(n) vs O(1)</p>"
+      },
+      {
+        "question": "<p>Quelle structure de données est utilisée pour implémenter un algorithme d'inversage ?</p>",
+        "options": [
+          "<p>File d'attente doublement chaînée</p>",
+          "<p>Pile et File d'attente simultanées</p>",
+          "<p>Arbre B</p>",
+          "<p>Hash Table</p>"
+        ],
+        "correct_index": 1,
+        "explanation": "<p>Utilise 2 piles ou une pile + queue inversée pour invertir le contenu sans modifier la structure originale.</p>"
+      },
+      {
+        "question": "<p>Quel est l'inconvénient principal des tables de hachage ?</p>",
+        "options": [
+          "<p>Elles ne supportent pas les suppressions</p>",
+          "<p>Les collisions peuvent dégrader la performance à O(n) dans certains cas</p>",
+          "<p>La mémoire est sous-utilisée même si on stocke peu d'éléments</p>",
+          "<p>Elles nécessitent une connaissance du nombre exact d'opérations avant création</p>"
+        ],
+        "correct_index": 1,
+        "explanation": "<p>Les mauvaises fonctions de hachage ou les collisions fréquentes dégradent la performance.</p>"
+      },
+      {
+        "question": "<p>Dans un arbre B, qu'est-ce que M représente ?</p>",
+        "options": [
+          "<p>La hauteur minimale de l'arbre</p>",
+          "<p>Le nombre maximum d'enfants pour nœud intérieur</p>",
+          "<p>Le facteur d'équilibrage global de l'arbre</p>",
+          "<p>La charge moyenne du disque dur lors des insertions/suppressions.</p>"
+        ],
+        "correct_index": 1,
+        "explanation": "<p>M = nombre max d'enfants par noeud interne, M-1 nombres max clés internes.</p>"
+      },
+      {
+        "question": "<p>Quelle opération est O(√n dans le pire cas pour un arbre B ?</p>",
+        "options": [
+          "<p>Recherche d'une clé spécifique</p>",
+          "<p>Insertion ou suppression de nœuds en fonction du nombre d'éléments à traiter.</p>",
+          "<p>Parcourir toutes les feuilles en profondeur.</p>",
+          "<p>Mise à jour racine après insertion/suppression massives.</p>"
+        ],
+        "correct_index": 1,
+        "explanation": "<p>L'équilibrage prend O(√n) quand le nombre de clés dépasse un certain seuil.</p>"
+      },
+      {
+        "question": "<p>Dans quelle structure peut-on trouver une paire de nombres dont la somme est égale à une valeur cible en temps optimal ?</p>",
+        "options": [
+          "<p>Liste chaînée non triée</p>",
+          "<p>Tableau avec deux pointeurs (left/right pointer technique).</p>",
+          "<p>Hash Table pour stocker les complémentaires.</p>",
+          "<p>Arbre binaire binomial ou arbre AVL.</p>"
+        ],
+        "correct_index": 2,
+        "explanation": "<p>On garde la somme dans le hash et on cherche O(1).</p>"
+      },
+      {
+        "question": "<p>Quel type de structure convient mieux à un navigateur d'historique ?</p>",
+        "options": [
+          "<p>File d'attente FIFO seule</p>",
+          "<p>Liste chaînée doublement avec gestion des états précédent/suivant.</p>",
+          "<p>Pile LIFO simple pour les actions annulables.</p>",
+          "<p>Arbre B multi-niveaux hiérarchisé par session utilisateur.</p>"
+        ],
+        "correct_index": 2,
+        "explanation": "<p>La pile implémente parfaitement le \"undo\" classique navigateur.</p>"
+      },
+      {
+        "question": "<p>Quelle opération est O(√n dans un tas binaire ?</p>",
+        "options": [
+          "<p>Recherche d'un élément spécifique arbitraire</p>",
+          "<p>Insertion en fonction du nombre total de clés stockées.</p>",
+          "<p>Extraction de l'élément minimum/maximum racine après suppression massive.</p>",
+          "<p>Parcourir toutes les feuilles pour trouver une valeur cible donnée par niveau maximal autorisé.</p>"
+        ],
+        "correct_index": 2,
+        "explanation": "<p>L'équilibrage prend O(√n) quand le nombre de clés dépasse un certain seuil.</p>"
+      },
+      {
+        "question": "<p>Dans quel cas l'arbre B redimensionne-t-il sa taille ?</p>",
+        "options": [
+          "<p>Lorsqu'une feuille contient M/2+1 éléments au maximum</p>",
+          "<p>Lorsque la racine devient inapte à supporter plus d'enfants internes.</p>",
+          "<p>Quand on doit supprimer un nœud contenant une clé interne uniquement.</p>",
+          "<p>Si le facteur d'équilibrage global dépasse 50% du nombre maximal théorique possible de clés stockées dans l'arbre B actuel.</p>"
+        ],
+        "correct_index": 1,
+        "explanation": "<p>La racine devient inapte après insertion massive, donc redimensionne son aire.</p>"
+      },
+      {
+        "question": "<p>Quelle opération est O(√n dans le pire cas pour un arbre AVL ?</p>",
+        "options": [
+          "<p>Recherche d'une clé spécifique</p>",
+          "<p>Insertion ou suppression de nœuds en fonction du nombre d'éléments à traiter.</p>",
+          "<p>Parcourir toutes les feuilles en profondeur.</p>",
+          "<p>Mise à jour racine après insertion/suppression massives.</p>"
+        ],
+        "correct_index": 1,
+        "explanation": "<p>L'équilibrage prend O(√n) quand le nombre de clés dépasse un certain seuil.</p>"
+      },
+      {
+        "question": "<p>Dans quelle structure peut-on trouver une paire de nombres dont la somme est égale à une valeur cible en temps optimal ?</p>",
+        "options": [
+          "<p>Liste chaînée non triée</p>",
+          "<p>Tableau avec deux pointeurs (left/right pointer technique).</p>",
+          "<p>Hash Table pour stocker les complémentaires.</p>",
+          "<p>Arbre binaire binomial ou arbre AVL.</p>"
+        ],
+        "correct_index": 2,
+        "explanation": "<p>On garde la somme dans le hash et on cherche O(1).</p>"
+      },
+      {
+        "question": "<p>Quelle opération est O(log n) dans un tas binaire ?</p>",
+        "options": [
+          "<p>Recherche d'un élément spécifique arbitraire</p>",
+          "<p>Insertion en fonction du nombre total de clés stockées.</p>",
+          "<p>Extraction de l'élément minimum/maximum racine après suppression massive.</p>",
+          "<p>Parcourir toutes les feuilles pour trouver une valeur cible donnée par niveau maximal autorisé.</p>"
+        ],
+        "correct_index": 0,
+        "explanation": "<p>La recherche prend O(log n).</p>"
+      },
+      {
+        "question": "<p>Quelle opération est constante en temps dans un tas binaire ?</p>",
+        "options": [
+          "<p>Recherche d'un élément spécifique arbitraire</p>",
+          "<p>Insertion ou suppression de racine après ajustement massifs.</p>",
+          "<p>Extraction de l'élément minimum/maximum racine après suppression massive.</p>",
+          "<p>Parcourir toutes les feuilles pour trouver une valeur cible donnée par niveau maximal autorisé.</p>"
+        ],
+        "correct_index": 3,
+        "explanation": "<p>L'extraction prend O(1).</p>"
+      }
     ]
+  ]
 }
