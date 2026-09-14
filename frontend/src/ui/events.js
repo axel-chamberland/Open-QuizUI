@@ -12,12 +12,13 @@ import { copyQuiz, copyQuestion } from "../shared/clipboard.js";
 import {
   closeEditorConfirm,
   openEditor,
+  restoreQuestionToDefault,
   saveEdit,
 } from "../rendering/editor.js";
 import {
   confirmRestart,
   cancelRestart,
-  showEditorPrompt,
+  restoreQuizToDefault,
 } from "../rendering/editor.js";
 import { toggleFullscreen } from "./fullscreen.js";
 import { restartQuiz } from "../rendering/results.js";
@@ -107,6 +108,29 @@ export function initializeEvents() {
   document
     .getElementById("editor-close-button")
     .addEventListener("click", closeEditorConfirm);
+
+  document
+    .getElementById("reset-quiz-button")
+    .addEventListener("click", restoreQuizToDefault);
+
+  document
+    .getElementById("reset-question-button")
+    .addEventListener("click", restoreQuestionToDefault);
+
+  // Drop down menu
+  const trigger = document.getElementById("actions-button");
+  const menu = document.getElementById("dropdown-menu");
+
+  trigger.addEventListener("click", (e) => {
+    e.stopPropagation();
+    menu.classList.toggle("show");
+  });
+
+  document.addEventListener("click", (e) => {
+    if (!menu.contains(e.target) && !trigger.contains(e.target)) {
+      menu.classList.remove("show");
+    }
+  });
 
   // Keybinds
 

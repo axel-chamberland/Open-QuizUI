@@ -20,7 +20,6 @@
         <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z" />
         <circle cx="12" cy="12" r="2.5" />
       </symbol>
-
       <symbol id="icon-fullscreen" viewBox="0 0 24 24">
         <path d="M8 3H3v5M16 3h5v5M8 21H3v-5M16 21h5v-5" />
       </symbol>
@@ -39,7 +38,6 @@
         <path d="M9 3h6v3H9z" />
         <path d="M8 11h8M8 15h5" />
       </symbol>
-
       <symbol
         id="icon-copy"
         viewBox="0 0 24 24"
@@ -97,8 +95,23 @@
         <line x1="18" y1="6" x2="6" y2="18"></line>
         <line x1="6" y1="6" x2="18" y2="18"></line>
       </symbol>
-    </svg>
 
+      <symbol
+        id="icon-more"
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        class="lucide lucide-ellipsis-vertical"
+      >
+        <circle cx="12" cy="12" r="1" />
+        <circle cx="12" cy="5" r="1" />
+        <circle cx="12" cy="19" r="1" />
+      </symbol>
+    </svg>
     <div class="question-box">
       <div class="title-bar">
         <h1 id="title">Quiz</h1>
@@ -258,6 +271,7 @@
 
     <div id="editor" style="display: none">
       <h1>Question Editor</h1>
+
       <div class="navigation-scroll" id="editor-navigation">
         <button
           id="editor-save-button"
@@ -284,13 +298,8 @@
         >
           <svg><use href="#icon-fullscreen"></use></svg>
         </button>
-        <button
-          id="editor-close-button"
-          title="Close editor"
-          aria-label="Close editor"
-          data-tooltip="Close editor"
-        >
-          <svg><use href="#icon-close"></use></svg>
+        <button class="dropdown-trigger" id="actions-button">
+          <svg><use href="#icon-more"></use></svg>
         </button>
         <button
           id="editor-close-button"
@@ -307,6 +316,25 @@
           <button id="editor-prompt-yes">yes</button>
           <button id="editor-prompt-no">no</button>
         </div>
+      </div>
+
+      <div class="dropdown-menu" id="dropdown-menu">
+        <button
+          id="reset-quiz-button"
+          title="Reset all questions"
+          aria-label="Reset quiz"
+          data-tooltip="Reset quiz"
+        >
+          Reset Quiz
+        </button>
+        <button
+          id="reset-question-button"
+          title="Reset current question"
+          aria-label="Reset question"
+          data-tooltip="Reset question"
+        >
+          Reset Question
+        </button>
       </div>
       <p>
         <strong>Limitation:</strong>

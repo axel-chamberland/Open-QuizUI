@@ -1,6 +1,10 @@
 import { state } from "../state.js";
 import { renderQuiz } from "./mcq.js";
-import { saveLocalEdit } from "../persistence/quiz_edits.js";
+import {
+  removeAllLocalEdits,
+  removeLocalEdit,
+  saveLocalEdit,
+} from "../persistence/quiz_edits.js";
 import { setQuizTitle } from "../quiz.js";
 
 document
@@ -228,21 +232,46 @@ function closeEditor() {
 
 export function restoreQuizToDefault() {
   showEditorPrompt(
-    "Restore the quiz to its original default state?\nAll unsaved edits will be discarded.",
+    "Restore the quiz to its original state?\nAll local edits will be discarded.",
     () => {
-      if (state.quizStorageKey) {
-        localStorage.removeItem(state.quizStorageKey);
-      }
+      // Update using app-data from last download
       const appData = JSON.parse(
         document.getElementById("app-data").textContent,
       );
 
-      export const ENABLE_MATHJAX = appData.enableMathJax;
-      export const quiz = appData.quiz;
+      state.quiz = structuredClone(appData.quiz);
+      setQuizTitle(state.quiz.title);
 
-      state.quiz = JSON.parse(JSON.stringify(defaultQuizData));
-      restartQuiz();
+      // Remove local storage edits
+      removeAllLocalEdits();
+
+      openEditor();
       showEditorAlert("Quiz restored to default.");
+    },
+    null,
+    "Yes",
+    "No",
+  );
+}
+
+export function restoreQuestionToDefault() {
+  showEditorPrompt(
+    "Restore the current question to its original state?\nAll local edits will be discarded.",
+    () => {
+      const appData = JSON.parse(
+        document.getElementById("app-data").textContent,
+      );
+
+      const index = state.currentQuestionIndex;
+
+      state.quiz.questions[index] = structuredClone(
+        appData.quiz.questions[index],
+      );
+
+      removeLocalEdit(index);
+
+      openEditor();
+      showEditorAlert("Question restored to default.");
     },
     null,
     "Yes",

@@ -15,20 +15,43 @@ export function saveLocalEdit(index, titleChanged) {
     edits = {};
   }
 
-  if (titleChanged) {
+  const questionChanged = hasQuestionChanged(index);
+  const actualTitleChanged = titleChanged && hasTitleChanged();
+
+  if (!questionChanged && !actualTitleChanged) {
+    return false;
+  }
+
+  if (actualTitleChanged) {
     edits.title = state.quiz.title;
   }
 
-  edits[index] = state.quiz.questions[index];
+  if (questionChanged) {
+    edits[index] = state.quiz.questions[index];
+  }
 
   try {
     localStorage.setItem(key, JSON.stringify(edits));
-    console.log("Saved edit:", key, edits);
     return true;
   } catch (e) {
     console.error("Failed to save edit:", e);
     return false;
   }
+}
+
+function hasQuestionChanged(index) {
+  const appData = JSON.parse(document.getElementById("app-data").textContent);
+
+  return (
+    JSON.stringify(state.quiz.questions[index]) !==
+    JSON.stringify(appData.quiz.questions[index])
+  );
+}
+
+function hasTitleChanged() {
+  const appData = JSON.parse(document.getElementById("app-data").textContent);
+
+  return state.quiz.title !== appData.quiz.title;
 }
 
 export function loadQuizEdits(state) {
@@ -55,4 +78,32 @@ export function loadQuizEdits(state) {
   } catch (e) {
     console.error("Failed to load quiz edits:", e);
   }
+}
+
+export function removeLocalEdit(index) {
+  const key = getQuizEditsKey(state.quizStorageKey);
+
+  let edits;
+
+  try {
+    edits = JSON.parse(localStorage.getItem(key)) || {};
+  } catch {
+    return false;
+  }
+
+  delete edits[index];
+
+  // If nothing remains, remove the whole edits entry.
+  if (Object.keys(edits).length === 0) {
+    localStorage.removeItem(key);
+  } else {
+    localStorage.setItem(key, JSON.stringify(edits));
+  }
+
+  return true;
+}
+
+export function removeAllLocalEdits() {
+  const key = getQuizEditsKey(state.quizStorageKey);
+  localStorage.removeItem(key);
 }

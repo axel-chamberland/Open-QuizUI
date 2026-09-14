@@ -3,7 +3,7 @@ title: QuizUI
 author: Axel Chamberland
 git_url: https://github.com/axel-chamberland/OpenQuizUI
 description: This tool allows large language models to generated interactive multiple-choice quizzes.
-version: 2.1.0
+version: 2.1.1
 licence: MIT
 """
 
@@ -443,733 +443,911 @@ def wrap_html(
     )
 
 
-HTML_TEMPLATE = r"""<!DOCTYPE html>
+HTML_TEMPLATE = r"""<!doctype html>
 <html>
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title id="page-title">Open-QuizUI</title>
 
-    <link rel="icon" href="https://raw.githubusercontent.com/axel-chamberland/Open-QuizUI/main/src/openquizui/action_logo.svg">
+    <link
+      rel="icon"
+      href="https://raw.githubusercontent.com/axel-chamberland/Open-QuizUI/main/src/openquizui/action_logo.svg"
+    />
 
     <style>
-:root {
-    color-scheme: light dark;
-    __LIGHT_THEME__
-}
-
-@media (prefers-color-scheme: dark) {
     :root {
-        __DARK_THEME__
+        color-scheme: light dark;
+        __LIGHT_THEME__
     }
-}
-</style>
+
+    @media (prefers-color-scheme: dark) {
+        :root {
+            __DARK_THEME__
+        }
+    }
+    </style>
     <style>
 .app-loading {
-    visibility: hidden;
+  visibility: hidden;
 }
 
 * {
-    box-sizing: border-box;
-    font-family: inherit;
+  box-sizing: border-box;
+  font-family: inherit;
 }
 
 body {
-    background: var(--bg);
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    align-items: center;
-    margin: 0;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  margin: 0;
 }
 
 :is(:fullscreen, .pseudo-fullscreen-active) body {
-    position: fixed;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    margin: 0;
-    padding: 0;
-    overflow: hidden;
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
 }
 
 :is(:fullscreen, .pseudo-fullscreen-active) .question-box,
 :is(:fullscreen, .pseudo-fullscreen-active) #results,
 :is(:fullscreen, .pseudo-fullscreen-active) #editor {
-    flex: 1;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 :is(:fullscreen, .pseudo-fullscreen-active) .navigation-scroll {
-    flex: 0 0 auto;
-    order: 1;
+  flex: 0 0 auto;
+  order: 1;
 }
 
 h1 {
-    font-size: 1.2rem;
+  font-size: 1.2rem;
 }
 
 .title-bar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
 }
 
 .title-bar h1 {
-    margin: 0;
+  margin: 0;
 }
 
 .question-box,
 #results,
 #editor {
-    display: flex;
-    flex-direction: column;
-    color: var(--text);
-    width: min(800px, 100%);
-    padding: 8px;
-    height: auto;
+  display: flex;
+  flex-direction: column;
+  color: var(--text);
+  width: min(800px, 100%);
+  padding: 8px;
+  height: auto;
 }
 
 #question {
-    margin-bottom: 2em;
-    font-size: 1.1rem;
+  margin-bottom: 2em;
+  font-size: 1.1rem;
 }
 
 #question-scroll {
-    display: flex;
-    flex-direction: column;
-    overflow-y: auto;
-    min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  min-height: 0;
 }
 
 :is(:fullscreen, .pseudo-fullscreen-active) #question-scroll {
-    flex: 1;
-    order: 0;
+  flex: 1;
+  order: 0;
 }
 
 #options {
-    display: grid;
-    max-width: 100%;
-    gap: 0.75rem;
+  display: grid;
+  max-width: 100%;
+  gap: 0.75rem;
 }
 
 button {
-    border: 1px solid;
-    border-radius: 0.25rem;
-    border-color: var(--border);
-    background: var(--btn);
-    cursor: pointer;
-    text-align: center;
-    color: var(--text);
-    font-size: 1.1rem;
+  border: 1px solid;
+  border-radius: 0.25rem;
+  border-color: var(--border);
+  background: var(--btn);
+  cursor: pointer;
+  color: var(--text);
+  font-size: 1.1rem;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 button svg {
-    width: 1em;
-    height: 1em;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 2;
-    stroke-linecap: round;
-    stroke-linejoin: round;
+  width: 1em;
+  height: 1em;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .option {
-    padding: 1rem 3rem 1rem 3rem;
-    position: relative;
-    text-align: center;
+  padding: 1rem 3rem 1rem 3rem;
+  position: relative;
+  text-align: center;
 }
 
 button:disabled {
-    opacity: 0.4;
+  opacity: 0.4;
 }
 
 .option:hover {
-    filter: contrast(1.1);
+  filter: contrast(1.1);
 }
 
 .option.correct {
-    background: var(--correct_bg);
-    border-color: var(--success);
-    opacity: 1;
+  background: var(--correct_bg);
+  border-color: var(--success);
+  opacity: 1;
 }
 
 .option.wrong {
-    background: var(--wrong_bg);
-    border-color: var(--danger);
-    opacity: 1;
+  background: var(--wrong_bg);
+  border-color: var(--danger);
+  opacity: 1;
 }
 
 .option::after {
-    position: absolute;
-    right: 1rem;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 1rem;
-    text-align: center;
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1rem;
+  text-align: center;
 }
 
 .option.correct::after {
-    content: " ✓";
-    font-weight: bold;
+  content: " ✓";
+  font-weight: bold;
 }
 
 .option.wrong::after {
-    content: " ✗";
-    font-weight: bold;
+  content: " ✗";
+  font-weight: bold;
 }
 
 #explanation {
-    display: none;
-    margin-top: 1rem;
-    padding: 0.75rem;
-    background: var(--btn);
-    border-radius: 0.5rem;
+  display: none;
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background: var(--btn);
+  border-radius: 0.5rem;
 }
 
 .navigation-scroll {
-    overflow-x: auto;
-    overflow-y: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
 }
 
 #navigation,
 #results-navigation,
 #editor-navigation {
-    display: flex;
-    flex-wrap: nowrap;
-    padding: 0.75rem;
-    justify-content: center;
-    gap: 0.5rem;
+  display: flex;
+  flex-wrap: nowrap;
+  padding: 0.75rem;
+  justify-content: center;
+  gap: 0.5rem;
 
-    width: max-content;
-    min-width: 100%;
-    z-index: 1000;
-    border-bottom: 1px solid var(--border);
-    margin-bottom: 20px;
+  width: max-content;
+  min-width: 100%;
+  z-index: 1000;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 20px;
 
-    user-select: none;
-    -webkit-user-select: none;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 #navigation button,
 #results-navigation button,
 #editor-navigation button {
-    font-size: 2rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  font-size: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 :is(:fullscreen, .pseudo-fullscreen-active) #navigation,
 :is(:fullscreen, .pseudo-fullscreen-active) #results-navigation,
 :is(:fullscreen, .pseudo-fullscreen-active) #editor-navigation {
-    margin: 0;
-    border: 0;
+  margin: 0;
+  border: 0;
 }
 
 #navigation button,
 #results-navigation button,
 #editor-navigation button {
-    font-size: 2rem;
+  font-size: 2rem;
 }
 
 #reveal-button,
 #maximize-button,
 #download-button,
 #question-selector {
-    flex: 0 0 auto;
-    min-width: 2rem;
+  flex: 0 0 auto;
+  min-width: 2rem;
 }
 
 #prev-button,
 #next-button {
-    flex: 1;
-    font-size: clamp(1.5rem, 5vw, 2rem);
-    max-width: 4rem;
+  flex: 1;
+  font-size: clamp(1.5rem, 5vw, 2rem);
+  max-width: 4rem;
 }
 
 #question-selector {
-    display: flex;
-    align-items: center;
-    white-space: nowrap;
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
 
-    background: var(--btn);
-    color: var(--text);
+  background: var(--btn);
+  color: var(--text);
 
-    border: 1px solid var(--border);
-    border-radius: 0.25rem;
+  border: 1px solid var(--border);
+  border-radius: 0.25rem;
 
-    font-size: 1.1rem;
+  font-size: 1.1rem;
 
-    gap: 0.2rem;
+  gap: 0.2rem;
 }
 
 #question-number {
-    width: 3ch;
-    text-align: center;
-    font-size: 1.1rem;
+  width: 3ch;
+  text-align: center;
+  font-size: 1.1rem;
 
-    padding: 0;
-    margin: 0;
-    line-height: 1;
+  padding: 0;
+  margin: 0;
+  line-height: 1;
 
-    background: transparent;
-    color: var(--text);
-    border: none;
-    outline: none;
+  background: transparent;
+  color: var(--text);
+  border: none;
+  outline: none;
 }
 
 #question-number:focus {
-    outline: none;
-    border: none;
+  outline: none;
+  border: none;
 }
 
 #question-count {
-    margin-right: 0.3em;
+  margin-right: 0.3em;
 }
 
 mjx-container {
-    max-width: 100%;
-    overflow-x: auto;
-    white-space: normal;
+  max-width: 100%;
+  overflow-x: auto;
+  white-space: normal;
 }
 
 /* Hide timer by default */
 #timer {
-    display: none;
-    min-width: 4rem;
-    font-size: 1.1rem;
-    text-align: center;
-    font-variant-numeric: tabular-nums;
+  display: none;
+  min-width: 4rem;
+  font-size: 1.1rem;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
 }
 
 #timer.visible {
-    display: inline-block;
+  display: inline-block;
 }
 
 #correct {
-    color: var(--success);
+  color: var(--success);
 }
 
 #wrong {
-    color: var(--danger);
+  color: var(--danger);
 }
 
 #unanswered {
-    color: var(--unanswered);
+  color: var(--unanswered);
 }
 
 #skipped {
-    color: var(--skipped);
+  color: var(--skipped);
 }
 
 .chart-correct {
-    stroke: var(--success);
+  stroke: var(--success);
 }
 
 .chart-wrong {
-    stroke: var(--danger);
+  stroke: var(--danger);
 }
 
 .chart-unanswered {
-    stroke: var(--unanswered);
+  stroke: var(--unanswered);
 }
 
 .chart-skipped {
-    stroke: var(--skipped);
+  stroke: var(--skipped);
 }
 
 #results-scroll {
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    margin: 0 auto;
-    text-align: center;
-    overflow-y: auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin: 0 auto;
+  text-align: center;
+  overflow-y: auto;
 }
 
 /* When embedded in an iframe */
 body.embedded #results-scroll {
-    max-height: 600px;
+  max-height: 600px;
 }
 
 :is(:fullscreen, .pseudo-fullscreen-active) #results-scroll {
-    flex: 1;
-    min-height: 0;
-    max-height: none !important;
-    padding: 1rem;
-    box-sizing: border-box;
+  flex: 1;
+  min-height: 0;
+  max-height: none !important;
+  padding: 1rem;
+  box-sizing: border-box;
 }
 
 .stat-row {
-    display: flex;
-    gap: 1rem;
+  display: flex;
+  gap: 1rem;
 }
 
 .stat-row > div {
-    flex: 1;
-    padding: 0.5rem;
-    border-radius: 0.5rem;
-    background: var(--btn);
+  flex: 1;
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  background: var(--btn);
 }
 
 #statsChart {
-    height: min(50vh, 500px);
-    align-self: center;
+  height: min(50vh, 500px);
+  align-self: center;
 }
 
 .correction-sheet {
-    border-top: 1px solid var(--border);
-    text-align: left;
+  border-top: 1px solid var(--border);
+  text-align: left;
 }
 
 .correction-sheet article {
-    padding: 1rem 0;
-    border-bottom: 1px solid var(--border);
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--border);
 }
 
 .correction-sheet h2 {
-    margin-bottom: 1rem;
+  margin-bottom: 1rem;
 }
 
 .correction-sheet h3 {
-    margin-top: 0;
+  margin-top: 0;
 }
 
 .correction-sheet p {
-    margin: 0.5rem 0;
+  margin: 0.5rem 0;
 }
 
 :is(:fullscreen, .pseudo-fullscreen-active) #editor {
-    flex: 1;
-    min-height: 0;
+  flex: 1;
+  min-height: 0;
 }
 
 #editor-scroll {
-    display: flex;
-    flex-direction: column;
-    overflow-y: auto;
-    min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  min-height: 0;
 }
 
 :is(:fullscreen, .pseudo-fullscreen-active) #editor-scroll {
-    flex: 1;
-    min-height: 0;
-    order: 0;
-    padding: 1rem;
-    box-sizing: border-box;
+  flex: 1;
+  min-height: 0;
+  order: 0;
+  box-sizing: border-box;
 }
 
 textarea {
-    color: var(--text);
-    background: var(--bg);
-    border: 1px solid var(--border);
-    font-size: 1rem;
-    field-sizing: content;
-    width: 100%;
-    max-width: 100%;
-    resize: vertical;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  font-size: 1rem;
+  field-sizing: content;
+  width: 100%;
+  max-width: 100%;
+  resize: vertical;
 }
 
 textarea:focus {
-    outline: none;
-    border-color: var(--success);
+  outline: none;
+  border-color: var(--success);
 }
 
 #editor-distractors article {
-    display: flex;
-    align-items: center;
-    margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
 }
 
 #editor-distractors textarea {
-    height: auto;
+  height: auto;
 }
 
 #editor-distractors .delete-prompt {
-    display: none;
+  display: none;
 }
 
 .editor-prompt {
-    display: none;
+  display: none;
 }
 
 .editor-prompt.visible {
-    display: block;
+  display: block;
 }
 
 .editor-prompt .button-row {
-    display: flex;
-    gap: 0.5rem;
+  display: flex;
+  gap: 0.5rem;
 }
 
 .answer-position {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .answer-position p {
-    margin: 0.5rem 0;
+  margin: 0.5rem 0;
 }
 
 .answer-position input {
-    width: 3ch;
-    field-sizing: content;
+  width: 3ch;
+  field-sizing: content;
 
-    color: var(--text);
-    background: var(--bg);
-    border: 1px solid var(--border);
-    font-size: 1rem;
-    text-align: center;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  font-size: 1rem;
+  text-align: center;
+}
+
+#actions-button {
+  anchor-name: --actions-button;
+}
+
+.dropdown-menu {
+  position: fixed;
+  position-anchor: --actions-button;
+
+  left: anchor(left);
+  top: anchor(bottom);
+
+  display: none;
+  z-index: 2000;
+
+  border: 1px solid var(--border);
+  background: var(--bg);
+}
+
+.dropdown-menu.show {
+  display: block;
+}
+
+.dropdown-menu button {
+  display: block;
+  width: 100%;
+  border: none;
+  border-radius: 0;
+}
+.dropdown-menu button + button {
+  border-top: 1px solid var(--border);
+}
+
+:is(:fullscreen, .pseudo-fullscreen-active) .dropdown-menu {
+  top: auto;
+  bottom: anchor(top);
 }
 
 /* image and embedded styles */
 img,
 video,
 iframe {
-    display: block;
-    max-width: 100%;
-    object-fit: contain;
-    margin-inline: auto;
+  display: block;
+  max-width: 100%;
+  object-fit: contain;
+  margin-inline: auto;
 }
 
 /* Tables */
 table {
-    max-width: 100%;
-    margin: 1rem auto;
-    border-collapse: collapse;
+  max-width: 100%;
+  margin: 1rem auto;
+  border-collapse: collapse;
 }
 
 th,
 td {
-    padding: 0.5rem;
-    border: 1px solid var(--border);
-    text-align: left;
+  padding: 0.5rem;
+  border: 1px solid var(--border);
+  text-align: left;
 }
 
 th {
-    background: var(--btn);
+  background: var(--btn);
 }
 
 </style>
-</head>
+  </head>
 
-<body class="app-loading">
-<svg style="display: none;">
-    <symbol id="icon-reveal" viewBox="0 0 24 24">
-        <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z"/>
-        <circle cx="12" cy="12" r="2.5"/>
-    </symbol>
+  <body class="app-loading">
+    <svg style="display: none">
+      <symbol id="icon-reveal" viewBox="0 0 24 24">
+        <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z" />
+        <circle cx="12" cy="12" r="2.5" />
+      </symbol>
+      <symbol id="icon-fullscreen" viewBox="0 0 24 24">
+        <path d="M8 3H3v5M16 3h5v5M8 21H3v-5M16 21h5v-5" />
+      </symbol>
 
-    <symbol id="icon-fullscreen" viewBox="0 0 24 24">
-        <path d="M8 3H3v5M16 3h5v5M8 21H3v-5M16 21h5v-5"/>
-    </symbol>
+      <symbol id="icon-download" viewBox="0 0 24 24">
+        <path d="M12 3v12m0 0 5-5m-5 5-5-5M4 21h16" />
+      </symbol>
 
-    <symbol id="icon-download" viewBox="0 0 24 24">
-        <path d="M12 3v12m0 0 5-5m-5 5-5-5M4 21h16"/>
-    </symbol>
+      <symbol id="icon-timer" viewBox="0 0 24 24">
+        <circle cx="12" cy="13" r="8" />
+        <path d="M12 9v4l3 2M9 3h6" />
+      </symbol>
 
-    <symbol id="icon-timer" viewBox="0 0 24 24">
-        <circle cx="12" cy="13" r="8"/>
-        <path d="M12 9v4l3 2M9 3h6"/>
-    </symbol>
-
-    <symbol id="icon-editor" viewBox="0 0 24 24">
-        <rect x="5" y="4" width="14" height="17" rx="2"/>
-        <path d="M9 3h6v3H9z"/>
-        <path d="M8 11h8M8 15h5"/>
-    </symbol>
-
-    <symbol id="icon-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <symbol id="icon-editor" viewBox="0 0 24 24">
+        <rect x="5" y="4" width="14" height="17" rx="2" />
+        <path d="M9 3h6v3H9z" />
+        <path d="M8 11h8M8 15h5" />
+      </symbol>
+      <symbol
+        id="icon-copy"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
         <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-    </symbol>
+        <path
+          d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"
+        ></path>
+      </symbol>
 
-    <symbol id="icon-copy-all" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <symbol
+        id="icon-copy-all"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
         <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
         <polyline points="2 17 12 22 22 17"></polyline>
         <polyline points="2 12 12 17 22 12"></polyline>
-    </symbol>
+      </symbol>
 
-    <symbol id="icon-save" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+      <symbol
+        id="icon-save"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path
+          d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"
+        ></path>
         <polyline points="17 21 17 13 7 13 7 21"></polyline>
         <polyline points="7 3 7 8 15 8"></polyline>
-    </symbol>
+      </symbol>
 
-    <symbol id="icon-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <symbol
+        id="icon-close"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
         <line x1="18" y1="6" x2="6" y2="18"></line>
         <line x1="6" y1="6" x2="18" y2="18"></line>
-    </symbol>
-</svg>
+      </symbol>
 
-<div class="question-box">
-    <div class="title-bar">
+      <symbol
+        id="icon-more"
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        class="lucide lucide-ellipsis-vertical"
+      >
+        <circle cx="12" cy="12" r="1" />
+        <circle cx="12" cy="5" r="1" />
+        <circle cx="12" cy="19" r="1" />
+      </symbol>
+    </svg>
+    <div class="question-box">
+      <div class="title-bar">
         <h1 id="title">Quiz</h1>
         <span id="timer">00:00</span>
-    </div>
-    <div class="navigation-scroll">
+      </div>
+      <div class="navigation-scroll">
+        <div id="navigation">
+          <button id="prev-button" aria-label="Previous question">&lt;</button>
 
-    <div id="navigation">
-
-        <button id="prev-button" aria-label="Previous question">&lt;</button>
-
-        <div id="question-selector">
-            <input id="question-number" type="text" inputmode="numeric" value="1">
+          <div id="question-selector">
+            <input
+              id="question-number"
+              type="text"
+              inputmode="numeric"
+              value="1"
+            />
             <span class="separator">/</span>
             <span id="question-count">1</span>
-        </div>
+          </div>
 
-        <button id="next-button" aria-label="Next question">&gt;</button>
+          <button id="next-button" aria-label="Next question">&gt;</button>
 
-        <button id="reveal-button" title="Reveal answer" aria-label="Reveal answer">
+          <button
+            id="reveal-button"
+            title="Reveal answer"
+            aria-label="Reveal answer"
+          >
             <svg><use href="#icon-reveal"></use></svg>
-        </button>
+          </button>
 
-        <button id="maximize-button" title="Toggle Fullscreen" aria-label="Fullscreen">
+          <button
+            id="maximize-button"
+            title="Toggle Fullscreen"
+            aria-label="Fullscreen"
+          >
             <svg><use href="#icon-fullscreen"></use></svg>
-        </button>
+          </button>
 
-        <button id="download-button" title="Download quiz" aria-label="Download quiz">
+          <button
+            id="download-button"
+            title="Download quiz"
+            aria-label="Download quiz"
+          >
             <svg><use href="#icon-download"></use></svg>
-        </button>
+          </button>
 
-        <button id="timer-toggle" title="Toggle timer" aria-label="Toggle timer">
+          <button
+            id="timer-toggle"
+            title="Toggle timer"
+            aria-label="Toggle timer"
+          >
             <svg><use href="#icon-timer"></use></svg>
-        </button>
+          </button>
 
-        <button id="copy-all-button" title="Copy quiz" aria-label="Copy quiz">
+          <button id="copy-all-button" title="Copy quiz" aria-label="Copy quiz">
             <svg><use href="#icon-copy-all"></use></svg>
-        </button>
+          </button>
 
-        <button id="copy-question-button" title="Copy question" aria-label="Copy question">
+          <button
+            id="copy-question-button"
+            title="Copy question"
+            aria-label="Copy question"
+          >
             <svg><use href="#icon-copy"></use></svg>
-        </button>
-        <button id="editor-button" title="Edit question" aria-label="Edit question">
+          </button>
+          <button
+            id="editor-button"
+            title="Edit question"
+            aria-label="Edit question"
+          >
             <svg><use href="#icon-editor"></use></svg>
-        </button>
-
-    </div>
-    </div>
-    <div id="question-scroll">
+          </button>
+        </div>
+      </div>
+      <div id="question-scroll">
         <p id="question"></p>
         <div id="options"></div>
         <div id="explanation"></div>
+      </div>
     </div>
-</div>
 
-
-<div id="results" style="display: none;">
-    <div class=navigation-scroll>
+    <div id="results" style="display: none">
+      <div class="navigation-scroll">
         <div id="results-navigation">
-            <button id="results-back-button" title="Back to quiz" aria-label="Back to quiz">&lt;</button>
+          <button
+            id="results-back-button"
+            title="Back to quiz"
+            aria-label="Back to quiz"
+          >
+            &lt;
+          </button>
 
-            <button id="results-maximize-button" title="Toggle Fullscreen" aria-label="Fullscreen">
-                <svg><use href="#icon-fullscreen"></use></svg>
-            </button>
+          <button
+            id="results-maximize-button"
+            title="Toggle Fullscreen"
+            aria-label="Fullscreen"
+          >
+            <svg><use href="#icon-fullscreen"></use></svg>
+          </button>
 
-            <button id="results-download-button" title="Download quiz" aria-label="Download quiz">
-                <svg><use href="#icon-download"></use></svg>
-            </button>
+          <button
+            id="results-download-button"
+            title="Download quiz"
+            aria-label="Download quiz"
+          >
+            <svg><use href="#icon-download"></use></svg>
+          </button>
 
-            <button id="results-copy-all-button" title="Copy quiz" aria-label="Copy quiz">
-                <svg><use href="#icon-copy-all"></use></svg>
-            </button>
+          <button
+            id="results-copy-all-button"
+            title="Copy quiz"
+            aria-label="Copy quiz"
+          >
+            <svg><use href="#icon-copy-all"></use></svg>
+          </button>
         </div>
-    </div>
-    <div id="results-scroll">
-
+      </div>
+      <div id="results-scroll">
         <div id="time"></div>
         <div id="averageTime"></div>
 
         <div class="stat-row">
-            <div id="correct"></div>
-            <div id="wrong"></div>
+          <div id="correct"></div>
+          <div id="wrong"></div>
         </div>
         <div class="stat-row">
-            <div id="skipped"></div>
-            <div id="unanswered"></div>
+          <div id="skipped"></div>
+          <div id="unanswered"></div>
         </div>
 
         <div class="stat-row">
-            <div id="score"></div>
-            <div id="accuracy"></div>
+          <div id="score"></div>
+          <div id="accuracy"></div>
         </div>
-
 
         <div id="statsChart"></div>
 
-        <button id="restart-button" aria-label="Restart quiz">Restart Quiz</button>
-        <div id="restart-confirm" style="display: none;">
-            <span>Restart quiz?</span>
-            <button id="confirm-restart-button" aria-label="Confirm restart">Yes</button>
-            <button id="cancel-restart-button" aria-label="Cancel restart">No</button>
+        <button id="restart-button" aria-label="Restart quiz">
+          Restart Quiz
+        </button>
+        <div id="restart-confirm" style="display: none">
+          <span>Restart quiz?</span>
+          <button id="confirm-restart-button" aria-label="Confirm restart">
+            Yes
+          </button>
+          <button id="cancel-restart-button" aria-label="Cancel restart">
+            No
+          </button>
         </div>
 
-    <section class="correction-sheet">
-        <h2>Correction</h2>
-        <div id="question-corrections"></div>
-    </section>
+        <section class="correction-sheet">
+          <h2>Correction</h2>
+          <div id="question-corrections"></div>
+        </section>
+      </div>
     </div>
 
-</div>
+    <div id="editor" style="display: none">
+      <h1>Question Editor</h1>
 
-
-<div id="editor" style="display: none;">
-    <h1>Question Editor</h1>
-    <div class="navigation-scroll" id="editor-navigation">
-        <button id="editor-save-button" title="Save changes" aria-label="Save changes" data-tooltip="Save changes">
-            <svg><use href="#icon-save"></use></svg>
+      <div class="navigation-scroll" id="editor-navigation">
+        <button
+          id="editor-save-button"
+          title="Save changes"
+          aria-label="Save changes"
+          data-tooltip="Save changes"
+        >
+          <svg><use href="#icon-save"></use></svg>
         </button>
         <button title="Copy quiz" aria-label="Copy quiz">
-            <svg><use href="#icon-copy-all"></use></svg>
+          <svg><use href="#icon-copy-all"></use></svg>
         </button>
-        <button id="editor-copy-button" title="Copy question" aria-label="Copy question">
-            <svg><use href="#icon-copy"></use></svg>
+        <button
+          id="editor-copy-button"
+          title="Copy question"
+          aria-label="Copy question"
+        >
+          <svg><use href="#icon-copy"></use></svg>
         </button>
-        <button id="editor-maximize-button" title="Fullscreen" aria-label="Fullscreen">
-            <svg><use href="#icon-fullscreen"></use></svg>
+        <button
+          id="editor-maximize-button"
+          title="Fullscreen"
+          aria-label="Fullscreen"
+        >
+          <svg><use href="#icon-fullscreen"></use></svg>
         </button>
-        <button id="editor-close-button" title="Close editor" aria-label="Close editor" data-tooltip="Close editor">
-            <svg><use href="#icon-close"></use></svg>
+        <button class="dropdown-trigger" id="actions-button">
+          <svg><use href="#icon-more"></use></svg>
         </button>
-    </div>
-    <div id="editor-close" class="editor-prompt">
+        <button
+          id="editor-close-button"
+          title="Close editor"
+          aria-label="Close editor"
+          data-tooltip="Close editor"
+        >
+          <svg><use href="#icon-close"></use></svg>
+        </button>
+      </div>
+      <div id="editor-close" class="editor-prompt">
         <p id="editor-prompt-message"></p>
         <div class="button-row">
-            <button id="editor-prompt-yes">yes</button>
-            <button id="editor-prompt-no">no</button>
+          <button id="editor-prompt-yes">yes</button>
+          <button id="editor-prompt-no">no</button>
         </div>
-    </div>
-    <p>
+      </div>
+
+      <div class="dropdown-menu" id="dropdown-menu">
+        <button
+          id="reset-quiz-button"
+          title="Reset all questions"
+          aria-label="Reset quiz"
+          data-tooltip="Reset quiz"
+        >
+          Reset Quiz
+        </button>
+        <button
+          id="reset-question-button"
+          title="Reset current question"
+          aria-label="Reset question"
+          data-tooltip="Reset question"
+        >
+          Reset Question
+        </button>
+      </div>
+      <p>
         <strong>Limitation:</strong>
-        Changes are stored in your browser.<br>
-        Download the modified quiz as a new HTML file to keep your changes permanently.
-    </p>
-    <div id="editor-scroll">
+        Changes are stored in your browser.<br />
+        Download the modified quiz as a new HTML file to keep your changes
+        permanently.
+      </p>
+      <div id="editor-scroll">
         <p><strong>Title:</strong></p>
         <div id="editor-title"></div>
         <p><strong>Question:</strong></p>
         <div id="editor-question"></div>
         <div class="answer-position">
-            <p><strong>Answer Position:</strong></p>
-            <input type="text" id="editor-answer-number" inputmode="numeric">        </div>
+          <p><strong>Answer Position:</strong></p>
+          <input type="text" id="editor-answer-number" inputmode="numeric" />
+        </div>
         <p><strong>Explanation:</strong></p>
         <div id="editor-explanation"></div>
         <p><strong>Choices:</strong></p>
         <div id="editor-distractors"></div>
-
+      </div>
     </div>
-</div>
 
-<script id="app-data" type="application/json">__APP_DATA__</script>
+    <script id="app-data" type="application/json">__APP_DATA__</script>
 
-<script type="module">
+    <script type="module">
 // frontend/src/persistence/progress.js
 function hashQuiz(quiz2) {
   const data = JSON.stringify(quiz2);
@@ -1185,9 +1363,7 @@ function getProgressKey(quizStorageKey) {
 }
 function getStoredQuestionIndex(quizStorageKey) {
   try {
-    const index = Number(
-      localStorage.getItem(getProgressKey(quizStorageKey))
-    );
+    const index = Number(localStorage.getItem(getProgressKey(quizStorageKey)));
     if (!Number.isInteger(index)) {
       return 0;
     }
@@ -1198,10 +1374,7 @@ function getStoredQuestionIndex(quizStorageKey) {
 }
 function setStoredQuestionIndex(quizStorageKey, value) {
   try {
-    localStorage.setItem(
-      getProgressKey(quizStorageKey),
-      String(value)
-    );
+    localStorage.setItem(getProgressKey(quizStorageKey), String(value));
   } catch {
   }
 }
@@ -1483,7 +1656,10 @@ ${"#".repeat(level)} ${content.trim()}
 function showExplanation(question) {
   const explanationEl = document.getElementById("explanation");
   if (question.explanation) {
-    explanationEl.innerHTML = renderMarkdown(question.explanation, state.mathReady);
+    explanationEl.innerHTML = renderMarkdown(
+      question.explanation,
+      state.mathReady
+    );
     explanationEl.style.display = "block";
     if (state.mathReady) {
       window.MathJax.typesetPromise([explanationEl]).catch(
@@ -1543,7 +1719,9 @@ function getStatsKey(quizStorageKey) {
 }
 function loadStats() {
   try {
-    const data = JSON.parse(localStorage.getItem(getStatsKey(state.quizStorageKey)));
+    const data = JSON.parse(
+      localStorage.getItem(getStatsKey(state.quizStorageKey))
+    );
     if (Array.isArray(data?.results)) {
       state.questionResults = data.results;
     }
@@ -1554,7 +1732,9 @@ function loadStats() {
       state.defaultStartDate = data.startDate;
     }
   } catch {
-    state.questionResults = new Array(state.quiz.questions.length).fill(UNANSWERED);
+    state.questionResults = new Array(state.quiz.questions.length).fill(
+      UNANSWERED
+    );
     state.questionAnswers = new Array(state.quiz.questions.length).fill(null);
     state.defaultStartDate = Date.now();
   }
@@ -1644,7 +1824,9 @@ function getTimerKey(quizStorageKey) {
 }
 function loadTimer(state2) {
   try {
-    const data = JSON.parse(localStorage.getItem(getTimerKey(state2.quizStorageKey)));
+    const data = JSON.parse(
+      localStorage.getItem(getTimerKey(state2.quizStorageKey))
+    );
     state2.timer.elapsed = data?.elapsed || 0;
     state2.timer.start = data?.start || null;
   } catch {
@@ -1682,7 +1864,9 @@ function toggleTimer() {
     state.timer.interval = setInterval(updateTimer, 1e3);
   } else {
     if (state.timer.start) {
-      state.timer.elapsed += Math.floor((Date.now() - state.timer.start) / 1e3);
+      state.timer.elapsed += Math.floor(
+        (Date.now() - state.timer.start) / 1e3
+      );
       state.timer.start = null;
       saveTimer();
     }
@@ -1699,7 +1883,9 @@ async function renderResults() {
   results2.style.display = "";
   const correct = state.questionResults.filter((x) => x === CORRECT).length;
   const wrong = state.questionResults.filter((x) => x === WRONG).length;
-  const unanswered = state.questionResults.filter((x) => x === UNANSWERED).length;
+  const unanswered = state.questionResults.filter(
+    (x) => x === UNANSWERED
+  ).length;
   const skipped = state.questionResults.filter((x) => x === SKIPPED).length;
   const total = state.quiz.questions.length;
   const answered = correct + wrong;
@@ -1816,7 +2002,9 @@ function restartQuiz() {
   questionNumber.value = 1;
   state.answerRevealed = false;
   state.wrongAnswerCount = 0;
-  state.questionResults = new Array(state.quiz.questions.length).fill(UNANSWERED);
+  state.questionResults = new Array(state.quiz.questions.length).fill(
+    UNANSWERED
+  );
   state.questionAnswers = new Array(state.quiz.questions.length).fill(null);
   document.getElementById("question-corrections").innerHTML = "";
   clearInterval(state.timer.interval);
@@ -1987,18 +2175,32 @@ function saveLocalEdit(index, titleChanged) {
   } catch {
     edits = {};
   }
-  if (titleChanged) {
+  const questionChanged = hasQuestionChanged(index);
+  const actualTitleChanged = titleChanged && hasTitleChanged();
+  if (!questionChanged && !actualTitleChanged) {
+    return false;
+  }
+  if (actualTitleChanged) {
     edits.title = state.quiz.title;
   }
-  edits[index] = state.quiz.questions[index];
+  if (questionChanged) {
+    edits[index] = state.quiz.questions[index];
+  }
   try {
     localStorage.setItem(key, JSON.stringify(edits));
-    console.log("Saved edit:", key, edits);
     return true;
   } catch (e) {
     console.error("Failed to save edit:", e);
     return false;
   }
+}
+function hasQuestionChanged(index) {
+  const appData2 = JSON.parse(document.getElementById("app-data").textContent);
+  return JSON.stringify(state.quiz.questions[index]) !== JSON.stringify(appData2.quiz.questions[index]);
+}
+function hasTitleChanged() {
+  const appData2 = JSON.parse(document.getElementById("app-data").textContent);
+  return state.quiz.title !== appData2.quiz.title;
 }
 function loadQuizEdits(state2) {
   const key = getQuizEditsKey(state2.quizStorageKey);
@@ -2019,6 +2221,26 @@ function loadQuizEdits(state2) {
   } catch (e) {
     console.error("Failed to load quiz edits:", e);
   }
+}
+function removeLocalEdit(index) {
+  const key = getQuizEditsKey(state.quizStorageKey);
+  let edits;
+  try {
+    edits = JSON.parse(localStorage.getItem(key)) || {};
+  } catch {
+    return false;
+  }
+  delete edits[index];
+  if (Object.keys(edits).length === 0) {
+    localStorage.removeItem(key);
+  } else {
+    localStorage.setItem(key, JSON.stringify(edits));
+  }
+  return true;
+}
+function removeAllLocalEdits() {
+  const key = getQuizEditsKey(state.quizStorageKey);
+  localStorage.removeItem(key);
 }
 
 // frontend/src/rendering/editor.js
@@ -2181,6 +2403,44 @@ function closeEditor() {
   questionBox.style.display = "";
   renderQuiz();
 }
+function restoreQuizToDefault() {
+  showEditorPrompt(
+    "Restore the quiz to its original state?\nAll local edits will be discarded.",
+    () => {
+      const appData2 = JSON.parse(
+        document.getElementById("app-data").textContent
+      );
+      state.quiz = structuredClone(appData2.quiz);
+      setQuizTitle(state.quiz.title);
+      removeAllLocalEdits();
+      openEditor();
+      showEditorAlert("Quiz restored to default.");
+    },
+    null,
+    "Yes",
+    "No"
+  );
+}
+function restoreQuestionToDefault() {
+  showEditorPrompt(
+    "Restore the current question to its original state?\nAll local edits will be discarded.",
+    () => {
+      const appData2 = JSON.parse(
+        document.getElementById("app-data").textContent
+      );
+      const index = state.currentQuestionIndex;
+      state.quiz.questions[index] = structuredClone(
+        appData2.quiz.questions[index]
+      );
+      removeLocalEdit(index);
+      openEditor();
+      showEditorAlert("Question restored to default.");
+    },
+    null,
+    "Yes",
+    "No"
+  );
+}
 
 // frontend/src/ui/fullscreen.js
 var pseudoFullscreenState = null;
@@ -2282,6 +2542,19 @@ function initializeEvents() {
   document.getElementById("editor-copy-button").addEventListener("click", copyQuestion);
   document.getElementById("editor-maximize-button").addEventListener("click", toggleFullscreen);
   document.getElementById("editor-close-button").addEventListener("click", closeEditorConfirm);
+  document.getElementById("reset-quiz-button").addEventListener("click", restoreQuizToDefault);
+  document.getElementById("reset-question-button").addEventListener("click", restoreQuestionToDefault);
+  const trigger = document.getElementById("actions-button");
+  const menu = document.getElementById("dropdown-menu");
+  trigger.addEventListener("click", (e) => {
+    e.stopPropagation();
+    menu.classList.toggle("show");
+  });
+  document.addEventListener("click", (e) => {
+    if (!menu.contains(e.target) && !trigger.contains(e.target)) {
+      menu.classList.remove("show");
+    }
+  });
   document.addEventListener("keydown", (e) => {
     if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
     const key = e.key.toLowerCase();
@@ -2380,7 +2653,8 @@ function loadMathJax(enabled) {
 
 // frontend/src/ui/reportHeight.js
 function reportHeight() {
-  if (document.fullscreenElement || document.documentElement.classList.contains("pseudo-fullscreen-active")) return;
+  if (document.fullscreenElement || document.documentElement.classList.contains("pseudo-fullscreen-active"))
+    return;
   const questionBox = document.querySelector(".question-box");
   const results2 = document.getElementById("results");
   const editor = document.getElementById("editor");
@@ -2396,9 +2670,7 @@ function initHeightReporting() {
 }
 
 // frontend/src/main.js
-var appData = JSON.parse(
-  document.getElementById("app-data").textContent
-);
+var appData = JSON.parse(document.getElementById("app-data").textContent);
 var ENABLE_MATHJAX = appData.enableMathJax;
 var quiz = appData.quiz;
 try {
@@ -2436,7 +2708,6 @@ export {
 };
 
 </script>
-
-</body>
+  </body>
 </html>
 """

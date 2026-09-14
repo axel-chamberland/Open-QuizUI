@@ -3,7 +3,7 @@ title: QuizUI
 author: Axel Chamberland
 git_url: https://github.com/axel-chamberland/OpenQuizUI
 description: This tool allows large language models to generated interactive multiple-choice quizzes.
-version: 2.1.0
+version: 2.1.1
 licence: MIT
 """
 

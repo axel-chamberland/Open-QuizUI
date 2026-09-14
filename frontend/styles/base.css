@@ -95,9 +95,12 @@ button {
   border-color: var(--border);
   background: var(--btn);
   cursor: pointer;
-  text-align: center;
   color: var(--text);
   font-size: 1.1rem;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 button svg {
@@ -393,7 +396,6 @@ body.embedded #results-scroll {
   flex: 1;
   min-height: 0;
   order: 0;
-  padding: 1rem;
   box-sizing: border-box;
 }
 
@@ -459,6 +461,43 @@ textarea:focus {
   border: 1px solid var(--border);
   font-size: 1rem;
   text-align: center;
+}
+
+#actions-button {
+  anchor-name: --actions-button;
+}
+
+.dropdown-menu {
+  position: fixed;
+  position-anchor: --actions-button;
+
+  left: anchor(left);
+  top: anchor(bottom);
+
+  display: none;
+  z-index: 2000;
+
+  border: 1px solid var(--border);
+  background: var(--bg);
+}
+
+.dropdown-menu.show {
+  display: block;
+}
+
+.dropdown-menu button {
+  display: block;
+  width: 100%;
+  border: none;
+  border-radius: 0;
+}
+.dropdown-menu button + button {
+  border-top: 1px solid var(--border);
+}
+
+:is(:fullscreen, .pseudo-fullscreen-active) .dropdown-menu {
+  top: auto;
+  bottom: anchor(top);
 }
 
 /* image and embedded styles */
