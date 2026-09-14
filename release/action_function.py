@@ -1042,7 +1042,7 @@ HTML_TEMPLATE = r"""<!doctype html>
 
     <link
       rel="icon"
-      href="https://raw.githubusercontent.com/axel-chamberland/Open-QuizUI/main/src/openquizui/action_logo.svg"
+      href="https://raw.githubusercontent.com/axel-chamberland/Open-QuizUI/main/frontend/assets/action_logo.svg"
     />
 
     <style>
