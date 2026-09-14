@@ -1264,6 +1264,7 @@ button:disabled {
 :is(:fullscreen, .pseudo-fullscreen-active) #editor-navigation {
   margin: 0;
   border: 0;
+  border-top: 1px solid var(--border);
 }
 
 #navigation button,
