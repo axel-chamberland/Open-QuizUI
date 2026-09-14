@@ -6,7 +6,7 @@ Open-QuizUI is installed through Open WebUI's Tools and Functions pages.
 
 ### Tool
 
-1. Download or copy [quiz_tool.py](https://github.com/axel-chamberland/Open-QuizUI/blob/main/src/openquizui/quiz_tool.py).
+1. Download or copy [tool.py](https://github.com/axel-chamberland/Open-QuizUI/blob/main/release/tool.py).
 2. Open **Workspace → Tools** in Open WebUI.
 3. Create a new function and paste the Open-QuizUI code.
 4. Save the function and enable it.
