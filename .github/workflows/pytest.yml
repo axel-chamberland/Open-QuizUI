@@ -1,19 +1,25 @@
-name: Pytest
+name: Tests
 
 on:
   push:
     branches: [main]
     paths:
-      - "src/openquizui/**"
+      - "backend/**"
+      - "frontend/**"
       - "tests/**"
       - "pyproject.toml"
+      - "package.json"
+      - "package-lock.json"
 
   pull_request:
     branches: [main]
     paths:
-      - "src/openquizui/**"
+      - "backend/**"
+      - "frontend/**"
       - "tests/**"
       - "pyproject.toml"
+      - "package.json"
+      - "package-lock.json"
 
 jobs:
   test:
@@ -28,10 +34,19 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install project
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install Python project
         run: |
           python -m pip install --upgrade pip
-          pip install .
+          python -m pip install -e .
+
+      - name: Install JavaScript dependencies
+        run: npm ci
 
       - name: Run tests
         run: pytest
