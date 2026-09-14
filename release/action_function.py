@@ -108,7 +108,7 @@ THEMES = {
 
 
 class Action:
-    icon_url = "https://raw.githubusercontent.com/axel-chamberland/Open-QuizUI/main/src/assets/action_logo.svg"
+    icon_url = "https://raw.githubusercontent.com/axel-chamberland/Open-QuizUI/main/frontend/assets/action_logo.svg"
 
     class Valves(BaseModel):
         shuffle_choices: bool = Field(
