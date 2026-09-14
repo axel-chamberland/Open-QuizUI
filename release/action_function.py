@@ -325,12 +325,10 @@ def parse_quiz(
 
     # Convert paragraphs and markdown tables to HTML per-question (question, options, explanation),
     for q in questions:
-        q["question"] = _markdown_without_inline_code(q.get("question", ""))
-        q["options"] = [
-            _markdown_without_inline_code(opt) for opt in q.get("options", [])
-        ]
+        q["question"] = _markdown_to_html(q.get("question", ""))
+        q["options"] = [_markdown_to_html(opt) for opt in q.get("options", [])]
         if "explanation" in q:
-            q["explanation"] = _markdown_without_inline_code(q["explanation"])
+            q["explanation"] = _markdown_to_html(q["explanation"])
 
     return title, questions
 
@@ -964,7 +962,7 @@ def clean_text(text: str, add_period=True) -> str:
     return text
 
 
-def _markdown_without_inline_code(text):
+def _markdown_to_html(text):
     code = []
 
     def protect(match):
@@ -2479,8 +2477,8 @@ function goTo(question_index) {
   state.currentQuestionIndex = question_index;
   setStoredQuestionIndex(state.quizStorageKey, state.currentQuestionIndex);
   state.answerRevealed = false;
-  const questionNumber2 = document.getElementById("question-number");
-  questionNumber2.value = state.currentQuestionIndex + 1;
+  const questionNumber3 = document.getElementById("question-number");
+  questionNumber3.value = state.currentQuestionIndex + 1;
   renderQuiz();
 }
 function handleAnswer(index, button) {
@@ -2944,17 +2942,17 @@ function initializeEvents() {
     }
   });
   const questionSelector = document.getElementById("question-selector");
-  const questionNumber2 = document.getElementById("question-number");
+  const questionNumber3 = document.getElementById("question-number");
   questionSelector.addEventListener("click", () => {
-    questionNumber2.focus();
-    questionNumber2.select();
+    questionNumber3.focus();
+    questionNumber3.select();
   });
-  questionNumber2.addEventListener("input", () => {
-    questionNumber2.value = questionNumber2.value.replace(/\D/g, "");
+  questionNumber3.addEventListener("input", () => {
+    questionNumber3.value = questionNumber3.value.replace(/\D/g, "");
   });
-  questionNumber2.addEventListener("change", () => {
-    if (!questionNumber2.value) return;
-    goTo(Number(questionNumber2.value) - 1);
+  questionNumber3.addEventListener("change", () => {
+    if (!questionNumber3.value) return;
+    goTo(Number(questionNumber3.value) - 1);
   });
 }
 
@@ -3022,6 +3020,8 @@ loadStats();
 loadQuizEdits(state);
 var questionCount = document.getElementById("question-count");
 questionCount.textContent = quiz.questions.length;
+var questionNumber2 = document.getElementById("question-number");
+questionNumber2.value = state.currentQuestionIndex + 1;
 async function initializeQuiz() {
   await loadMathJax(ENABLE_MATHJAX);
   if (state.mathReady && window.MathJax?.startup?.promise) {

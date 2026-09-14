@@ -39,6 +39,10 @@ loadQuizEdits(state);
 const questionCount = document.getElementById("question-count");
 questionCount.textContent = quiz.questions.length;
 
+// Update current question count
+const questionNumber = document.getElementById("question-number");
+questionNumber.value = state.currentQuestionIndex + 1;
+
 
 async function initializeQuiz() {
     await loadMathJax(ENABLE_MATHJAX);

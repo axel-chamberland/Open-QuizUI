@@ -8,10 +8,12 @@ licence: MIT
 """
 
 import random
+import re
 from difflib import SequenceMatcher
 from functools import wraps
 from typing import Literal
 
+import markdown
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, Field
 
@@ -197,6 +199,13 @@ class Tools:
 
             shuffle_options(questions_and_answers)
 
+            # Convert paragraphs and markdown tables to HTML per-question
+            for q in questions_and_answers:
+                q["question"] = _markdown_to_html(q.get("question", ""))
+                q["options"] = [_markdown_to_html(opt) for opt in q.get("options", [])]
+                if "explanation" in q:
+                    q["explanation"] = _markdown_to_html(q["explanation"])
+
             quiz = {"title": title, "questions": questions_and_answers}
 
             # Modify Theme
@@ -280,6 +289,22 @@ def _best_match_index(answer_text: str, options: list) -> int | None:
             best_i, best_score = i, score
 
     return best_i if best_score >= 0.6 else None
+
+
+def _markdown_to_html(text):
+    code = []
+
+    def protect(match):
+        code.append(match.group(0))
+        return f"\x00CODE{len(code) - 1}\x00"
+
+    text = re.sub(r"`[^`]*`", protect, text)
+    text = markdown.markdown(text, extensions=["tables"])
+
+    for i, value in enumerate(code):
+        text = text.replace(f"\x00CODE{i}\x00", value)
+
+    return text
 
 
 def normalize_questions(questions) -> tuple[list[dict], list[str]]:
@@ -1862,8 +1887,8 @@ function goTo(question_index) {
   state.currentQuestionIndex = question_index;
   setStoredQuestionIndex(state.quizStorageKey, state.currentQuestionIndex);
   state.answerRevealed = false;
-  const questionNumber2 = document.getElementById("question-number");
-  questionNumber2.value = state.currentQuestionIndex + 1;
+  const questionNumber3 = document.getElementById("question-number");
+  questionNumber3.value = state.currentQuestionIndex + 1;
   renderQuiz();
 }
 function handleAnswer(index, button) {
@@ -2327,17 +2352,17 @@ function initializeEvents() {
     }
   });
   const questionSelector = document.getElementById("question-selector");
-  const questionNumber2 = document.getElementById("question-number");
+  const questionNumber3 = document.getElementById("question-number");
   questionSelector.addEventListener("click", () => {
-    questionNumber2.focus();
-    questionNumber2.select();
+    questionNumber3.focus();
+    questionNumber3.select();
   });
-  questionNumber2.addEventListener("input", () => {
-    questionNumber2.value = questionNumber2.value.replace(/\D/g, "");
+  questionNumber3.addEventListener("input", () => {
+    questionNumber3.value = questionNumber3.value.replace(/\D/g, "");
   });
-  questionNumber2.addEventListener("change", () => {
-    if (!questionNumber2.value) return;
-    goTo(Number(questionNumber2.value) - 1);
+  questionNumber3.addEventListener("change", () => {
+    if (!questionNumber3.value) return;
+    goTo(Number(questionNumber3.value) - 1);
   });
 }
 
@@ -2405,6 +2430,8 @@ loadStats();
 loadQuizEdits(state);
 var questionCount = document.getElementById("question-count");
 questionCount.textContent = quiz.questions.length;
+var questionNumber2 = document.getElementById("question-number");
+questionNumber2.value = state.currentQuestionIndex + 1;
 async function initializeQuiz() {
   await loadMathJax(ENABLE_MATHJAX);
   if (state.mathReady && window.MathJax?.startup?.promise) {
