@@ -55,4 +55,4 @@ Code can be included using HTML:
 
 HTML tables can be used directly within questions and answer choices.
 
-When using the Action function, Markdown tables are currently not converted to HTML.
+When using the Action function or the tool is called, Markdown tables are converted to HTML.
