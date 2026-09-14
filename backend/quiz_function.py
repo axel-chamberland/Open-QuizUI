@@ -325,12 +325,10 @@ def parse_quiz(
 
     # Convert paragraphs and markdown tables to HTML per-question (question, options, explanation),
     for q in questions:
-        q["question"] = _markdown_without_inline_code(q.get("question", ""))
-        q["options"] = [
-            _markdown_without_inline_code(opt) for opt in q.get("options", [])
-        ]
+        q["question"] = _markdown_to_html(q.get("question", ""))
+        q["options"] = [_markdown_to_html(opt) for opt in q.get("options", [])]
         if "explanation" in q:
-            q["explanation"] = _markdown_without_inline_code(q["explanation"])
+            q["explanation"] = _markdown_to_html(q["explanation"])
 
     return title, questions
 
@@ -964,7 +962,7 @@ def clean_text(text: str, add_period=True) -> str:
     return text
 
 
-def _markdown_without_inline_code(text):
+def _markdown_to_html(text):
     code = []
 
     def protect(match):
