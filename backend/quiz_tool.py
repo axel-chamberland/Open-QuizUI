@@ -100,11 +100,18 @@ class Tools:
         )
         enable_mathjax: bool = Field(
             default=False,
-            description="Disabled by default for privacy and performance. Enable LaTeX/math rendering with MathJax. Requires Internet access to load the MathJax library from a CDN. When disabled or offline, LaTeX expressions are displayed as plain text.",
+            description=(
+                "Disabled by default for privacy. Enable LaTeX/math rendering with MathJax."
+                "Requires Internet access to load the MathJax library from a CDN. When disabled or"
+                "offline, LaTeX expressions are displayed as plain text."
+            ),
         )
         enable_explanations: bool = Field(
             default=False,
-            description="Instructs the model to include an explanations for each question. Disabled by default as it requires the models to generate extra content.",
+            description=(
+                "Instructs the model to include an explanations for each question."
+                "Disabled by default as it requires the models to generate extra content."
+            ),
         )
         theme_mode: Literal["browser", "light", "dark"] = Field(
             default="browser",
@@ -128,14 +135,14 @@ class Tools:
             default=True,
             description=(
                 "Prevent shuffling choices when a choice refers to another "
-                "answer choice or it is a true/false question."
+                "answer choice's position or it is a true/false question."
             ),
         )
         choice_reference_patterns: str = Field(
             default="",
             description=(
-                "Additional regex patterns for detecting when a choice references to other "
-                "choices. Separate multiple patterns with |."
+                "Additional regex patterns for detecting when a choice should not be shuffled."
+                "Separate multiple patterns with |."
             ),
         )
 
@@ -349,8 +356,10 @@ def normalize_questions(questions) -> tuple[list[dict], list[str]]:
 
     if not isinstance(questions, list):
         return [], [
-            f"'questions' must be a list of question objects, got "
-            f"'{type(questions).__name__}'."
+            (
+                f"'questions' must be a list of question objects, got "
+                f"'{type(questions).__name__}'."
+            )
         ]
 
     normalized = []

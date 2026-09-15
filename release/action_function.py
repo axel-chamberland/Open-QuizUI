@@ -117,7 +117,11 @@ class Action:
         )
         enable_mathjax: bool = Field(
             default=False,
-            description="Disabled by default for privacy. Enable LaTeX/math rendering with MathJax. Requires Internet access to load the MathJax library from a CDN. When disabled or offline, LaTeX expressions are displayed as plain text.",
+            description=(
+                "Disabled by default for privacy. Enable LaTeX/math rendering with MathJax."
+                "Requires Internet access to load the MathJax library from a CDN. When disabled or"
+                "offline, LaTeX expressions are displayed as plain text."
+            ),
         )
 
         enable_explanations: bool = Field(
@@ -132,7 +136,10 @@ class Action:
 
         strip_ending_brackets: bool = Field(
             default=True,
-            description="LLMs will sometimes give the answer inline in [brackets], or a hint that gives off the answer. This may interfere with some questions.",
+            description=(
+                "LLMs will sometimes give the answer inline in [brackets]"
+                "or a hint that gives off the answer. This may interfere with some questions."
+            ),
         )
 
         theme_mode: Literal["browser", "light", "dark"] = Field(
@@ -176,8 +183,8 @@ class Action:
         choice_reference_patterns: str = Field(
             default="",
             description=(
-                "Additional regex patterns for detecting when a choice references to other "
-                "choices. Separate multiple patterns with |."
+                "Additional regex patterns for detecting when a choice should not be shuffled."
+                "Separate multiple patterns with |."
             ),
         )
 
