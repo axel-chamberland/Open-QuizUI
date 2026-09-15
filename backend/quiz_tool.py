@@ -141,7 +141,7 @@ class Tools:
         choice_reference_patterns: str = Field(
             default="",
             description=(
-                "Additional regex patterns for detecting when a choice should not be shuffled."
+                "Additional regex patterns for detecting when a choice should not be shuffled. "
                 "Separate multiple patterns with |."
             ),
         )
