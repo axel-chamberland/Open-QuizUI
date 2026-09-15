@@ -1,0 +1,11 @@
+{
+    "compilerOptions": {
+        "checkJs": false,
+        "allowJs": true,
+        "noEmit": true,
+        "target": "ES2022"
+    },
+    "include": [
+        "frontend/src/**/*.js"
+    ]
+}

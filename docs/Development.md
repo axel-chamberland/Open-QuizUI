@@ -15,10 +15,10 @@ Open-QuizUI/
 ├── release/             # Generated Open WebUI functions
 │   ├── action_function.py
 │   └── tool.py
-├── tests/               # Test suite
+├── tests/               # Python and JavaScript tests
 ├── examples/            # Examples
 ├── pyproject.toml       # Python project configuration and dependencies
-├── package.json         # JavaScript development dependencies
+├── package.json         # JavaScript development dependencies and scripts
 └── package-lock.json    # Locked JavaScript dependencies
 ```
 
@@ -63,28 +63,26 @@ pip install -e .
 
 The Python dependencies are defined in `pyproject.toml`; there is no separate `requirements.txt` file to maintain.
 
-### JavaScript
-
-The frontend uses Node.js for development and build tooling.
-
-Install the JavaScript dependencies from the repository root:
-
-```bash
-npm install
-```
-
-The dependencies are defined in `package.json` and the exact dependency tree is locked in `package-lock.json`.
-
-## Tests
-
-Tests are located in the `tests/` directory and use `pytest`.
-
-Run the test suite with:
-
 ```bash
 pytest
 ```
 
-The pytest configuration in `pyproject.toml` automatically uses the `tests/` directory and discovers files matching `test_*.py`.
+### JavaScript
 
-Run the test suite before submitting changes to make sure the affected functionality still works.
+JavaScript tests use **Vitest**. They cover frontend logic and behaviour independently of the browser.
+
+Run the JavaScript test suite with:
+
+```bash
+npm test
+```
+
+### Running all tests
+
+Run both test suites with:
+
+```bash
+npm run test:all
+```
+
+Run the full test suite before submitting changes to make sure the affected functionality still works.

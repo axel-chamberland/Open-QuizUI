@@ -31,14 +31,18 @@ export function prevQuestion() {
   goTo(state.currentQuestionIndex - 1);
 }
 
-export function goTo(question_index) {
+export function clampQuestionIndex(index, questionCount) {
+  return Math.max(0, Math.min(index, questionCount - 1));
+}
+
+export function goTo(questionIndex) {
   // Clamp between first and last question
-  question_index = Math.max(
-    0,
-    Math.min(question_index, state.quiz.questions.length - 1),
+  questionIndex = clampQuestionIndex(
+    questionIndex,
+    state.quiz.questions.length,
   );
 
-  state.currentQuestionIndex = question_index;
+  state.currentQuestionIndex = questionIndex;
 
   setStoredQuestionIndex(state.quizStorageKey, state.currentQuestionIndex);
 

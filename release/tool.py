@@ -596,6 +596,7 @@ def refers_to_other_options(
 def wrap_html(
     quiz, enable_mathjax: bool, light_theme="default_light", dark_theme="default_dark"
 ):
+
     import json
 
     payload = {"enableMathJax": bool(enable_mathjax), "quiz": quiz}
@@ -2221,12 +2222,15 @@ function prevQuestion() {
   if (state.currentQuestionIndex <= 0) return;
   goTo(state.currentQuestionIndex - 1);
 }
-function goTo(question_index) {
-  question_index = Math.max(
-    0,
-    Math.min(question_index, state.quiz.questions.length - 1)
+function clampQuestionIndex(index, questionCount2) {
+  return Math.max(0, Math.min(index, questionCount2 - 1));
+}
+function goTo(questionIndex) {
+  questionIndex = clampQuestionIndex(
+    questionIndex,
+    state.quiz.questions.length
   );
-  state.currentQuestionIndex = question_index;
+  state.currentQuestionIndex = questionIndex;
   setStoredQuestionIndex(state.quizStorageKey, state.currentQuestionIndex);
   state.answerRevealed = false;
   const questionNumber3 = document.getElementById("question-number");
