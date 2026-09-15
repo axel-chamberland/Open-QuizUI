@@ -3,7 +3,7 @@ title: QuizUI
 author: Axel Chamberland
 git_url: https://github.com/axel-chamberland/OpenQuizUI
 description: Converts a multiple-choice quiz message into an interactive HTML quiz.
-version: 2.2.0
+version: 2.2.1
 """
 
 import random
