@@ -98,7 +98,11 @@ export function initializeEvents() {
     .addEventListener("click", saveEdit);
 
   document
-    .getElementById("editor-copy-button")
+    .getElementById("editor-copy-all-button")
+    .addEventListener("click", copyQuiz);
+
+  document
+    .getElementById("editor-copy-question-button")
     .addEventListener("click", copyQuestion);
 
   document

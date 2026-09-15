@@ -1436,11 +1436,15 @@ th {
         >
           <svg><use href="#icon-save"></use></svg>
         </button>
-        <button title="Copy quiz" aria-label="Copy quiz">
+        <button
+          id="editor-copy-all-button"
+          title="Copy quiz"
+          aria-label="Copy quiz"
+        >
           <svg><use href="#icon-copy-all"></use></svg>
         </button>
         <button
-          id="editor-copy-button"
+          id="editor-copy-question-button"
           title="Copy question"
           aria-label="Copy question"
         >
@@ -2713,7 +2717,8 @@ function initializeEvents() {
   document.getElementById("confirm-restart-button").addEventListener("click", restartQuiz);
   document.getElementById("cancel-restart-button").addEventListener("click", cancelRestart);
   document.getElementById("editor-save-button").addEventListener("click", saveEdit);
-  document.getElementById("editor-copy-button").addEventListener("click", copyQuestion);
+  document.getElementById("editor-copy-all-button").addEventListener("click", copyQuiz);
+  document.getElementById("editor-copy-question-button").addEventListener("click", copyQuestion);
   document.getElementById("editor-maximize-button").addEventListener("click", toggleFullscreen);
   document.getElementById("editor-close-button").addEventListener("click", closeEditorConfirm);
   document.getElementById("reset-quiz-button").addEventListener("click", restoreQuizToDefault);
