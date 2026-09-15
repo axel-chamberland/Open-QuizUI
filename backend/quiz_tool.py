@@ -94,6 +94,10 @@ THEMES = {
 
 class Tools:
     class Valves(BaseModel):
+        shuffle_choices: bool = Field(
+            default=True,
+            description="Shuffle the order of choices",
+        )
         enable_mathjax: bool = Field(
             default=False,
             description="Disabled by default for privacy and performance. Enable LaTeX/math rendering with MathJax. Requires Internet access to load the MathJax library from a CDN. When disabled or offline, LaTeX expressions are displayed as plain text.",
@@ -218,13 +222,13 @@ class Tools:
                 if pattern.strip()
             ]
 
-            shuffle_options(
-                questions_and_answers,
-                self.valves.prevent_reference_shuffle,
-                r"\p{L}",
-                choice_reference_patterns,
-            )
-
+            if self.valves.shuffle_choices:
+                shuffle_options(
+                    questions_and_answers,
+                    self.valves.prevent_reference_shuffle,
+                    r"\p{L}",
+                    choice_reference_patterns,
+                )
             # Convert paragraphs and markdown tables to HTML per-question
             for q in questions_and_answers:
                 q["question"] = _markdown_to_html(q.get("question", ""))
