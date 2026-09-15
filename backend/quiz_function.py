@@ -3,7 +3,7 @@ title: QuizUI
 author: Axel Chamberland
 git_url: https://github.com/axel-chamberland/OpenQuizUI
 description: Converts a multiple-choice quiz message into an interactive HTML quiz.
-version: 2.1.0
+version: 2.1.1
 """
 
 import random
@@ -117,7 +117,11 @@ class Action:
         )
         enable_mathjax: bool = Field(
             default=False,
-            description="Disabled by default for privacy. Enable LaTeX/math rendering with MathJax. Requires Internet access to load the MathJax library from a CDN. When disabled or offline, LaTeX expressions are displayed as plain text.",
+            description=(
+                "Disabled by default for privacy. Enable LaTeX/math rendering with MathJax."
+                "Requires Internet access to load the MathJax library from a CDN. When disabled or"
+                "offline, LaTeX expressions are displayed as plain text."
+            ),
         )
 
         enable_explanations: bool = Field(
@@ -132,7 +136,10 @@ class Action:
 
         strip_ending_brackets: bool = Field(
             default=True,
-            description="LLMs will sometimes give the answer inline in [brackets], or a hint that gives off the answer. This may interfere with some questions.",
+            description=(
+                "LLMs will sometimes give the answer inline in [brackets]"
+                "or a hint that gives off the answer. This may interfere with some questions."
+            ),
         )
 
         theme_mode: Literal["browser", "light", "dark"] = Field(
@@ -165,6 +172,20 @@ class Action:
         choice_pattern: str = Field(
             default=r"\p{L}",
             description="Regex for the multiple-choice option identifier.",
+        )
+        prevent_reference_shuffle: bool = Field(
+            default=True,
+            description=(
+                "Prevent shuffling choices when a choice refers to another "
+                "answer choice or it is a true/false question."
+            ),
+        )
+        choice_reference_patterns: str = Field(
+            default="",
+            description=(
+                "Additional regex patterns for detecting when a choice should not be shuffled."
+                "Separate multiple patterns with |."
+            ),
         )
 
     def __init__(self):
@@ -219,8 +240,19 @@ class Action:
                 self.valves.choice_pattern,
             )
 
+            choice_reference_patterns = [
+                pattern.strip()
+                for pattern in self.valves.choice_reference_patterns.split("|")
+                if pattern.strip()
+            ]
+
             if self.valves.shuffle_choices:
-                shuffle_options(questions)
+                shuffle_options(
+                    questions,
+                    self.valves.prevent_reference_shuffle,
+                    self.valves.choice_pattern,
+                    choice_reference_patterns,
+                )
 
             quiz = {"title": title, "questions": questions}
 
@@ -983,19 +1015,28 @@ def _markdown_to_html(text):
 # =========================
 
 
-def shuffle_options(questions: list[dict]):
+def shuffle_options(
+    questions: list[dict],
+    prevent_reference_shuffle: bool = False,
+    choice_pattern: str = r"\p{L}",
+    choice_reference_patterns: list[str] | None = None,
+):
 
-    if not questions:
-        return "Quiz", [
-            {
-                "question": "No valid questions detected from input",
-                "options": ["Check formatting", "Ensure Q/A structure"],
-                "correct_index": 0,
-            }
-        ]
+    if choice_reference_patterns is None:
+        choice_reference_patterns = []
 
     for question in questions:
         choices = question["options"]
+
+        if prevent_reference_shuffle and any(
+            refers_to_other_options(
+                choice,
+                choice_pattern,
+                choice_reference_patterns,
+            )
+            for choice in choices
+        ):
+            continue
 
         indices = [x for x in range(len(question["options"]))]
         random.shuffle(indices)
@@ -1009,6 +1050,116 @@ def shuffle_options(questions: list[dict]):
 
         question["options"] = shuffled_options
         question["correct_index"] = new_correct_index
+
+
+def refers_to_other_options(
+    text: str,
+    choice_pattern: str,
+    choice_reference_patterns: list[str],
+) -> bool:
+    choice = rf"(?:{choice_pattern})"
+
+    choice_noun_en = (
+        r"(?:answer|answers|option|options|choice|choices|"
+        r"statement|statements)"
+    )
+
+    choice_noun_fr = (
+        r"(?:réponse|réponses|option|options|choix|"
+        r"affirmation|affirmations|proposition|propositions|"
+        r"énoncé|énoncés)"
+    )
+
+    relative_en = (
+        r"(?:above|previous|following|"
+        r"listed\s+above|listed\s+previously)"
+    )
+
+    relative_fr = (
+        r"(?:ci-dessus|ci-avant|précédent(?:e|s|es)?|"
+        r"suivant(?:e|s|es)?)"
+    )
+
+    # A, B, C / A and B / A, B, and C
+    choice_list_en = (
+        rf"{choice}"
+        rf"(?:\s*,\s*{choice})*"
+        rf"(?:\s*,)?\s+and\s+{choice}"
+    )
+
+    choice_list_fr = (
+        rf"{choice}"
+        rf"(?:\s*,\s*{choice})*"
+        rf"(?:\s*,)?\s+et\s+{choice}"
+    )
+
+    # A–C / A-C / A through C / A à C
+    choice_range = rf"{choice}\s*(?:[-–]|through|à)\s*{choice}"
+
+    patterns = [
+        # True/False choices.
+        r"^\s*(?:true|false)\s*$",
+        r"^\s*(?:vrai|faux)\s*$",
+        # Explicit references to a choice label.
+        rf"\b{choice_noun_en}\s+{choice}\b",
+        rf"\b{choice_noun_fr}\s+{choice}\b",
+        # Explicit references to a choice by relative position.
+        rf"\b(?:the\s+)?{choice_noun_en}\s+{relative_en}\b",
+        rf"\b(?:the\s+)?{relative_en}\s+{choice_noun_en}\b",
+        rf"\b(?:le|la|les)\s+{choice_noun_fr}\s+{relative_fr}\b",
+        rf"\b(?:le|la|les)\s+{relative_fr}\s+{choice_noun_fr}\b",
+        # Choice lists.
+        rf"\b{choice_list_en}\b",
+        rf"\b{choice_list_fr}\b",
+        # Choice ranges.
+        rf"\b{choice_range}\b",
+        # A range/list preceded by a choice noun.
+        rf"\b{choice_noun_en}\s+{choice_range}\b",
+        rf"\b{choice_noun_fr}\s+{choice_range}\b",
+        # "statements in A–C", "propositions de A à C".
+        rf"\b{choice_noun_en}\s+(?:in|from)\s+{choice_range}\b",
+        rf"\b{choice_noun_fr}\s+(?:de|parmi)\s+{choice_range}\b",
+        # All/none of a referenced group.
+        (
+            r"\b(?:all|none)\s+of\s+the\s+"
+            r"(?:above|following)\b"
+        ),
+        (
+            r"\b(?:toutes?|aucune)\s+les?\s+"
+            rf"{choice_noun_fr}\s+{relative_fr}\b"
+        ),
+        # "tout ce qui précède".
+        r"\btout\s+ce\s+qui\s+précède\b",
+        # Existing correctness forms.
+        (
+            rf"\b{choice_list_en}\s+"
+            r"(?:are|is)\s+(?:all\s+)?"
+            r"(?:correct|true|accurate|valid)\b"
+        ),
+        (
+            rf"\b{choice_list_fr}\s+"
+            r"(?:sont|est)\s+(?:toutes?\s+)?"
+            r"(?:correctes?|vraies|exactes|justes|valides)\b"
+        ),
+        (
+            rf"\b{choice_range}\s+"
+            r"(?:are|is)\s+(?:all\s+)?"
+            r"(?:correct|true|accurate|valid)\b"
+        ),
+        (
+            rf"\b{choice_range}\s+"
+            r"(?:sont|est)\s+(?:toutes?\s+)?"
+            r"(?:correctes?|vraies|exactes|justes|valides)\b"
+        ),
+    ]
+
+    patterns.extend(choice_reference_patterns)
+
+    for pattern in patterns:
+        if "previous" in pattern:
+            print(repr(pattern))
+            print(regex.search(pattern, text, regex.IGNORECASE))
+    return any(regex.search(pattern, text, regex.IGNORECASE) for pattern in patterns)
 
 
 # =========================

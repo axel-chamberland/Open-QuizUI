@@ -48,20 +48,27 @@ def build(python_file, output_file):
 
     # Remove default theme CSS.
     # Themes are supplied by Python at runtime.
-    html = html.replace(
-        '<link rel="stylesheet" href="./styles/default_theme.css">',
-        """<style>
-:root {
-    color-scheme: light dark;
-    __LIGHT_THEME__
-}
+    html = re.sub(
+        r'<link\s+rel="stylesheet"\s+href="\./styles/base\.css"\s*/?>',
+        f"<style>\n{css}\n</style>",
+        html,
+    )
 
-@media (prefers-color-scheme: dark) {
+    html = re.sub(
+        r'<link\s+rel="stylesheet"\s+href="\./styles/default_theme\.css"\s*/?>',
+        """<style>
     :root {
-        __DARK_THEME__
+        color-scheme: light dark;
+        __LIGHT_THEME__
     }
-}
-</style>""",
+
+    @media (prefers-color-scheme: dark) {
+        :root {
+            __DARK_THEME__
+        }
+    }
+    </style>""",
+        html,
     )
 
     # Replace demo quiz data with a placeholder
