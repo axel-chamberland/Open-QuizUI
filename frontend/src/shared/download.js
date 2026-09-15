@@ -13,6 +13,15 @@ export function downloadQuizHTML() {
     // Clone the document so the live page is not modified.
     const documentClone = document.documentElement.cloneNode(true);
 
+    const questionScroll = documentClone.querySelector("#question-scroll");
+
+    // Empty current quiz
+    if (questionScroll) {
+        questionScroll.querySelector("#question").replaceChildren();
+        questionScroll.querySelector("#options").replaceChildren();
+        questionScroll.querySelector("#explanation").replaceChildren();
+    }
+
     // Replace the JSON payload in the cloned document.
     const dataScript = documentClone.querySelector("#app-data");
 

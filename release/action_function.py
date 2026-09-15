@@ -2856,6 +2856,12 @@ function downloadQuizHTML() {
   };
   const filename = state.quiz.title;
   const documentClone = document.documentElement.cloneNode(true);
+  const questionScroll = documentClone.querySelector("#question-scroll");
+  if (questionScroll) {
+    questionScroll.querySelector("#question").replaceChildren();
+    questionScroll.querySelector("#options").replaceChildren();
+    questionScroll.querySelector("#explanation").replaceChildren();
+  }
   const dataScript = documentClone.querySelector("#app-data");
   if (!dataScript) {
     throw new Error("Could not find #app-data");
