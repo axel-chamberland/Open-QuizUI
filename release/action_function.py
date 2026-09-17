@@ -1238,9 +1238,7 @@ body {
   overflow: hidden;
 }
 
-:is(:fullscreen, .pseudo-fullscreen-active) .question-box,
-:is(:fullscreen, .pseudo-fullscreen-active) #results,
-:is(:fullscreen, .pseudo-fullscreen-active) #editor {
+:is(:fullscreen, .pseudo-fullscreen-active) .page {
   flex: 1;
   min-height: 0;
   display: flex;
@@ -1267,9 +1265,7 @@ h1 {
   margin: 0;
 }
 
-.question-box,
-#results,
-#editor {
+.page {
   display: flex;
   flex-direction: column;
   color: var(--text);
@@ -1383,9 +1379,7 @@ button:disabled {
   overflow-y: hidden;
 }
 
-#navigation,
-#results-navigation,
-#editor-navigation {
+.navigation {
   display: flex;
   flex-wrap: nowrap;
   padding: 0.75rem;
@@ -1402,45 +1396,35 @@ button:disabled {
   -webkit-user-select: none;
 }
 
-#navigation button,
-#results-navigation button,
-#editor-navigation button {
+.navigation button {
   font-size: 2rem;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-:is(:fullscreen, .pseudo-fullscreen-active) #navigation,
-:is(:fullscreen, .pseudo-fullscreen-active) #results-navigation,
-:is(:fullscreen, .pseudo-fullscreen-active) #editor-navigation {
+:is(:fullscreen, .pseudo-fullscreen-active) .navigation {
   margin: 0;
   border: 0;
   border-top: 1px solid var(--border);
 }
 
-#navigation button,
-#results-navigation button,
-#editor-navigation button {
-  font-size: 2rem;
-}
-
-#reveal-button,
-#maximize-button,
-#download-button,
-#question-selector {
+.reveal-button,
+.maximize-button,
+.download-button,
+.question-selector {
   flex: 0 0 auto;
   min-width: 2rem;
 }
 
-#prev-button,
-#next-button {
+.prev-button,
+.next-button {
   flex: 1;
   font-size: clamp(1.5rem, 5vw, 2rem);
   max-width: 4rem;
 }
 
-#question-selector {
+.question-selector {
   display: flex;
   align-items: center;
   white-space: nowrap;
@@ -1456,7 +1440,7 @@ button:disabled {
   gap: 0.2rem;
 }
 
-#question-number {
+.question-number {
   width: 3ch;
   text-align: center;
   font-size: 1.1rem;
@@ -1471,12 +1455,12 @@ button:disabled {
   outline: none;
 }
 
-#question-number:focus {
+.question-number:focus {
   outline: none;
   border: none;
 }
 
-#question-count {
+.question-count {
   margin-right: 0.3em;
 }
 
@@ -1487,7 +1471,7 @@ mjx-container {
 }
 
 /* Hide timer by default */
-#timer {
+.timer {
   display: none;
   min-width: 4rem;
   font-size: 1.1rem;
@@ -1495,7 +1479,7 @@ mjx-container {
   font-variant-numeric: tabular-nums;
 }
 
-#timer.visible {
+.timer.visible {
   display: inline-block;
 }
 
@@ -1566,7 +1550,7 @@ body.embedded #results-scroll {
   background: var(--btn);
 }
 
-#statsChart {
+#stats-chart {
   height: min(50vh, 500px);
   align-self: center;
 }
@@ -1842,30 +1826,32 @@ th {
         <circle cx="12" cy="19" r="1" />
       </symbol>
     </svg>
-    <div class="question-box">
+    <div id="question-box" class="page">
       <div class="title-bar">
         <h1 id="title">Quiz</h1>
-        <span id="timer">00:00</span>
+        <span class="timer">00:00</span>
       </div>
       <div class="navigation-scroll">
-        <div id="navigation">
-          <button id="prev-button" aria-label="Previous question">&lt;</button>
+        <div id="navigation" class="navigation">
+          <button class="prev-button" aria-label="Previous question">
+            &lt;
+          </button>
 
-          <div id="question-selector">
+          <div class="question-selector">
             <input
-              id="question-number"
+              class="question-number"
               type="text"
               inputmode="numeric"
               value="1"
             />
             <span class="separator">/</span>
-            <span id="question-count">1</span>
+            <span class="question-count">1</span>
           </div>
 
-          <button id="next-button" aria-label="Next question">&gt;</button>
+          <button class="next-button" aria-label="Next question">&gt;</button>
 
           <button
-            id="reveal-button"
+            class="reveal-button"
             title="Reveal answer"
             aria-label="Reveal answer"
           >
@@ -1873,7 +1859,7 @@ th {
           </button>
 
           <button
-            id="maximize-button"
+            class="maximize-button"
             title="Toggle Fullscreen"
             aria-label="Fullscreen"
           >
@@ -1881,7 +1867,7 @@ th {
           </button>
 
           <button
-            id="download-button"
+            class="download-button"
             title="Download quiz"
             aria-label="Download quiz"
           >
@@ -1889,26 +1875,30 @@ th {
           </button>
 
           <button
-            id="timer-toggle"
+            class="timer-toggle-button"
             title="Toggle timer"
             aria-label="Toggle timer"
           >
             <svg><use href="#icon-timer"></use></svg>
           </button>
 
-          <button id="copy-all-button" title="Copy quiz" aria-label="Copy quiz">
+          <button
+            class="copy-all-button"
+            title="Copy quiz"
+            aria-label="Copy quiz"
+          >
             <svg><use href="#icon-copy-all"></use></svg>
           </button>
 
           <button
-            id="copy-question-button"
+            class="copy-question-button"
             title="Copy question"
             aria-label="Copy question"
           >
             <svg><use href="#icon-copy"></use></svg>
           </button>
           <button
-            id="editor-button"
+            class="editor-button"
             title="Edit question"
             aria-label="Edit question"
           >
@@ -1923,9 +1913,9 @@ th {
       </div>
     </div>
 
-    <div id="results" style="display: none">
+    <div id="results" class="page" style="display: none">
       <div class="navigation-scroll">
-        <div id="results-navigation">
+        <div id="results-navigation" class="navigation">
           <button
             id="results-back-button"
             title="Back to quiz"
@@ -1935,7 +1925,7 @@ th {
           </button>
 
           <button
-            id="results-maximize-button"
+            class="maximize-button"
             title="Toggle Fullscreen"
             aria-label="Fullscreen"
           >
@@ -1943,7 +1933,7 @@ th {
           </button>
 
           <button
-            id="results-download-button"
+            class="download-button"
             title="Download quiz"
             aria-label="Download quiz"
           >
@@ -1951,7 +1941,7 @@ th {
           </button>
 
           <button
-            id="results-copy-all-button"
+            class="copy-all-button"
             title="Copy quiz"
             aria-label="Copy quiz"
           >
@@ -1977,7 +1967,7 @@ th {
           <div id="accuracy"></div>
         </div>
 
-        <div id="statsChart"></div>
+        <div id="stats-chart"></div>
 
         <button id="restart-button" aria-label="Restart quiz">
           Restart Quiz
@@ -1999,50 +1989,51 @@ th {
       </div>
     </div>
 
-    <div id="editor" style="display: none">
+    <div id="editor" class="page" style="display: none">
       <h1>Question Editor</h1>
-
-      <div class="navigation-scroll" id="editor-navigation">
-        <button
-          id="editor-save-button"
-          title="Save changes"
-          aria-label="Save changes"
-          data-tooltip="Save changes"
-        >
-          <svg><use href="#icon-save"></use></svg>
-        </button>
-        <button
-          id="editor-copy-all-button"
-          title="Copy quiz"
-          aria-label="Copy quiz"
-        >
-          <svg><use href="#icon-copy-all"></use></svg>
-        </button>
-        <button
-          id="editor-copy-question-button"
-          title="Copy question"
-          aria-label="Copy question"
-        >
-          <svg><use href="#icon-copy"></use></svg>
-        </button>
-        <button
-          id="editor-maximize-button"
-          title="Fullscreen"
-          aria-label="Fullscreen"
-        >
-          <svg><use href="#icon-fullscreen"></use></svg>
-        </button>
-        <button class="dropdown-trigger" id="actions-button">
-          <svg><use href="#icon-more"></use></svg>
-        </button>
-        <button
-          id="editor-close-button"
-          title="Close editor"
-          aria-label="Close editor"
-          data-tooltip="Close editor"
-        >
-          <svg><use href="#icon-close"></use></svg>
-        </button>
+      <div class="navigation-scroll">
+        <div id="editor-navigation" class="navigation">
+          <button
+            id="editor-save-button"
+            title="Save changes"
+            aria-label="Save changes"
+            data-tooltip="Save changes"
+          >
+            <svg><use href="#icon-save"></use></svg>
+          </button>
+          <button
+            class="copy-all-button"
+            title="Copy quiz"
+            aria-label="Copy quiz"
+          >
+            <svg><use href="#icon-copy-all"></use></svg>
+          </button>
+          <button
+            class="copy-question-button"
+            title="Copy question"
+            aria-label="Copy question"
+          >
+            <svg><use href="#icon-copy"></use></svg>
+          </button>
+          <button
+            class="maximize-button"
+            title="Fullscreen"
+            aria-label="Fullscreen"
+          >
+            <svg><use href="#icon-fullscreen"></use></svg>
+          </button>
+          <button class="dropdown-trigger" id="actions-button">
+            <svg><use href="#icon-more"></use></svg>
+          </button>
+          <button
+            id="editor-close-button"
+            title="Close editor"
+            aria-label="Close editor"
+            data-tooltip="Close editor"
+          >
+            <svg><use href="#icon-close"></use></svg>
+          </button>
+        </div>
       </div>
       <div id="editor-close" class="editor-prompt">
         <p id="editor-prompt-message"></p>
@@ -2399,6 +2390,45 @@ ${"#".repeat(level)} ${content.trim()}
   return [...container.childNodes].map(convert).join("").replace(/[ \t]+\n/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
 }
 
+// frontend/src/shared/mathjax.js
+function loadMathJax(enabled) {
+  if (!enabled) {
+    state.mathReady = false;
+    Promise.resolve(false);
+    return;
+  }
+  window.MathJax = {
+    tex: {
+      inlineMath: [
+        ["$", "$"],
+        ["\\(", "\\)"]
+      ]
+    }
+  };
+  return new Promise((resolve) => {
+    const script = document.createElement("script");
+    script.src = "https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js";
+    script.onload = () => {
+      state.mathReady = true;
+      resolve(true);
+    };
+    script.onerror = () => {
+      state.mathReady = false;
+      resolve(false);
+    };
+    document.head.appendChild(script);
+  });
+}
+async function typesetMath() {
+  if (state.mathReady && window.MathJax) {
+    try {
+      await window.MathJax.typesetPromise();
+    } catch (err) {
+      console.error("MathJax typesetting failed:", err);
+    }
+  }
+}
+
 // frontend/src/rendering/mcq.js
 function showExplanation(question) {
   const explanationEl = document.getElementById("explanation");
@@ -2419,7 +2449,7 @@ function showExplanation(question) {
   }
 }
 async function renderQuiz() {
-  const questionBox = document.querySelector(".question-box");
+  const questionBox = document.getElementById("question-box");
   const questionText = questionBox.querySelector("#question");
   const optionsContainer = document.getElementById("options");
   const navigationContainer = questionBox.querySelector("#navigation");
@@ -2428,17 +2458,21 @@ async function renderQuiz() {
     document.getElementById("question").textContent = "No valid questions parsed";
     return;
   }
-  questionText.innerHTML = renderMarkdown(
-    state.quiz.questions[state.currentQuestionIndex].question,
-    state.mathReady
-  );
+  const question = state.quiz.questions[state.currentQuestionIndex];
+  state.currentQuestion = question;
+  renderQuestion(questionText, question);
   explanationEl.textContent = "";
   explanationEl.style.display = "none";
+  renderOptions(optionsContainer, question);
+  updateNavigation();
+  document.getElementById("question-scroll").scrollTop = 0;
+  await typesetMath();
+}
+function renderOptions(optionsContainer, question) {
   optionsContainer.innerHTML = "";
   state.wrongAnswerCount = 0;
   state.optionButtons = [];
-  state.currentQuestion = state.quiz.questions[state.currentQuestionIndex];
-  state.currentQuestion.options.forEach((option, index) => {
+  question.options.forEach((option, index) => {
     const button = document.createElement("button");
     button.innerHTML = renderMarkdown(option, state.mathReady);
     button.className = "option";
@@ -2448,16 +2482,6 @@ async function renderQuiz() {
     });
     optionsContainer.appendChild(button);
   });
-  const prevButton = navigationContainer.querySelector("#prev-button");
-  prevButton.disabled = state.currentQuestionIndex === 0;
-  document.getElementById("question-scroll").scrollTop = 0;
-  if (state.mathReady && window.MathJax) {
-    try {
-      await window.MathJax.typesetPromise();
-    } catch (err) {
-      console.error("MathJax typesetting failed:", err);
-    }
-  }
 }
 
 // frontend/src/persistence/stats.js
@@ -2565,21 +2589,9 @@ function formatQuizAsText(quiz2) {
 }
 
 // frontend/src/timer.js
-var timerElement = document.getElementById("timer");
+var timerElements = document.querySelectorAll(".timer");
 function getTimerKey(quizStorageKey) {
   return `quizTimer_${quizStorageKey}`;
-}
-function loadTimer(state2) {
-  try {
-    const data = JSON.parse(
-      localStorage.getItem(getTimerKey(state2.quizStorageKey))
-    );
-    state2.timer.elapsed = data?.elapsed || 0;
-    state2.timer.start = data?.start || null;
-  } catch {
-    state2.timer.elapsed = 0;
-    state2.timer.start = null;
-  }
 }
 function saveTimer() {
   try {
@@ -2596,35 +2608,14 @@ function saveTimer() {
 function updateTimer() {
   if (!state.timer.start) return;
   const elapsed = state.timer.elapsed + Math.floor((Date.now() - state.timer.start) / 1e3);
-  timerElement.textContent = formatTime(elapsed);
-}
-function toggleTimer() {
-  state.timer.visible = !state.timer.visible;
-  timerElement.classList.toggle("visible", state.timer.visible);
-  if (state.timer.visible) {
-    loadTimer(state);
-    if (!state.timer.start) {
-      state.timer.start = Date.now();
-      saveTimer();
-    }
-    updateTimer();
-    state.timer.interval = setInterval(updateTimer, 1e3);
-  } else {
-    if (state.timer.start) {
-      state.timer.elapsed += Math.floor(
-        (Date.now() - state.timer.start) / 1e3
-      );
-      state.timer.start = null;
-      saveTimer();
-    }
-    clearInterval(state.timer.interval);
-    state.timer.interval = null;
-  }
+  timerElements.forEach((timerElement) => {
+    timerElement.textContent = formatTime(elapsed);
+  });
 }
 
 // frontend/src/rendering/results.js
 async function renderResults() {
-  const questionBox = document.querySelector(".question-box");
+  const questionBox = document.getElementById("question-box");
   const results2 = document.getElementById("results");
   questionBox.style.display = "none";
   results2.style.display = "";
@@ -2661,17 +2652,9 @@ async function renderResults() {
   document.getElementById("skipped").textContent = `Skipped: ${skipped}`;
   document.getElementById("time").textContent = `Time: ${formatTime(elapsed)}`;
   document.getElementById("averageTime").textContent = `Average time per question: ${formatTime(Math.floor(elapsed / total))}`;
-  createDonutChart(document.getElementById("statsChart"), chartData);
+  createDonutChart(document.getElementById("stats-chart"), chartData);
   showCorrectionSheet();
-  if (state.mathReady && window.MathJax) {
-    try {
-      await MathJax.typesetPromise([
-        document.getElementById("question-corrections")
-      ]);
-    } catch (err) {
-      console.error("MathJax typesetting failed:", err);
-    }
-  }
+  await typesetMath();
 }
 function createDonutChart(container, data) {
   const viewSize = 100;
@@ -2746,7 +2729,7 @@ ${question.explanation ? `
 var questionNumber = document.getElementById("question-number");
 function restartQuiz() {
   state.currentQuestionIndex = 0;
-  questionNumber.value = 1;
+  updateQuestionNumbers();
   state.answerRevealed = false;
   state.wrongAnswerCount = 0;
   state.questionResults = new Array(state.quiz.questions.length).fill(
@@ -2759,17 +2742,19 @@ function restartQuiz() {
   state.timer.elapsed = 0;
   state.timer.start = state.timer.visible ? Date.now() : null;
   state.defaultStartDate = Date.now();
-  const timerElement2 = document.getElementById("timer");
+  const timerElements2 = document.querySelectorAll(".timer");
   if (state.timer.visible) {
     updateTimer();
     state.timer.interval = setInterval(updateTimer, 1e3);
   } else {
-    timerElement2.textContent = formatTime(0);
+    timerElements2.forEach((timerElement) => {
+      timerElement.textContent = formatTime(0);
+    });
   }
   saveTimer();
   setStoredQuestionIndex(state.quizStorageKey, 0);
   const results2 = document.getElementById("results");
-  const questionBox = document.querySelector(".question-box");
+  const questionBox = document.getElementById("question-box");
   results2.style.display = "none";
   questionBox.style.display = "";
   document.getElementById("restart-confirm").style.display = "none";
@@ -2789,15 +2774,15 @@ function prevQuestion() {
   const results2 = document.getElementById("results");
   if (results2.style.display !== "none") {
     results2.style.display = "none";
-    document.querySelector(".question-box").style.display = "";
+    document.getElementById("question-box").style.display = "";
     renderQuiz();
     return;
   }
   if (state.currentQuestionIndex <= 0) return;
   goTo(state.currentQuestionIndex - 1);
 }
-function clampQuestionIndex(index, questionCount2) {
-  return Math.max(0, Math.min(index, questionCount2 - 1));
+function clampQuestionIndex(index, questionCount) {
+  return Math.max(0, Math.min(index, questionCount - 1));
 }
 function goTo(questionIndex) {
   questionIndex = clampQuestionIndex(
@@ -2807,9 +2792,13 @@ function goTo(questionIndex) {
   state.currentQuestionIndex = questionIndex;
   setStoredQuestionIndex(state.quizStorageKey, state.currentQuestionIndex);
   state.answerRevealed = false;
-  const questionNumber3 = document.getElementById("question-number");
-  questionNumber3.value = state.currentQuestionIndex + 1;
+  updateQuestionNumbers();
   renderQuiz();
+}
+function updateQuestionNumbers() {
+  document.querySelectorAll(".question-number").forEach((element) => {
+    element.value = state.currentQuestionIndex + 1;
+  });
 }
 function handleAnswer(index, button) {
   saveStats();
@@ -2854,6 +2843,19 @@ function setQuizTitle(title) {
   const displayTitle = title.slice(0, 60);
   document.title = displayTitle;
   document.getElementById("title").textContent = title;
+}
+function renderQuestion(questionText, question) {
+  questionText.innerHTML = renderMarkdown(question.question, state.mathReady);
+}
+function updateNavigation() {
+  document.querySelectorAll(".prev-button").forEach((button) => {
+    button.disabled = state.currentQuestionIndex === 0;
+  });
+}
+function updateQuestionCounts() {
+  document.querySelectorAll(".question-count").forEach((element) => {
+    element.textContent = state.quiz.questions.length;
+  });
 }
 
 // frontend/src/shared/download.js
@@ -3010,7 +3012,7 @@ function cancelRestart() {
   document.getElementById("restart-confirm").style.display = "none";
 }
 function openEditor() {
-  const questionBox = document.querySelector(".question-box");
+  const questionBox = document.getElementById("question-box");
   const editor = document.getElementById("editor");
   const prompt = document.getElementById("editor-close");
   prompt.classList.remove("visible");
@@ -3149,7 +3151,7 @@ function saveEdit() {
   }
 }
 function closeEditor() {
-  const questionBox = document.querySelector(".question-box");
+  const questionBox = document.getElementById("question-box");
   const editor = document.getElementById("editor");
   const prompt = document.getElementById("editor-close");
   prompt.classList.remove("visible");
@@ -3278,26 +3280,38 @@ function exitPseudoFullscreen() {
 
 // frontend/src/ui/events.js
 function initializeEvents() {
-  document.getElementById("prev-button").addEventListener("click", prevQuestion);
-  document.getElementById("next-button").addEventListener("click", nextQuestion);
-  document.getElementById("reveal-button").addEventListener("click", revealAnswer);
-  document.getElementById("maximize-button").addEventListener("click", toggleFullscreen);
-  document.getElementById("download-button").addEventListener("click", downloadQuizHTML);
-  document.getElementById("timer-toggle").addEventListener("click", toggleTimer);
-  document.getElementById("copy-all-button").addEventListener("click", copyQuiz);
-  document.getElementById("copy-question-button").addEventListener("click", copyQuestion);
-  document.getElementById("editor-button").addEventListener("click", openEditor);
+  document.querySelectorAll(".reveal-button").forEach((button) => {
+    button.addEventListener("click", revealAnswer);
+  });
+  document.querySelectorAll(".timer-toggle-button").forEach((button) => {
+    button.addEventListener("click", revealAnswer);
+  });
+  document.querySelectorAll(".prev-button").forEach((button) => {
+    button.addEventListener("click", prevQuestion);
+  });
+  document.querySelectorAll(".next-button").forEach((button) => {
+    button.addEventListener("click", nextQuestion);
+  });
+  document.querySelectorAll(".download-button").forEach((button) => {
+    button.addEventListener("click", downloadQuizHTML);
+  });
+  document.querySelectorAll(".maximize-button").forEach((button) => {
+    button.addEventListener("click", toggleFullscreen);
+  });
+  document.querySelectorAll(".copy-all-button").forEach((button) => {
+    button.addEventListener("click", copyQuiz);
+  });
+  document.querySelectorAll(".copy-question-button").forEach((button) => {
+    button.addEventListener("click", copyQuestion);
+  });
+  document.querySelectorAll(".editor-button").forEach((button) => {
+    button.addEventListener("click", openEditor);
+  });
   document.getElementById("results-back-button").addEventListener("click", prevQuestion);
-  document.getElementById("results-maximize-button").addEventListener("click", toggleFullscreen);
-  document.getElementById("results-download-button").addEventListener("click", downloadQuizHTML);
-  document.getElementById("results-copy-all-button").addEventListener("click", copyQuiz);
   document.getElementById("restart-button").addEventListener("click", confirmRestart);
   document.getElementById("confirm-restart-button").addEventListener("click", restartQuiz);
   document.getElementById("cancel-restart-button").addEventListener("click", cancelRestart);
   document.getElementById("editor-save-button").addEventListener("click", saveEdit);
-  document.getElementById("editor-copy-all-button").addEventListener("click", copyQuiz);
-  document.getElementById("editor-copy-question-button").addEventListener("click", copyQuestion);
-  document.getElementById("editor-maximize-button").addEventListener("click", toggleFullscreen);
   document.getElementById("editor-close-button").addEventListener("click", closeEditorConfirm);
   document.getElementById("reset-quiz-button").addEventListener("click", restoreQuizToDefault);
   document.getElementById("reset-question-button").addEventListener("click", restoreQuestionToDefault);
@@ -3346,7 +3360,7 @@ function initializeEvents() {
       return;
     }
   });
-  const questionBox = document.querySelector(".question-box");
+  const questionBox = document.getElementById("question-box");
   questionBox.addEventListener("click", (e) => {
     if (e.target.closest("button, input")) return;
     const selection = window.getSelection();
@@ -3363,48 +3377,19 @@ function initializeEvents() {
       prevQuestion();
     }
   });
-  const questionSelector = document.getElementById("question-selector");
-  const questionNumber3 = document.getElementById("question-number");
-  questionSelector.addEventListener("click", () => {
-    questionNumber3.focus();
-    questionNumber3.select();
-  });
-  questionNumber3.addEventListener("input", () => {
-    questionNumber3.value = questionNumber3.value.replace(/\D/g, "");
-  });
-  questionNumber3.addEventListener("change", () => {
-    if (!questionNumber3.value) return;
-    goTo(Number(questionNumber3.value) - 1);
-  });
-}
-
-// frontend/src/shared/mathjax.js
-function loadMathJax(enabled) {
-  if (!enabled) {
-    state.mathReady = false;
-    Promise.resolve(false);
-    return;
-  }
-  window.MathJax = {
-    tex: {
-      inlineMath: [
-        ["$", "$"],
-        ["\\(", "\\)"]
-      ]
-    }
-  };
-  return new Promise((resolve) => {
-    const script = document.createElement("script");
-    script.src = "https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js";
-    script.onload = () => {
-      state.mathReady = true;
-      resolve(true);
-    };
-    script.onerror = () => {
-      state.mathReady = false;
-      resolve(false);
-    };
-    document.head.appendChild(script);
+  document.querySelectorAll(".question-selector").forEach((questionSelector) => {
+    const questionNumber2 = questionSelector.querySelector(".question-number");
+    questionSelector.addEventListener("click", () => {
+      questionNumber2.focus();
+      questionNumber2.select();
+    });
+    questionNumber2.addEventListener("input", () => {
+      questionNumber2.value = questionNumber2.value.replace(/\D/g, "");
+    });
+    questionNumber2.addEventListener("change", () => {
+      if (!questionNumber2.value) return;
+      goTo(Number(questionNumber2.value) - 1);
+    });
   });
 }
 
@@ -3412,7 +3397,7 @@ function loadMathJax(enabled) {
 function reportHeight() {
   if (document.fullscreenElement || document.documentElement.classList.contains("pseudo-fullscreen-active"))
     return;
-  const questionBox = document.querySelector(".question-box");
+  const questionBox = document.getElementById("question-box");
   const results2 = document.getElementById("results");
   const editor = document.getElementById("editor");
   const visible = questionBox.style.display !== "none" ? questionBox : results2.style.display !== "none" ? results2 : editor;
@@ -3439,10 +3424,6 @@ try {
 initializeState(quiz);
 loadStats();
 loadQuizEdits(state);
-var questionCount = document.getElementById("question-count");
-questionCount.textContent = quiz.questions.length;
-var questionNumber2 = document.getElementById("question-number");
-questionNumber2.value = state.currentQuestionIndex + 1;
 async function initializeQuiz() {
   await loadMathJax(ENABLE_MATHJAX);
   if (state.mathReady && window.MathJax?.startup?.promise) {
@@ -3452,6 +3433,8 @@ async function initializeQuiz() {
   renderQuiz();
   initializeEvents();
   initHeightReporting();
+  updateQuestionCounts();
+  updateQuestionNumbers();
 }
 if (document.readyState === "loading") {
   window.addEventListener("load", initializeQuiz, { once: true });

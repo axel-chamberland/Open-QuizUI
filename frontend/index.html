@@ -112,30 +112,32 @@
         <circle cx="12" cy="19" r="1" />
       </symbol>
     </svg>
-    <div class="question-box">
+    <div id="question-box" class="page">
       <div class="title-bar">
         <h1 id="title">Quiz</h1>
-        <span id="timer">00:00</span>
+        <span class="timer">00:00</span>
       </div>
       <div class="navigation-scroll">
-        <div id="navigation">
-          <button id="prev-button" aria-label="Previous question">&lt;</button>
+        <div id="navigation" class="navigation">
+          <button class="prev-button" aria-label="Previous question">
+            &lt;
+          </button>
 
-          <div id="question-selector">
+          <div class="question-selector">
             <input
-              id="question-number"
+              class="question-number"
               type="text"
               inputmode="numeric"
               value="1"
             />
             <span class="separator">/</span>
-            <span id="question-count">1</span>
+            <span class="question-count">1</span>
           </div>
 
-          <button id="next-button" aria-label="Next question">&gt;</button>
+          <button class="next-button" aria-label="Next question">&gt;</button>
 
           <button
-            id="reveal-button"
+            class="reveal-button"
             title="Reveal answer"
             aria-label="Reveal answer"
           >
@@ -143,7 +145,7 @@
           </button>
 
           <button
-            id="maximize-button"
+            class="maximize-button"
             title="Toggle Fullscreen"
             aria-label="Fullscreen"
           >
@@ -151,7 +153,7 @@
           </button>
 
           <button
-            id="download-button"
+            class="download-button"
             title="Download quiz"
             aria-label="Download quiz"
           >
@@ -159,26 +161,30 @@
           </button>
 
           <button
-            id="timer-toggle"
+            class="timer-toggle-button"
             title="Toggle timer"
             aria-label="Toggle timer"
           >
             <svg><use href="#icon-timer"></use></svg>
           </button>
 
-          <button id="copy-all-button" title="Copy quiz" aria-label="Copy quiz">
+          <button
+            class="copy-all-button"
+            title="Copy quiz"
+            aria-label="Copy quiz"
+          >
             <svg><use href="#icon-copy-all"></use></svg>
           </button>
 
           <button
-            id="copy-question-button"
+            class="copy-question-button"
             title="Copy question"
             aria-label="Copy question"
           >
             <svg><use href="#icon-copy"></use></svg>
           </button>
           <button
-            id="editor-button"
+            class="editor-button"
             title="Edit question"
             aria-label="Edit question"
           >
@@ -193,9 +199,9 @@
       </div>
     </div>
 
-    <div id="results" style="display: none">
+    <div id="results" class="page" style="display: none">
       <div class="navigation-scroll">
-        <div id="results-navigation">
+        <div id="results-navigation" class="navigation">
           <button
             id="results-back-button"
             title="Back to quiz"
@@ -205,7 +211,7 @@
           </button>
 
           <button
-            id="results-maximize-button"
+            class="maximize-button"
             title="Toggle Fullscreen"
             aria-label="Fullscreen"
           >
@@ -213,7 +219,7 @@
           </button>
 
           <button
-            id="results-download-button"
+            class="download-button"
             title="Download quiz"
             aria-label="Download quiz"
           >
@@ -221,7 +227,7 @@
           </button>
 
           <button
-            id="results-copy-all-button"
+            class="copy-all-button"
             title="Copy quiz"
             aria-label="Copy quiz"
           >
@@ -247,7 +253,7 @@
           <div id="accuracy"></div>
         </div>
 
-        <div id="statsChart"></div>
+        <div id="stats-chart"></div>
 
         <button id="restart-button" aria-label="Restart quiz">
           Restart Quiz
@@ -269,50 +275,51 @@
       </div>
     </div>
 
-    <div id="editor" style="display: none">
+    <div id="editor" class="page" style="display: none">
       <h1>Question Editor</h1>
-
-      <div class="navigation-scroll" id="editor-navigation">
-        <button
-          id="editor-save-button"
-          title="Save changes"
-          aria-label="Save changes"
-          data-tooltip="Save changes"
-        >
-          <svg><use href="#icon-save"></use></svg>
-        </button>
-        <button
-          id="editor-copy-all-button"
-          title="Copy quiz"
-          aria-label="Copy quiz"
-        >
-          <svg><use href="#icon-copy-all"></use></svg>
-        </button>
-        <button
-          id="editor-copy-question-button"
-          title="Copy question"
-          aria-label="Copy question"
-        >
-          <svg><use href="#icon-copy"></use></svg>
-        </button>
-        <button
-          id="editor-maximize-button"
-          title="Fullscreen"
-          aria-label="Fullscreen"
-        >
-          <svg><use href="#icon-fullscreen"></use></svg>
-        </button>
-        <button class="dropdown-trigger" id="actions-button">
-          <svg><use href="#icon-more"></use></svg>
-        </button>
-        <button
-          id="editor-close-button"
-          title="Close editor"
-          aria-label="Close editor"
-          data-tooltip="Close editor"
-        >
-          <svg><use href="#icon-close"></use></svg>
-        </button>
+      <div class="navigation-scroll">
+        <div id="editor-navigation" class="navigation">
+          <button
+            id="editor-save-button"
+            title="Save changes"
+            aria-label="Save changes"
+            data-tooltip="Save changes"
+          >
+            <svg><use href="#icon-save"></use></svg>
+          </button>
+          <button
+            class="copy-all-button"
+            title="Copy quiz"
+            aria-label="Copy quiz"
+          >
+            <svg><use href="#icon-copy-all"></use></svg>
+          </button>
+          <button
+            class="copy-question-button"
+            title="Copy question"
+            aria-label="Copy question"
+          >
+            <svg><use href="#icon-copy"></use></svg>
+          </button>
+          <button
+            class="maximize-button"
+            title="Fullscreen"
+            aria-label="Fullscreen"
+          >
+            <svg><use href="#icon-fullscreen"></use></svg>
+          </button>
+          <button class="dropdown-trigger" id="actions-button">
+            <svg><use href="#icon-more"></use></svg>
+          </button>
+          <button
+            id="editor-close-button"
+            title="Close editor"
+            aria-label="Close editor"
+            data-tooltip="Close editor"
+          >
+            <svg><use href="#icon-close"></use></svg>
+          </button>
+        </div>
       </div>
       <div id="editor-close" class="editor-prompt">
         <p id="editor-prompt-message"></p>

@@ -1,12 +1,14 @@
 import { setStoredQuestionIndex } from "../persistence/progress.js";
+import { updateQuestionNumbers } from "../quiz.js";
 import { formatTime } from "../shared/formatting.js";
 import { renderMarkdown } from "../shared/markdown.js";
+import { typesetMath } from "../shared/mathjax.js";
 import { UNANSWERED, WRONG, CORRECT, SKIPPED, state } from "../state.js";
 import { saveTimer, updateTimer } from "../timer.js";
 import { renderQuiz } from "./mcq.js";
 
 export async function renderResults() {
-  const questionBox = document.querySelector(".question-box");
+  const questionBox = document.getElementById("question-box");
   const results = document.getElementById("results");
 
   questionBox.style.display = "none";
@@ -63,18 +65,10 @@ export async function renderResults() {
   document.getElementById("averageTime").textContent =
     `Average time per question: ${formatTime(Math.floor(elapsed / total))}`;
 
-  createDonutChart(document.getElementById("statsChart"), chartData);
+  createDonutChart(document.getElementById("stats-chart"), chartData);
   showCorrectionSheet();
 
-  if (state.mathReady && window.MathJax) {
-    try {
-      await MathJax.typesetPromise([
-        document.getElementById("question-corrections"),
-      ]);
-    } catch (err) {
-      console.error("MathJax typesetting failed:", err);
-    }
-  }
+  await typesetMath();
 }
 
 function createDonutChart(container, data) {
@@ -182,7 +176,7 @@ const questionNumber = document.getElementById("question-number");
 export function restartQuiz() {
   // Reset question state
   state.currentQuestionIndex = 0;
-  questionNumber.value = 1;
+  updateQuestionNumbers();
   state.answerRevealed = false;
   state.wrongAnswerCount = 0;
 
@@ -201,12 +195,15 @@ export function restartQuiz() {
   state.timer.start = state.timer.visible ? Date.now() : null;
   state.defaultStartDate = Date.now();
 
-  const timerElement = document.getElementById("timer");
+  const timerElements = document.querySelectorAll(".timer");
+
   if (state.timer.visible) {
     updateTimer();
     state.timer.interval = setInterval(updateTimer, 1000);
   } else {
-    timerElement.textContent = formatTime(0);
+    timerElements.forEach((timerElement) => {
+      timerElement.textContent = formatTime(0);
+    });
   }
   saveTimer();
 
@@ -215,7 +212,7 @@ export function restartQuiz() {
 
   // Return to quiz
   const results = document.getElementById("results");
-  const questionBox = document.querySelector(".question-box");
+  const questionBox = document.getElementById("question-box");
 
   results.style.display = "none";
   questionBox.style.display = "";

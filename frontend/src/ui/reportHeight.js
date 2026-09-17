@@ -6,7 +6,7 @@ function reportHeight() {
   )
     return;
 
-  const questionBox = document.querySelector(".question-box");
+  const questionBox = document.getElementById("question-box");
   const results = document.getElementById("results");
   const editor = document.getElementById("editor");
 

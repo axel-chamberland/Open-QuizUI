@@ -1,6 +1,7 @@
 import { state } from "../state.js";
 import { renderMarkdown } from "../shared/markdown.js";
-import { handleAnswer } from "../quiz.js";
+import { handleAnswer, renderQuestion, updateNavigation } from "../quiz.js";
+import { typesetMath } from "../shared/mathjax.js";
 
 export function showExplanation(question) {
   const explanationEl = document.getElementById("explanation");
@@ -24,7 +25,7 @@ export function showExplanation(question) {
 }
 
 export async function renderQuiz() {
-  const questionBox = document.querySelector(".question-box");
+  const questionBox = document.getElementById("question-box");
   const questionText = questionBox.querySelector("#question");
   const optionsContainer = document.getElementById("options");
   const navigationContainer = questionBox.querySelector("#navigation");
@@ -37,23 +38,34 @@ export async function renderQuiz() {
   }
 
   // Update question
-  questionText.innerHTML = renderMarkdown(
-    state.quiz.questions[state.currentQuestionIndex].question,
-    state.mathReady,
-  );
+  const question = state.quiz.questions[state.currentQuestionIndex];
+  state.currentQuestion = question;
+
+  renderQuestion(questionText, question);
 
   // Clear explanation
   explanationEl.textContent = "";
   explanationEl.style.display = "none";
 
   // Clear and rebuild options
+  renderOptions(optionsContainer, question);
+
+  // Update button states
+  updateNavigation();
+
+  document.getElementById("question-scroll").scrollTop = 0; // reset scroll
+
+  await typesetMath();
+}
+function renderOptions(optionsContainer, question) {
   optionsContainer.innerHTML = "";
-  state.wrongAnswerCount = 0; // Answer button is revealed when user exhausted all options
+  // Answer button is revealed when user exhausted all options
+  state.wrongAnswerCount = 0;
   state.optionButtons = [];
 
-  state.currentQuestion = state.quiz.questions[state.currentQuestionIndex];
-  state.currentQuestion.options.forEach((option, index) => {
+  question.options.forEach((option, index) => {
     const button = document.createElement("button");
+
     button.innerHTML = renderMarkdown(option, state.mathReady);
     button.className = "option";
 
@@ -65,19 +77,4 @@ export async function renderQuiz() {
 
     optionsContainer.appendChild(button);
   });
-  // Update button states
-  const prevButton = navigationContainer.querySelector("#prev-button");
-  prevButton.disabled = state.currentQuestionIndex === 0;
-
-  // Next button is not disabled as it goes to the result screen after last question
-
-  document.getElementById("question-scroll").scrollTop = 0; // reset scroll
-
-  if (state.mathReady && window.MathJax) {
-    try {
-      await window.MathJax.typesetPromise();
-    } catch (err) {
-      console.error("MathJax typesetting failed:", err);
-    }
-  }
 }

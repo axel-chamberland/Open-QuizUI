@@ -3,6 +3,7 @@ import { saveStats } from "./persistence/stats.js";
 import { renderResults } from "./rendering/results.js";
 import { UNANSWERED, WRONG, CORRECT, SKIPPED, state } from "./state.js";
 import { setStoredQuestionIndex } from "./persistence/progress.js";
+import { renderMarkdown } from "./shared/markdown.js";
 
 const results = document.getElementById("results");
 
@@ -22,7 +23,7 @@ export function prevQuestion() {
 
   if (results.style.display !== "none") {
     results.style.display = "none";
-    document.querySelector(".question-box").style.display = "";
+    document.getElementById("question-box").style.display = "";
     renderQuiz();
     return;
   }
@@ -48,11 +49,15 @@ export function goTo(questionIndex) {
 
   state.answerRevealed = false;
 
-  const questionNumber = document.getElementById("question-number");
-  questionNumber.value = state.currentQuestionIndex + 1;
+  updateQuestionNumbers();
   renderQuiz();
 }
 
+export function updateQuestionNumbers() {
+  document.querySelectorAll(".question-number").forEach((element) => {
+    element.value = state.currentQuestionIndex + 1;
+  });
+}
 export function handleAnswer(index, button) {
   saveStats();
   if (index === state.currentQuestion.correct_index) {
@@ -102,4 +107,20 @@ export function setQuizTitle(title) {
 
   document.title = displayTitle;
   document.getElementById("title").textContent = title;
+}
+
+export function renderQuestion(questionText, question) {
+  questionText.innerHTML = renderMarkdown(question.question, state.mathReady);
+}
+
+export function updateNavigation() {
+  document.querySelectorAll(".prev-button").forEach((button) => {
+    button.disabled = state.currentQuestionIndex === 0;
+  });
+}
+
+export function updateQuestionCounts() {
+  document.querySelectorAll(".question-count").forEach((element) => {
+    element.textContent = state.quiz.questions.length;
+  });
 }

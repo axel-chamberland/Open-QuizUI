@@ -44,7 +44,7 @@ import { setStoredQuestionIndex } from "../frontend/src/persistence/progress.js"
 describe("goTo", () => {
   beforeEach(() => {
     document.body.innerHTML = `
-      <input id="question-number" />
+      <input class="question-number" />
     `;
 
     state.quiz = {
@@ -63,7 +63,7 @@ describe("goTo", () => {
 
     expect(state.currentQuestionIndex).toBe(2);
     expect(state.answerRevealed).toBe(false);
-    expect(document.getElementById("question-number").value).toBe("3");
+    expect(document.querySelector(".question-number").value).toBe("3");
 
     expect(setStoredQuestionIndex).toHaveBeenCalledWith("test-quiz", 2);
 

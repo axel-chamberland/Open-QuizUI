@@ -36,7 +36,7 @@ vi.mock("../frontend/src/rendering/mcq.js", () => ({
 describe("renderResults", () => {
   beforeEach(() => {
     document.body.innerHTML = `
-      <div class="question-box"></div>
+      <div id="question-box"></div>
       <div id="results" style="display: none"></div>
 
       <div id="score"></div>
@@ -48,7 +48,7 @@ describe("renderResults", () => {
       <div id="time"></div>
       <div id="averageTime"></div>
 
-      <div id="statsChart"></div>
+      <div id="stats-chart"></div>
       <div id="question-corrections"></div>
     `;
 
@@ -91,7 +91,7 @@ describe("renderResults", () => {
   it("displays the results", async () => {
     await renderResults();
 
-    expect(document.querySelector(".question-box").style.display).toBe("none");
+    expect(document.getElementById("question-box").style.display).toBe("none");
 
     expect(document.getElementById("results").style.display).toBe("");
   });

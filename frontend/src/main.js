@@ -6,7 +6,11 @@ import { loadMathJax } from "./shared/mathjax.js";
 import { renderQuiz } from "./rendering/mcq.js";
 import { state } from "./state.js";
 import { initHeightReporting } from "./ui/reportHeight.js";
-import { setQuizTitle } from "./quiz.js";
+import {
+  setQuizTitle,
+  updateQuestionCounts,
+  updateQuestionNumbers,
+} from "./quiz.js";
 
 const appData = JSON.parse(document.getElementById("app-data").textContent);
 
@@ -30,14 +34,6 @@ initializeState(quiz);
 loadStats();
 loadQuizEdits(state);
 
-// Update max question count
-const questionCount = document.getElementById("question-count");
-questionCount.textContent = quiz.questions.length;
-
-// Update current question count
-const questionNumber = document.getElementById("question-number");
-questionNumber.value = state.currentQuestionIndex + 1;
-
 async function initializeQuiz() {
   await loadMathJax(ENABLE_MATHJAX);
 
@@ -49,6 +45,8 @@ async function initializeQuiz() {
   renderQuiz();
   initializeEvents();
   initHeightReporting();
+  updateQuestionCounts();
+  updateQuestionNumbers();
 }
 
 if (document.readyState === "loading") {

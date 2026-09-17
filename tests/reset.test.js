@@ -178,7 +178,7 @@ describe("restartQuiz", () => {
       "<p>old correction</p>";
 
     document.getElementById("results").style.display = "";
-    document.querySelector(".question-box").style.display = "none";
+    document.getElementById("question-box").style.display = "none";
     document.getElementById("restart-confirm").style.display = "flex";
 
     vi.clearAllMocks();
@@ -203,7 +203,7 @@ describe("restartQuiz", () => {
 
     expect(document.getElementById("results").style.display).toBe("none");
 
-    expect(document.querySelector(".question-box").style.display).toBe("");
+    expect(document.getElementById("question-box").style.display).toBe("");
 
     expect(document.getElementById("restart-confirm").style.display).toBe(
       "none",

@@ -22,7 +22,7 @@ export function cancelRestart() {
 }
 
 export function openEditor() {
-  const questionBox = document.querySelector(".question-box");
+  const questionBox = document.getElementById("question-box");
   const editor = document.getElementById("editor");
   const prompt = document.getElementById("editor-close");
 
@@ -213,7 +213,7 @@ export function saveEdit() {
 }
 
 function closeEditor() {
-  const questionBox = document.querySelector(".question-box");
+  const questionBox = document.getElementById("question-box");
   const editor = document.getElementById("editor");
   const prompt = document.getElementById("editor-close");
 

@@ -25,59 +25,46 @@ import { restartQuiz } from "../rendering/results.js";
 
 export function initializeEvents() {
   // Quiz page
-  document
-    .getElementById("prev-button")
-    .addEventListener("click", prevQuestion);
 
-  document
-    .getElementById("next-button")
-    .addEventListener("click", nextQuestion);
+  document.querySelectorAll(".reveal-button").forEach((button) => {
+    button.addEventListener("click", revealAnswer);
+  });
 
-  document
-    .getElementById("reveal-button")
-    .addEventListener("click", revealAnswer);
+  document.querySelectorAll(".timer-toggle-button").forEach((button) => {
+    button.addEventListener("click", revealAnswer);
+  });
 
-  document
-    .getElementById("maximize-button")
-    .addEventListener("click", toggleFullscreen);
+  document.querySelectorAll(".prev-button").forEach((button) => {
+    button.addEventListener("click", prevQuestion);
+  });
 
-  document
-    .getElementById("download-button")
-    .addEventListener("click", downloadQuizHTML);
+  document.querySelectorAll(".next-button").forEach((button) => {
+    button.addEventListener("click", nextQuestion);
+  });
+  document.querySelectorAll(".download-button").forEach((button) => {
+    button.addEventListener("click", downloadQuizHTML);
+  });
+  document.querySelectorAll(".maximize-button").forEach((button) => {
+    button.addEventListener("click", toggleFullscreen);
+  });
 
-  document
-    .getElementById("timer-toggle")
-    .addEventListener("click", toggleTimer);
+  document.querySelectorAll(".copy-all-button").forEach((button) => {
+    button.addEventListener("click", copyQuiz);
+  });
 
-  document
-    .getElementById("copy-all-button")
-    .addEventListener("click", copyQuiz);
+  document.querySelectorAll(".copy-question-button").forEach((button) => {
+    button.addEventListener("click", copyQuestion);
+  });
 
-  document
-    .getElementById("copy-question-button")
-    .addEventListener("click", copyQuestion);
-
-  document
-    .getElementById("editor-button")
-    .addEventListener("click", openEditor);
+  document.querySelectorAll(".editor-button").forEach((button) => {
+    button.addEventListener("click", openEditor);
+  });
 
   // Results page
 
   document
     .getElementById("results-back-button")
     .addEventListener("click", prevQuestion);
-
-  document
-    .getElementById("results-maximize-button")
-    .addEventListener("click", toggleFullscreen);
-
-  document
-    .getElementById("results-download-button")
-    .addEventListener("click", downloadQuizHTML);
-
-  document
-    .getElementById("results-copy-all-button")
-    .addEventListener("click", copyQuiz);
 
   document
     .getElementById("restart-button")
@@ -96,18 +83,6 @@ export function initializeEvents() {
   document
     .getElementById("editor-save-button")
     .addEventListener("click", saveEdit);
-
-  document
-    .getElementById("editor-copy-all-button")
-    .addEventListener("click", copyQuiz);
-
-  document
-    .getElementById("editor-copy-question-button")
-    .addEventListener("click", copyQuestion);
-
-  document
-    .getElementById("editor-maximize-button")
-    .addEventListener("click", toggleFullscreen);
 
   document
     .getElementById("editor-close-button")
@@ -186,7 +161,7 @@ export function initializeEvents() {
 
   // Tap or click to change question (touch control)
 
-  const questionBox = document.querySelector(".question-box");
+  const questionBox = document.getElementById("question-box");
 
   questionBox.addEventListener("click", (e) => {
     if (e.target.closest("button, input")) return;
@@ -210,20 +185,24 @@ export function initializeEvents() {
 
   // Change question directly
 
-  const questionSelector = document.getElementById("question-selector");
-  const questionNumber = document.getElementById("question-number");
+  document
+    .querySelectorAll(".question-selector")
+    .forEach((questionSelector) => {
+      const questionNumber = questionSelector.querySelector(".question-number");
 
-  questionSelector.addEventListener("click", () => {
-    questionNumber.focus();
-    questionNumber.select();
-  });
+      questionSelector.addEventListener("click", () => {
+        questionNumber.focus();
+        questionNumber.select();
+      });
 
-  questionNumber.addEventListener("input", () => {
-    questionNumber.value = questionNumber.value.replace(/\D/g, "");
-  });
-  questionNumber.addEventListener("change", () => {
-    if (!questionNumber.value) return;
+      questionNumber.addEventListener("input", () => {
+        questionNumber.value = questionNumber.value.replace(/\D/g, "");
+      });
 
-    goTo(Number(questionNumber.value) - 1);
-  });
+      questionNumber.addEventListener("change", () => {
+        if (!questionNumber.value) return;
+
+        goTo(Number(questionNumber.value) - 1);
+      });
+    });
 }
