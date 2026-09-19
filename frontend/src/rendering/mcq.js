@@ -24,7 +24,7 @@ export function showExplanation(question) {
   }
 }
 
-export async function renderQuiz() {
+export async function renderMCQ() {
   const questionBox = document.getElementById("question-box");
   const questionText = questionBox.querySelector("#question");
   const optionsContainer = document.getElementById("options");

@@ -4,6 +4,7 @@ import {
   prevQuestion,
   handleAnswer,
   revealAnswer,
+  switchMode,
 } from "../quiz.js";
 import { downloadQuizHTML } from "../shared/download.js";
 import { state } from "../state.js";
@@ -58,6 +59,10 @@ export function initializeEvents() {
 
   document.querySelectorAll(".editor-button").forEach((button) => {
     button.addEventListener("click", openEditor);
+  });
+
+  document.querySelectorAll(".mode-button").forEach((button) => {
+    button.addEventListener("click", switchMode);
   });
 
   // Results page
@@ -125,7 +130,11 @@ export function initializeEvents() {
       index = Number(key) - 1;
     }
 
-    if (index >= 0 && index < state.optionButtons.length) {
+    if (
+      index >= 0 &&
+      index < state.optionButtons.length &&
+      state.mode == "mcq"
+    ) {
       const button = state.optionButtons[index];
       if (!button.disabled) {
         handleAnswer(index, button);
@@ -163,14 +172,17 @@ export function initializeEvents() {
 
   const questionBox = document.getElementById("question-box");
 
-  questionBox.addEventListener("click", (e) => {
+  const flashcardBox = document.getElementById("flashcard-box");
+
+  function handleBoxClick(e) {
     if (e.target.closest("button, input")) return;
 
     // Don't navigate if the user just made a text selection
     const selection = window.getSelection();
     if (selection && selection.toString().length > 0) return;
 
-    const rect = questionBox.getBoundingClientRect();
+    const box = e.currentTarget;
+    const rect = box.getBoundingClientRect();
     const x = e.clientX - rect.left;
     if (x > rect.width * 0.7) {
       if (!state.answerRevealed) {
@@ -181,8 +193,10 @@ export function initializeEvents() {
     } else if (x < rect.width * 0.3) {
       prevQuestion();
     }
-  });
+  }
 
+  questionBox.addEventListener("click", handleBoxClick);
+  flashcardBox.addEventListener("click", handleBoxClick);
   // Change question directly
 
   document

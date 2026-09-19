@@ -1,5 +1,5 @@
 import { state } from "../state.js";
-import { renderQuiz } from "./mcq.js";
+import { renderMCQ } from "./mcq.js";
 import {
   removeAllLocalEdits,
   removeLocalEdit,
@@ -22,13 +22,21 @@ export function cancelRestart() {
 }
 
 export function openEditor() {
-  const questionBox = document.getElementById("question-box");
   const editor = document.getElementById("editor");
   const prompt = document.getElementById("editor-close");
 
   prompt.classList.remove("visible");
 
-  questionBox.style.display = "none";
+  // Hide current page
+  if (state.mode === "flashcard") {
+    const flashcardBox = document.getElementById("flashcard-box");
+    flashcardBox.style.display = "none";
+  } else {
+    const questionBox = document.getElementById("question-box");
+    questionBox.style.display = "none";
+  }
+
+  // Show editor page
   editor.style.display = "";
 
   const titleField = document.getElementById("editor-title");
@@ -213,7 +221,6 @@ export function saveEdit() {
 }
 
 function closeEditor() {
-  const questionBox = document.getElementById("question-box");
   const editor = document.getElementById("editor");
   const prompt = document.getElementById("editor-close");
 
@@ -225,9 +232,15 @@ function closeEditor() {
   const options = document.getElementById("editor-distractors");
   options.innerHTML = "";
 
-  questionBox.style.display = "";
+  if (state.mode === "flashcard") {
+    const flashcardBox = document.getElementById("flashcard-box");
+    flashcardBox.style.display = "";
+  } else {
+    const questionBox = document.getElementById("question-box");
+    questionBox.style.display = "";
+  }
 
-  renderQuiz();
+  renderMCQ();
 }
 
 export function restoreQuizToDefault() {

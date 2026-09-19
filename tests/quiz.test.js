@@ -29,7 +29,7 @@ describe("clampQuestionIndex", () => {
 });
 
 vi.mock("../frontend/src/rendering/mcq.js", () => ({
-  renderQuiz: vi.fn(),
+  renderMCQ: vi.fn(),
   showExplanation: vi.fn(),
 }));
 
@@ -39,7 +39,7 @@ vi.mock("../frontend/src/persistence/progress.js", () => ({
 
 import { goTo } from "../frontend/src/quiz.js";
 import { state } from "../frontend/src/state.js";
-import { renderQuiz, showExplanation } from "../frontend/src/rendering/mcq.js";
+import { renderMCQ, showExplanation } from "../frontend/src/rendering/mcq.js";
 import { setStoredQuestionIndex } from "../frontend/src/persistence/progress.js";
 describe("goTo", () => {
   beforeEach(() => {
@@ -67,7 +67,7 @@ describe("goTo", () => {
 
     expect(setStoredQuestionIndex).toHaveBeenCalledWith("test-quiz", 2);
 
-    expect(renderQuiz).toHaveBeenCalled();
+    expect(renderMCQ).toHaveBeenCalled();
   });
 
   it("clamps to the first question", () => {
@@ -92,7 +92,9 @@ describe("setQuizTitle", () => {
     setQuizTitle("My Quiz");
 
     expect(document.title).toBe("My Quiz");
-    expect(document.getElementById("title").textContent).toBe("My Quiz");
+    document.querySelectorAll(".title").forEach((e) => {
+      expect(e.textContent).toBe("My Quiz");
+    });
   });
 
   it("limits the document title to 60 characters", () => {
@@ -122,6 +124,8 @@ describe("revealAnswer", () => {
         },
       ],
     };
+
+    state.mode == "mcq";
 
     state.questionResults = [UNANSWERED];
 

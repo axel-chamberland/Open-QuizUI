@@ -14,7 +14,7 @@ vi.mock("../frontend/src/persistence/quiz_edits.js", () => ({
 }));
 
 vi.mock("../frontend/src/rendering/mcq.js", () => ({
-  renderQuiz: vi.fn(),
+  renderMCQ: vi.fn(),
 }));
 
 // editor.js uses setQuizTitle, but we don't want the test to modify
@@ -43,7 +43,7 @@ const { removeLocalEdit, removeAllLocalEdits } =
 
 const { setQuizTitle } = await import("../frontend/src/quiz.js");
 
-const { renderQuiz } = await import("../frontend/src/rendering/mcq.js");
+const { renderMCQ } = await import("../frontend/src/rendering/mcq.js");
 
 describe("restoreQuestionToDefault", () => {
   beforeEach(() => {
@@ -209,6 +209,6 @@ describe("restartQuiz", () => {
       "none",
     );
 
-    expect(renderQuiz).toHaveBeenCalled();
+    expect(renderMCQ).toHaveBeenCalled();
   });
 });

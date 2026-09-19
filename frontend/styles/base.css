@@ -154,6 +154,14 @@ button:disabled {
   font-weight: bold;
 }
 
+.flashcard-answer {
+  display: none;
+}
+
+.flashcard-answer.visible {
+  display: block;
+}
+
 #explanation {
   display: none;
   margin-top: 1rem;

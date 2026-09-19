@@ -10,6 +10,8 @@ export const state = {
 
   quiz: null,
 
+  mode: null,
+
   wrongAnswerCount: 0,
 
   optionButtons: [],

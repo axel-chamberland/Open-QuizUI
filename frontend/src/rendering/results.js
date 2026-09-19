@@ -5,13 +5,21 @@ import { renderMarkdown } from "../shared/markdown.js";
 import { typesetMath } from "../shared/mathjax.js";
 import { UNANSWERED, WRONG, CORRECT, SKIPPED, state } from "../state.js";
 import { saveTimer, updateTimer } from "../timer.js";
-import { renderQuiz } from "./mcq.js";
+import { renderFlashcard } from "./flashcards.js";
+import { renderMCQ } from "./mcq.js";
 
 export async function renderResults() {
-  const questionBox = document.getElementById("question-box");
   const results = document.getElementById("results");
 
-  questionBox.style.display = "none";
+  // Hide current page
+  if (state.mode === "flashcard") {
+    const flashcardBox = document.getElementById("flashcard-box");
+    flashcardBox.style.display = "none";
+  } else {
+    const questionBox = document.getElementById("question-box");
+    questionBox.style.display = "none";
+  }
+
   results.style.display = "";
 
   const correct = state.questionResults.filter((x) => x === CORRECT).length;
@@ -212,12 +220,21 @@ export function restartQuiz() {
 
   // Return to quiz
   const results = document.getElementById("results");
-  const questionBox = document.getElementById("question-box");
 
   results.style.display = "none";
-  questionBox.style.display = "";
 
   document.getElementById("restart-confirm").style.display = "none";
 
-  renderQuiz();
+  if (state.mode === "flashcard") {
+    const flashcardBox = document.getElementById("flashcard-box");
+    flashcardBox.style.display = "";
+    renderFlashcard();
+    return;
+  }
+
+  const questionBox = document.getElementById("question-box");
+  questionBox.style.display = "";
+  document.getElementById("restart-confirm").style.display = "none";
+
+  renderMCQ();
 }

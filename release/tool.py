@@ -792,6 +792,14 @@ button:disabled {
   font-weight: bold;
 }
 
+.flashcard-answer {
+  display: none;
+}
+
+.flashcard-answer.visible {
+  display: block;
+}
+
 #explanation {
   display: none;
   margin-top: 1rem;
@@ -1251,10 +1259,26 @@ th {
         <circle cx="12" cy="5" r="1" />
         <circle cx="12" cy="19" r="1" />
       </symbol>
+      <symbol
+        id="switch-mode"
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        class="lucide lucide-arrow-left-right preview-icon"
+      >
+        <path d="M8 3 4 7l4 4" />
+        <path d="M4 7h16" />
+        <path d="m16 21 4-4-4-4" />
+        <path d="M20 17H4" />
+      </symbol>
     </svg>
-    <div id="question-box" class="page">
+    <div id="question-box" class="page" style="display: none">
       <div class="title-bar">
-        <h1 id="title">Quiz</h1>
+        <h1 class="title">Quiz</h1>
         <span class="timer">00:00</span>
       </div>
       <div class="navigation-scroll">
@@ -1330,12 +1354,115 @@ th {
           >
             <svg><use href="#icon-editor"></use></svg>
           </button>
+          <button
+            class="mode-button"
+            title="Switch to Flashcards mode"
+            aria-label="Switch to Flashcards mode"
+          >
+            <svg><use href="#switch-mode"></use></svg>
+          </button>
         </div>
       </div>
       <div id="question-scroll">
         <p id="question"></p>
         <div id="options"></div>
         <div id="explanation"></div>
+      </div>
+    </div>
+
+    <div id="flashcard-box" class="page" style="display: none">
+      <div class="title-bar">
+        <h1 class="title">Flashcards</h1>
+        <span class="timer">00:00</span>
+      </div>
+
+      <div class="navigation-scroll">
+        <div class="navigation">
+          <button class="prev-button" aria-label="Previous question">
+            &lt;
+          </button>
+
+          <div class="question-selector">
+            <input
+              class="question-number"
+              type="text"
+              inputmode="numeric"
+              value="1"
+            />
+            <span class="separator">/</span>
+            <span class="question-count">1</span>
+          </div>
+
+          <button class="next-button" aria-label="Next question">&gt;</button>
+
+          <button
+            class="reveal-button"
+            title="Reveal answer"
+            aria-label="Reveal answer"
+          >
+            <svg><use href="#icon-reveal"></use></svg>
+          </button>
+
+          <button
+            class="maximize-button"
+            title="Toggle Fullscreen"
+            aria-label="Fullscreen"
+          >
+            <svg><use href="#icon-fullscreen"></use></svg>
+          </button>
+
+          <button
+            class="download-button"
+            title="Download flashcards"
+            aria-label="Download quiz"
+          >
+            <svg><use href="#icon-download"></use></svg>
+          </button>
+
+          <button
+            class="timer-toggle-button"
+            title="Toggle timer"
+            aria-label="Toggle timer"
+          >
+            <svg><use href="#icon-timer"></use></svg>
+          </button>
+
+          <button
+            class="copy-all-button"
+            title="Copy flashcards"
+            aria-label="Copy flashcards"
+          >
+            <svg><use href="#icon-copy-all"></use></svg>
+          </button>
+
+          <button
+            class="copy-question-button"
+            title="Copy question"
+            aria-label="Copy question"
+          >
+            <svg><use href="#icon-copy"></use></svg>
+          </button>
+
+          <button
+            class="editor-button"
+            title="Edit question"
+            aria-label="Edit question"
+          >
+            <svg><use href="#icon-editor"></use></svg>
+          </button>
+          <button
+            class="mode-button"
+            title="Switch to MCQ mode"
+            aria-label="Switch to MCQ mode"
+          >
+            <svg><use href="#switch-mode"></use></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="question-scroll">
+        <p class="flashcard-question"></p>
+        <div class="flashcard-answer"></div>
       </div>
     </div>
 
@@ -1551,6 +1678,7 @@ var SKIPPED = 3;
 var state = {
   mathReady: false,
   quiz: null,
+  mode: null,
   wrongAnswerCount: 0,
   optionButtons: [],
   currentQuestion: null,
@@ -1874,7 +2002,7 @@ function showExplanation(question) {
     explanationEl.style.display = "none";
   }
 }
-async function renderQuiz() {
+async function renderMCQ() {
   const questionBox = document.getElementById("question-box");
   const questionText = questionBox.querySelector("#question");
   const optionsContainer = document.getElementById("options");
@@ -2039,11 +2167,39 @@ function updateTimer() {
   });
 }
 
+// frontend/src/rendering/flashcards.js
+async function renderFlashcard() {
+  const flashcardBox = document.getElementById("flashcard-box");
+  const questionText = flashcardBox.querySelector(".flashcard-question");
+  const answerEl = flashcardBox.querySelector(".flashcard-answer");
+  if (!state.quiz.questions || state.quiz.questions.length === 0) {
+    questionText.textContent = "No valid questions parsed";
+    return;
+  }
+  const question = state.quiz.questions[state.currentQuestionIndex];
+  state.currentQuestion = question;
+  renderQuestion(questionText, question);
+  const answerIndex = question.options.length === 1 ? 0 : question.correct_index;
+  answerEl.innerHTML = renderMarkdown(
+    question.options[answerIndex],
+    state.mathReady
+  );
+  state.answerRevealed = false;
+  updateNavigation();
+  flashcardBox.querySelector(".question-scroll").scrollTop = 0;
+  await typesetMath();
+}
+
 // frontend/src/rendering/results.js
 async function renderResults() {
-  const questionBox = document.getElementById("question-box");
   const results2 = document.getElementById("results");
-  questionBox.style.display = "none";
+  if (state.mode === "flashcard") {
+    const flashcardBox = document.getElementById("flashcard-box");
+    flashcardBox.style.display = "none";
+  } else {
+    const questionBox = document.getElementById("question-box");
+    questionBox.style.display = "none";
+  }
   results2.style.display = "";
   const correct = state.questionResults.filter((x) => x === CORRECT).length;
   const wrong = state.questionResults.filter((x) => x === WRONG).length;
@@ -2180,11 +2336,18 @@ function restartQuiz() {
   saveTimer();
   setStoredQuestionIndex(state.quizStorageKey, 0);
   const results2 = document.getElementById("results");
-  const questionBox = document.getElementById("question-box");
   results2.style.display = "none";
+  document.getElementById("restart-confirm").style.display = "none";
+  if (state.mode === "flashcard") {
+    const flashcardBox = document.getElementById("flashcard-box");
+    flashcardBox.style.display = "";
+    renderFlashcard();
+    return;
+  }
+  const questionBox = document.getElementById("question-box");
   questionBox.style.display = "";
   document.getElementById("restart-confirm").style.display = "none";
-  renderQuiz();
+  renderMCQ();
 }
 
 // frontend/src/quiz.js
@@ -2200,8 +2363,13 @@ function prevQuestion() {
   const results2 = document.getElementById("results");
   if (results2.style.display !== "none") {
     results2.style.display = "none";
+    if (state.mode === "flashcard") {
+      document.getElementById("flashcard-box").style.display = "";
+      renderFlashcard();
+      return;
+    }
     document.getElementById("question-box").style.display = "";
-    renderQuiz();
+    renderMCQ();
     return;
   }
   if (state.currentQuestionIndex <= 0) return;
@@ -2219,7 +2387,12 @@ function goTo(questionIndex) {
   setStoredQuestionIndex(state.quizStorageKey, state.currentQuestionIndex);
   state.answerRevealed = false;
   updateQuestionNumbers();
-  renderQuiz();
+  if (state.mode === "flashcard") {
+    document.querySelector(".flashcard-answer").classList.remove("visible");
+    renderFlashcard();
+    return;
+  }
+  renderMCQ();
 }
 function updateQuestionNumbers() {
   document.querySelectorAll(".question-number").forEach((element) => {
@@ -2259,6 +2432,10 @@ function revealAnswer() {
     state.questionResults[state.currentQuestionIndex] = SKIPPED;
     saveStats();
   }
+  if (state.mode === "flashcard") {
+    document.querySelector(".flashcard-answer").classList.add("visible");
+    return;
+  }
   state.currentQuestion = state.quiz.questions[state.currentQuestionIndex];
   const optionsContainer = document.getElementById("options");
   const buttons = optionsContainer.querySelectorAll("button");
@@ -2268,7 +2445,7 @@ function revealAnswer() {
 function setQuizTitle(title) {
   const displayTitle = title.slice(0, 60);
   document.title = displayTitle;
-  document.getElementById("title").textContent = title;
+  document.querySelectorAll(".title").forEach((e) => e.textContent = title);
 }
 function renderQuestion(questionText, question) {
   questionText.innerHTML = renderMarkdown(question.question, state.mathReady);
@@ -2282,6 +2459,23 @@ function updateQuestionCounts() {
   document.querySelectorAll(".question-count").forEach((element) => {
     element.textContent = state.quiz.questions.length;
   });
+}
+function setMode(mode2) {
+  state.mode = mode2;
+  const quizPage = document.getElementById("question-box");
+  const flashcardPage = document.getElementById("flashcard-box");
+  const isFlashcard = mode2 === "flashcard";
+  quizPage.style.display = isFlashcard ? "none" : "";
+  flashcardPage.style.display = isFlashcard ? "" : "none";
+}
+function switchMode() {
+  state.mode = state.mode === "mcq" ? "flashcard" : "mcq";
+  setMode(state.mode);
+  if (state.mode === "mcq") {
+    renderMCQ();
+  } else {
+    renderFlashcard();
+  }
 }
 
 // frontend/src/shared/download.js
@@ -2438,11 +2632,16 @@ function cancelRestart() {
   document.getElementById("restart-confirm").style.display = "none";
 }
 function openEditor() {
-  const questionBox = document.getElementById("question-box");
   const editor = document.getElementById("editor");
   const prompt = document.getElementById("editor-close");
   prompt.classList.remove("visible");
-  questionBox.style.display = "none";
+  if (state.mode === "flashcard") {
+    const flashcardBox = document.getElementById("flashcard-box");
+    flashcardBox.style.display = "none";
+  } else {
+    const questionBox = document.getElementById("question-box");
+    questionBox.style.display = "none";
+  }
   editor.style.display = "";
   const titleField = document.getElementById("editor-title");
   const questionField = document.getElementById("editor-question");
@@ -2577,15 +2776,20 @@ function saveEdit() {
   }
 }
 function closeEditor() {
-  const questionBox = document.getElementById("question-box");
   const editor = document.getElementById("editor");
   const prompt = document.getElementById("editor-close");
   prompt.classList.remove("visible");
   editor.style.display = "none";
   const options = document.getElementById("editor-distractors");
   options.innerHTML = "";
-  questionBox.style.display = "";
-  renderQuiz();
+  if (state.mode === "flashcard") {
+    const flashcardBox = document.getElementById("flashcard-box");
+    flashcardBox.style.display = "";
+  } else {
+    const questionBox = document.getElementById("question-box");
+    questionBox.style.display = "";
+  }
+  renderMCQ();
 }
 function restoreQuizToDefault() {
   showEditorPrompt(
@@ -2733,6 +2937,9 @@ function initializeEvents() {
   document.querySelectorAll(".editor-button").forEach((button) => {
     button.addEventListener("click", openEditor);
   });
+  document.querySelectorAll(".mode-button").forEach((button) => {
+    button.addEventListener("click", switchMode);
+  });
   document.getElementById("results-back-button").addEventListener("click", prevQuestion);
   document.getElementById("restart-button").addEventListener("click", confirmRestart);
   document.getElementById("confirm-restart-button").addEventListener("click", restartQuiz);
@@ -2759,7 +2966,7 @@ function initializeEvents() {
     if (/^[1-9]$/.test(key)) {
       index = Number(key) - 1;
     }
-    if (index >= 0 && index < state.optionButtons.length) {
+    if (index >= 0 && index < state.optionButtons.length && state.mode == "mcq") {
       const button = state.optionButtons[index];
       if (!button.disabled) {
         handleAnswer(index, button);
@@ -2787,11 +2994,13 @@ function initializeEvents() {
     }
   });
   const questionBox = document.getElementById("question-box");
-  questionBox.addEventListener("click", (e) => {
+  const flashcardBox = document.getElementById("flashcard-box");
+  function handleBoxClick(e) {
     if (e.target.closest("button, input")) return;
     const selection = window.getSelection();
     if (selection && selection.toString().length > 0) return;
-    const rect = questionBox.getBoundingClientRect();
+    const box = e.currentTarget;
+    const rect = box.getBoundingClientRect();
     const x = e.clientX - rect.left;
     if (x > rect.width * 0.7) {
       if (!state.answerRevealed) {
@@ -2802,7 +3011,9 @@ function initializeEvents() {
     } else if (x < rect.width * 0.3) {
       prevQuestion();
     }
-  });
+  }
+  questionBox.addEventListener("click", handleBoxClick);
+  flashcardBox.addEventListener("click", handleBoxClick);
   document.querySelectorAll(".question-selector").forEach((questionSelector) => {
     const questionNumber2 = questionSelector.querySelector(".question-number");
     questionSelector.addEventListener("click", () => {
@@ -2841,6 +3052,7 @@ function initHeightReporting() {
 var appData = JSON.parse(document.getElementById("app-data").textContent);
 var ENABLE_MATHJAX = appData.enableMathJax;
 var quiz = appData.quiz;
+var mode = appData.mode;
 try {
   if (window.top.document.body.classList.contains("pseudo-fullscreen-active")) {
     window.top.location.reload();
@@ -2850,26 +3062,32 @@ try {
 initializeState(quiz);
 loadStats();
 loadQuizEdits(state);
-async function initializeQuiz() {
+async function initializeApp() {
   await loadMathJax(ENABLE_MATHJAX);
   if (state.mathReady && window.MathJax?.startup?.promise) {
     await window.MathJax.startup.promise;
   }
   setQuizTitle(quiz.title);
-  renderQuiz();
   initializeEvents();
   initHeightReporting();
   updateQuestionCounts();
   updateQuestionNumbers();
+  if (state.mode === "flashcard") {
+    await renderFlashcard();
+  } else {
+    await renderMCQ();
+  }
+  setMode(appData.mode);
 }
 if (document.readyState === "loading") {
-  window.addEventListener("load", initializeQuiz, { once: true });
+  window.addEventListener("load", initializeApp, { once: true });
 } else {
-  initializeQuiz();
+  initializeApp();
   document.body.classList.remove("app-loading");
 }
 export {
   ENABLE_MATHJAX,
+  mode,
   quiz
 };
 
