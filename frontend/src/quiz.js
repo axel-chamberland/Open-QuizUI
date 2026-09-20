@@ -9,60 +9,63 @@ import { renderFlashcard } from "./rendering/flashcards.js";
 const results = document.getElementById("results");
 
 export function nextQuestion() {
-  // If last question, go to results page
-  if (
-    state.currentQuestionIndex >= state.quiz.questions.length - 1 &&
-    results.style.display === "none"
-  ) {
-    renderResults();
-    return;
-  }
   goTo(state.currentQuestionIndex + 1);
 }
 
 export function prevQuestion() {
-  const results = document.getElementById("results");
-
-  if (results.style.display !== "none") {
-    results.style.display = "none";
-    if (state.mode === "flashcard") {
-      document.getElementById("flashcard-box").style.display = "";
-      renderFlashcard();
-      return;
-    }
-
-    document.getElementById("question-box").style.display = "";
-    renderMCQ();
-    return;
-  }
-
   if (state.currentQuestionIndex <= 0) return;
+
+  const results = document.getElementById("results");
+  results.style.display = "none";
   goTo(state.currentQuestionIndex - 1);
 }
 
-export function clampQuestionIndex(index, questionCount) {
-  return Math.max(0, Math.min(index, questionCount - 1));
-}
-
 export function goTo(questionIndex) {
-  // Clamp between first and last question
-  questionIndex = clampQuestionIndex(
-    questionIndex,
-    state.quiz.questions.length,
-  );
+  const questionCount = state.quiz.questions.length;
+
+  if (questionIndex < 0) {
+    questionIndex = 0;
+  }
+
+  // Results page
+  if (questionIndex >= questionCount) {
+    state.currentQuestionIndex = questionCount;
+    setStoredQuestionIndex(state.quizStorageKey, state.currentQuestionIndex);
+
+    renderResults();
+    return;
+  }
 
   state.currentQuestionIndex = questionIndex;
-
   setStoredQuestionIndex(state.quizStorageKey, state.currentQuestionIndex);
 
   state.answerRevealed = false;
 
   updateQuestionNumbers();
-  if (state.mode === "flashcard") {
-    document.querySelector(".flashcard-answer").classList.remove("visible");
+
+  const question = state.quiz.questions[questionIndex];
+  const distractorCount = question.options.length - 1;
+
+  let mode = state.mode;
+
+  if (mode === "flashcard" || distractorCount < 2) {
+    mode = "flashcard";
+  }
+
+  const quizPage = document.getElementById("question-box");
+  const flashcardPage = document.getElementById("flashcard-box");
+
+  if (mode === "flashcard") {
+    quizPage.style.display = "none";
+    flashcardPage.style.display = "";
+
     renderFlashcard();
     return;
   }
+
+  quizPage.style.display = "";
+  flashcardPage.style.display = "none";
+
   renderMCQ();
 }
 
@@ -107,8 +110,7 @@ export function revealAnswer() {
     state.questionResults[state.currentQuestionIndex] = SKIPPED;
     saveStats();
   }
-
-  if (state.mode === "flashcard") {
+  if (document.getElementById("flashcard-box").style.display !== "none") {
     document.querySelector(".flashcard-answer").classList.add("visible");
     return;
   }

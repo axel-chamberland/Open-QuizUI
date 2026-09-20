@@ -12,13 +12,10 @@ export async function renderResults() {
   const results = document.getElementById("results");
 
   // Hide current page
-  if (state.mode === "flashcard") {
-    const flashcardBox = document.getElementById("flashcard-box");
-    flashcardBox.style.display = "none";
-  } else {
-    const questionBox = document.getElementById("question-box");
-    questionBox.style.display = "none";
-  }
+  const flashcardBox = document.getElementById("flashcard-box");
+  flashcardBox.style.display = "none";
+  const questionBox = document.getElementById("question-box");
+  questionBox.style.display = "none";
 
   results.style.display = "";
 

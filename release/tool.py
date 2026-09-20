@@ -594,12 +594,12 @@ def refers_to_other_options(
 
 
 def wrap_html(
-    quiz, enable_mathjax: bool, light_theme="default_light", dark_theme="default_dark"
+    quiz, enable_mathjax: bool, light_theme="default_light", dark_theme="default_dark", default_mode="mcq"
 ):
 
     import json
 
-    payload = {"enableMathJax": bool(enable_mathjax), "quiz": quiz}
+    payload = {"enableMathJax": bool(enable_mathjax), "mode": default_mode, "quiz": quiz}
 
     app_data = json.dumps(payload, ensure_ascii=False)
 
@@ -1658,7 +1658,7 @@ function getStoredQuestionIndex(quizStorageKey) {
     if (!Number.isInteger(index)) {
       return 0;
     }
-    return Math.max(0, Math.min(index, state.quiz.questions.length - 1));
+    return Math.max(0, Math.min(index, state.quiz.questions.length));
   } catch {
     return 0;
   }
@@ -2176,6 +2176,7 @@ async function renderFlashcard() {
     questionText.textContent = "No valid questions parsed";
     return;
   }
+  document.querySelector(".flashcard-answer").classList.remove("visible");
   const question = state.quiz.questions[state.currentQuestionIndex];
   state.currentQuestion = question;
   renderQuestion(questionText, question);
@@ -2193,13 +2194,10 @@ async function renderFlashcard() {
 // frontend/src/rendering/results.js
 async function renderResults() {
   const results2 = document.getElementById("results");
-  if (state.mode === "flashcard") {
-    const flashcardBox = document.getElementById("flashcard-box");
-    flashcardBox.style.display = "none";
-  } else {
-    const questionBox = document.getElementById("question-box");
-    questionBox.style.display = "none";
-  }
+  const flashcardBox = document.getElementById("flashcard-box");
+  flashcardBox.style.display = "none";
+  const questionBox = document.getElementById("question-box");
+  questionBox.style.display = "none";
   results2.style.display = "";
   const correct = state.questionResults.filter((x) => x === CORRECT).length;
   const wrong = state.questionResults.filter((x) => x === WRONG).length;
@@ -2353,45 +2351,45 @@ function restartQuiz() {
 // frontend/src/quiz.js
 var results = document.getElementById("results");
 function nextQuestion() {
-  if (state.currentQuestionIndex >= state.quiz.questions.length - 1 && results.style.display === "none") {
-    renderResults();
-    return;
-  }
   goTo(state.currentQuestionIndex + 1);
 }
 function prevQuestion() {
-  const results2 = document.getElementById("results");
-  if (results2.style.display !== "none") {
-    results2.style.display = "none";
-    if (state.mode === "flashcard") {
-      document.getElementById("flashcard-box").style.display = "";
-      renderFlashcard();
-      return;
-    }
-    document.getElementById("question-box").style.display = "";
-    renderMCQ();
-    return;
-  }
   if (state.currentQuestionIndex <= 0) return;
+  const results2 = document.getElementById("results");
+  results2.style.display = "none";
   goTo(state.currentQuestionIndex - 1);
 }
-function clampQuestionIndex(index, questionCount) {
-  return Math.max(0, Math.min(index, questionCount - 1));
-}
 function goTo(questionIndex) {
-  questionIndex = clampQuestionIndex(
-    questionIndex,
-    state.quiz.questions.length
-  );
+  const questionCount = state.quiz.questions.length;
+  if (questionIndex < 0) {
+    questionIndex = 0;
+  }
+  if (questionIndex >= questionCount) {
+    state.currentQuestionIndex = questionCount;
+    setStoredQuestionIndex(state.quizStorageKey, state.currentQuestionIndex);
+    renderResults();
+    return;
+  }
   state.currentQuestionIndex = questionIndex;
   setStoredQuestionIndex(state.quizStorageKey, state.currentQuestionIndex);
   state.answerRevealed = false;
   updateQuestionNumbers();
-  if (state.mode === "flashcard") {
-    document.querySelector(".flashcard-answer").classList.remove("visible");
+  const question = state.quiz.questions[questionIndex];
+  const distractorCount = question.options.length - 1;
+  let mode2 = state.mode;
+  if (mode2 === "flashcard" || distractorCount < 2) {
+    mode2 = "flashcard";
+  }
+  const quizPage = document.getElementById("question-box");
+  const flashcardPage = document.getElementById("flashcard-box");
+  if (mode2 === "flashcard") {
+    quizPage.style.display = "none";
+    flashcardPage.style.display = "";
     renderFlashcard();
     return;
   }
+  quizPage.style.display = "";
+  flashcardPage.style.display = "none";
   renderMCQ();
 }
 function updateQuestionNumbers() {
@@ -2432,7 +2430,7 @@ function revealAnswer() {
     state.questionResults[state.currentQuestionIndex] = SKIPPED;
     saveStats();
   }
-  if (state.mode === "flashcard") {
+  if (document.getElementById("flashcard-box").style.display !== "none") {
     document.querySelector(".flashcard-answer").classList.add("visible");
     return;
   }
@@ -3034,10 +3032,8 @@ function initializeEvents() {
 function reportHeight() {
   if (document.fullscreenElement || document.documentElement.classList.contains("pseudo-fullscreen-active"))
     return;
-  const questionBox = document.getElementById("question-box");
-  const results2 = document.getElementById("results");
-  const editor = document.getElementById("editor");
-  const visible = questionBox.style.display !== "none" ? questionBox : results2.style.display !== "none" ? results2 : editor;
+  const pages = document.querySelectorAll(".page");
+  const visible = [...pages].find((page) => page.style.display !== "none");
   const h = visible.scrollHeight;
   parent.postMessage({ type: "iframe:height", height: h }, "*");
 }
@@ -3072,12 +3068,8 @@ async function initializeApp() {
   initHeightReporting();
   updateQuestionCounts();
   updateQuestionNumbers();
-  if (state.mode === "flashcard") {
-    await renderFlashcard();
-  } else {
-    await renderMCQ();
-  }
   setMode(appData.mode);
+  goTo(state.currentQuestionIndex);
 }
 if (document.readyState === "loading") {
   window.addEventListener("load", initializeApp, { once: true });

@@ -3,16 +3,15 @@ import { initializeEvents } from "./ui/events.js";
 import { loadQuizEdits } from "./persistence/quiz_edits.js";
 import { loadStats } from "./persistence/stats.js";
 import { loadMathJax } from "./shared/mathjax.js";
-import { renderMCQ } from "./rendering/mcq.js";
 import { state } from "./state.js";
 import { initHeightReporting } from "./ui/reportHeight.js";
 import {
   setMode,
+  goTo,
   setQuizTitle,
   updateQuestionCounts,
   updateQuestionNumbers,
 } from "./quiz.js";
-import { renderFlashcard } from "./rendering/flashcards.js";
 
 const appData = JSON.parse(document.getElementById("app-data").textContent);
 
@@ -50,13 +49,8 @@ async function initializeApp() {
   updateQuestionCounts();
   updateQuestionNumbers();
 
-  if (state.mode === "flashcard") {
-    await renderFlashcard();
-  } else {
-    await renderMCQ();
-  }
-
   setMode(appData.mode);
+  goTo(state.currentQuestionIndex);
 }
 
 if (document.readyState === "loading") {

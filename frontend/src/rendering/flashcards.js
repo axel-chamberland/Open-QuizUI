@@ -13,6 +13,8 @@ export async function renderFlashcard() {
     return;
   }
 
+  document.querySelector(".flashcard-answer").classList.remove("visible");
+
   const question = state.quiz.questions[state.currentQuestionIndex];
   state.currentQuestion = question;
 

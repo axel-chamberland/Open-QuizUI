@@ -4,29 +4,10 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 
 import {
-  clampQuestionIndex,
   handleAnswer,
   revealAnswer,
   setQuizTitle,
 } from "../frontend/src/quiz.js";
-
-describe("clampQuestionIndex", () => {
-  it("returns the index when it is valid", () => {
-    expect(clampQuestionIndex(2, 5)).toBe(2);
-  });
-
-  it("clamps negative indexes to 0", () => {
-    expect(clampQuestionIndex(-1, 5)).toBe(0);
-  });
-
-  it("clamps indexes above the last question", () => {
-    expect(clampQuestionIndex(10, 5)).toBe(4);
-  });
-
-  it("returns 0 when there is one question", () => {
-    expect(clampQuestionIndex(0, 1)).toBe(0);
-  });
-});
 
 vi.mock("../frontend/src/rendering/mcq.js", () => ({
   renderMCQ: vi.fn(),
@@ -37,18 +18,42 @@ vi.mock("../frontend/src/persistence/progress.js", () => ({
   setStoredQuestionIndex: vi.fn(),
 }));
 
+vi.mock("../frontend/src/rendering/flashcards.js", () => ({
+  renderFlashcard: vi.fn(),
+}));
+
+vi.mock("../frontend/src/rendering/results.js", () => ({
+  renderResults: vi.fn(),
+}));
+
 import { goTo } from "../frontend/src/quiz.js";
 import { state } from "../frontend/src/state.js";
 import { renderMCQ, showExplanation } from "../frontend/src/rendering/mcq.js";
 import { setStoredQuestionIndex } from "../frontend/src/persistence/progress.js";
+import { renderFlashcard } from "../frontend/src/rendering/flashcards.js";
+import { renderResults } from "../frontend/src/rendering/results.js";
 describe("goTo", () => {
   beforeEach(() => {
     document.body.innerHTML = `
-      <input class="question-number" />
-    `;
+  <div id="question-box">
+    <input class="question-number" />
+  </div>
 
+  <div id="flashcard-box">
+    <div class="flashcard-question"></div>
+    <div class="flashcard-answer"></div>
+  </div>
+`;
+
+    state.mode = "mcq";
     state.quiz = {
-      questions: [{}, {}, {}, {}, {}],
+      questions: [
+        { options: ["A", "B", "C"], correct_index: 0 },
+        { options: ["A", "B", "C"], correct_index: 0 },
+        { options: ["A", "B", "C"], correct_index: 0 },
+        { options: ["A", "B", "C"], correct_index: 0 },
+        { options: ["A", "B", "C"], correct_index: 0 },
+      ],
     };
 
     state.quizStorageKey = "test-quiz";
@@ -66,7 +71,8 @@ describe("goTo", () => {
     expect(document.querySelector(".question-number").value).toBe("3");
 
     expect(setStoredQuestionIndex).toHaveBeenCalledWith("test-quiz", 2);
-
+    expect(document.getElementById("question-box").style.display).toBe("");
+    expect(document.getElementById("flashcard-box").style.display).toBe("none");
     expect(renderMCQ).toHaveBeenCalled();
   });
 
@@ -76,10 +82,48 @@ describe("goTo", () => {
     expect(state.currentQuestionIndex).toBe(0);
   });
 
-  it("clamps to the last question", () => {
-    goTo(100);
+  it("goes to the results page", () => {
+    goTo(state.quiz.questions.length);
 
-    expect(state.currentQuestionIndex).toBe(4);
+    expect(state.currentQuestionIndex).toBe(state.quiz.questions.length);
+    expect(renderResults).toHaveBeenCalled();
+  });
+
+  it("renders MCQ when the question has at least two distractors", () => {
+    state.mode = "mcq";
+
+    goTo(2);
+
+    expect(renderMCQ).toHaveBeenCalled();
+    expect(renderFlashcard).not.toHaveBeenCalled();
+    expect(state.mode).toBe("mcq");
+  });
+
+  it("falls back to flashcard when MCQ has a single distractor (choice)", () => {
+    state.mode = "mcq";
+    state.quiz.questions[2] = {
+      options: ["A", "B"],
+      correct_index: 0,
+    };
+
+    goTo(2);
+    expect(document.getElementById("question-box").style.display).toBe("none");
+    expect(document.getElementById("flashcard-box").style.display).toBe("");
+    expect(renderMCQ).not.toHaveBeenCalled();
+    expect(renderFlashcard).toHaveBeenCalled();
+    expect(state.mode).toBe("mcq");
+  });
+
+  it("renders flashcard directly in flashcard mode", () => {
+    state.mode = "flashcard";
+
+    goTo(2);
+
+    expect(document.getElementById("question-box").style.display).toBe("none");
+    expect(document.getElementById("flashcard-box").style.display).toBe("");
+    expect(renderFlashcard).toHaveBeenCalled();
+    expect(renderMCQ).not.toHaveBeenCalled();
+    expect(state.mode).toBe("flashcard");
   });
 });
 
@@ -108,12 +152,18 @@ import { UNANSWERED, CORRECT, WRONG, SKIPPED } from "../frontend/src/state.js";
 describe("revealAnswer", () => {
   beforeEach(() => {
     document.body.innerHTML = `
-      <div id="options">
-        <button></button>
-        <button></button>
-        <button></button>
-      </div>
-    `;
+    <div id="question-box"></div>
+
+    <div id="flashcard-box" style="display: none">
+      <div class="flashcard-answer"></div>
+    </div>
+
+    <div id="options">
+      <button></button>
+      <button></button>
+      <button></button>
+    </div>
+  `;
 
     state.currentQuestionIndex = 0;
     state.quiz = {
@@ -157,12 +207,18 @@ describe("revealAnswer", () => {
 describe("handleAnswer", () => {
   beforeEach(() => {
     document.body.innerHTML = `
-      <div id="options">
-        <button></button>
-        <button></button>
-        <button></button>
-      </div>
-    `;
+  <div id="question-box"></div>
+
+  <div id="flashcard-box" style="display: none">
+    <div class="flashcard-answer"></div>
+  </div>
+
+  <div id="options">
+    <button></button>
+    <button></button>
+    <button></button>
+  </div>
+`;
 
     state.currentQuestionIndex = 0;
     state.currentQuestion = {

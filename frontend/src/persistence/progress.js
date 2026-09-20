@@ -25,7 +25,8 @@ export function getStoredQuestionIndex(quizStorageKey) {
       return 0;
     }
 
-    return Math.max(0, Math.min(index, state.quiz.questions.length - 1));
+    // n+1 means at the results page
+    return Math.max(0, Math.min(index, state.quiz.questions.length));
   } catch {
     return 0;
   }

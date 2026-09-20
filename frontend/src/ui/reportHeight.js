@@ -6,16 +6,9 @@ function reportHeight() {
   )
     return;
 
-  const questionBox = document.getElementById("question-box");
-  const results = document.getElementById("results");
-  const editor = document.getElementById("editor");
+  const pages = document.querySelectorAll(".page");
 
-  const visible =
-    questionBox.style.display !== "none"
-      ? questionBox
-      : results.style.display !== "none"
-        ? results
-        : editor;
+  const visible = [...pages].find((page) => page.style.display !== "none");
 
   const h = visible.scrollHeight;
 

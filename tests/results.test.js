@@ -36,21 +36,23 @@ vi.mock("../frontend/src/rendering/mcq.js", () => ({
 describe("renderResults", () => {
   beforeEach(() => {
     document.body.innerHTML = `
-      <div id="question-box"></div>
-      <div id="results" style="display: none"></div>
+<div id="results"></div>
+<div id="flashcard-box"></div>
+<div id="question-box"></div>
 
-      <div id="score"></div>
-      <div id="accuracy"></div>
-      <div id="correct"></div>
-      <div id="wrong"></div>
-      <div id="unanswered"></div>
-      <div id="skipped"></div>
-      <div id="time"></div>
-      <div id="averageTime"></div>
+<div id="score"></div>
+<div id="accuracy"></div>
+<div id="correct"></div>
+<div id="wrong"></div>
+<div id="unanswered"></div>
+<div id="skipped"></div>
+<div id="time"></div>
+<div id="averageTime"></div>
 
-      <div id="stats-chart"></div>
-      <div id="question-corrections"></div>
-    `;
+<div id="stats-chart"></div>
+<div id="question-corrections"></div>
+
+`;
 
     state.quiz = {
       questions: [

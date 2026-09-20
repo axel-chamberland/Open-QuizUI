@@ -1168,6 +1168,10 @@ def refers_to_other_options(
 
 
 def wrap_html(
-    quiz, enable_mathjax: bool, light_theme="default_light", dark_theme="default_dark"
+    quiz,
+    enable_mathjax: bool,
+    light_theme="default_light",
+    dark_theme="default_dark",
+    default_mode="mcq",
 ):
     return "__HTML_PLACEHOLDER__"
