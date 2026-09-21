@@ -32,7 +32,7 @@ export function initializeEvents() {
   });
 
   document.querySelectorAll(".timer-toggle-button").forEach((button) => {
-    button.addEventListener("click", revealAnswer);
+    button.addEventListener("click", toggleTimer);
   });
 
   document.querySelectorAll(".prev-button").forEach((button) => {

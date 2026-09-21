@@ -2721,6 +2721,18 @@ var timerElements = document.querySelectorAll(".timer");
 function getTimerKey(quizStorageKey) {
   return `quizTimer_${quizStorageKey}`;
 }
+function loadTimer(state2) {
+  try {
+    const data = JSON.parse(
+      localStorage.getItem(getTimerKey(state2.quizStorageKey))
+    );
+    state2.timer.elapsed = data?.elapsed || 0;
+    state2.timer.start = data?.start || null;
+  } catch {
+    state2.timer.elapsed = 0;
+    state2.timer.start = null;
+  }
+}
 function saveTimer() {
   try {
     localStorage.setItem(
@@ -2739,6 +2751,31 @@ function updateTimer() {
   timerElements.forEach((timerElement) => {
     timerElement.textContent = formatTime(elapsed);
   });
+}
+function toggleTimer() {
+  state.timer.visible = !state.timer.visible;
+  timerElements.forEach((timerElement) => {
+    timerElement.classList.toggle("visible", state.timer.visible);
+  });
+  if (state.timer.visible) {
+    loadTimer(state);
+    if (!state.timer.start) {
+      state.timer.start = Date.now();
+      saveTimer();
+    }
+    updateTimer();
+    state.timer.interval = setInterval(updateTimer, 1e3);
+  } else {
+    if (state.timer.start) {
+      state.timer.elapsed += Math.floor(
+        (Date.now() - state.timer.start) / 1e3
+      );
+      state.timer.start = null;
+      saveTimer();
+    }
+    clearInterval(state.timer.interval);
+    state.timer.interval = null;
+  }
 }
 
 // frontend/src/rendering/flashcards.js
@@ -3486,7 +3523,7 @@ function initializeEvents() {
     button.addEventListener("click", revealAnswer);
   });
   document.querySelectorAll(".timer-toggle-button").forEach((button) => {
-    button.addEventListener("click", revealAnswer);
+    button.addEventListener("click", toggleTimer);
   });
   document.querySelectorAll(".prev-button").forEach((button) => {
     button.addEventListener("click", prevQuestion);
