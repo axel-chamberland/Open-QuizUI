@@ -422,19 +422,6 @@ textarea:focus {
   display: none;
 }
 
-.editor-prompt {
-  display: none;
-}
-
-.editor-prompt.visible {
-  display: block;
-}
-
-.editor-prompt .button-row {
-  display: flex;
-  gap: 0.5rem;
-}
-
 .answer-position {
   display: flex;
   align-items: center;
@@ -491,6 +478,36 @@ textarea:focus {
 :is(:fullscreen, .pseudo-fullscreen-active) .dropdown-menu {
   top: auto;
   bottom: anchor(top);
+}
+
+.global-prompt {
+  display: none;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 9999;
+
+  padding: 1rem;
+  background: var(--btn);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  width: fit-content;
+}
+
+.global-prompt.visible {
+  display: block;
+}
+
+.global-prompt .button-row {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.global-prompt .button-row button {
+  background: var(--bg);
 }
 
 /* image and embedded styles */

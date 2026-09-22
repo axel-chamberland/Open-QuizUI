@@ -89,6 +89,7 @@ export function initializeEvents() {
     .getElementById("editor-save-button")
     .addEventListener("click", saveEdit);
 
+  // TODO: Change to alert system
   document
     .getElementById("editor-close-button")
     .addEventListener("click", closeEditorConfirm);
@@ -101,19 +102,21 @@ export function initializeEvents() {
     .getElementById("reset-question-button")
     .addEventListener("click", restoreQuestionToDefault);
 
-  // Drop down menu
-  const trigger = document.getElementById("actions-button");
-  const menu = document.getElementById("dropdown-menu");
+  // Drop down menus
+  document.querySelectorAll(".dropdown-trigger").forEach((trigger) => {
+    const menuId = trigger.id.replace("-menu-button", "-dropdown-menu");
+    const menu = document.getElementById(menuId);
 
-  trigger.addEventListener("click", (e) => {
-    e.stopPropagation();
-    menu.classList.toggle("show");
-  });
+    trigger.addEventListener("click", (e) => {
+      e.stopPropagation();
+      menu.classList.toggle("show");
+    });
 
-  document.addEventListener("click", (e) => {
-    if (!menu.contains(e.target) && !trigger.contains(e.target)) {
-      menu.classList.remove("show");
-    }
+    document.addEventListener("click", (e) => {
+      if (!menu.contains(e.target) && !trigger.contains(e.target)) {
+        menu.classList.remove("show");
+      }
+    });
   });
 
   // Keybinds

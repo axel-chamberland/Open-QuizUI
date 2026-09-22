@@ -128,6 +128,13 @@
         <path d="M20 17H4" />
       </symbol>
     </svg>
+    <div id="global-prompt" class="global-prompt">
+      <p id="global-prompt-message"></p>
+      <div class="button-row">
+        <button id="global-prompt-yes">yes</button>
+        <button id="global-prompt-no">no</button>
+      </div>
+    </div>
     <div id="question-box" class="page" style="display: none">
       <div class="title-bar">
         <h1 class="title">Quiz</h1>
@@ -427,7 +434,7 @@
           >
             <svg><use href="#icon-fullscreen"></use></svg>
           </button>
-          <button class="dropdown-trigger" id="actions-button">
+          <button class="dropdown-trigger" id="editor-menu-button">
             <svg><use href="#icon-more"></use></svg>
           </button>
           <button
@@ -440,15 +447,7 @@
           </button>
         </div>
       </div>
-      <div id="editor-close" class="editor-prompt">
-        <p id="editor-prompt-message"></p>
-        <div class="button-row">
-          <button id="editor-prompt-yes">yes</button>
-          <button id="editor-prompt-no">no</button>
-        </div>
-      </div>
-
-      <div class="dropdown-menu" id="dropdown-menu">
+      <div class="dropdown-menu" id="editor-dropdown-menu">
         <button
           id="reset-quiz-button"
           title="Reset all questions"

@@ -6,6 +6,7 @@ import {
   saveLocalEdit,
 } from "../persistence/quiz_edits.js";
 import { setQuizTitle } from "../quiz.js";
+import { showAlert, showPrompt } from "../ui/alert.js";
 
 document
   .getElementById("editor-answer-number")
@@ -23,9 +24,6 @@ export function cancelRestart() {
 
 export function openEditor() {
   const editor = document.getElementById("editor");
-  const prompt = document.getElementById("editor-close");
-
-  prompt.classList.remove("visible");
 
   // Hide current page
   if (state.mode === "flashcard") {
@@ -109,49 +107,6 @@ function addEditorOption(value) {
   return article;
 }
 
-function showEditorPrompt(
-  message,
-  onYes = null,
-  onNo = null,
-  yesText = "yes",
-  noText = "no",
-) {
-  const prompt = document.getElementById("editor-close");
-  const messageElement = document.getElementById("editor-prompt-message");
-  const yesButton = document.getElementById("editor-prompt-yes");
-  const noButton = document.getElementById("editor-prompt-no");
-  messageElement.textContent = message;
-  yesButton.textContent = yesText;
-  noButton.textContent = noText;
-  yesButton.style.display = "";
-  noButton.style.display = "";
-  yesButton.onclick = () => {
-    prompt.classList.remove("visible");
-    if (onYes) onYes();
-  };
-  noButton.onclick = () => {
-    prompt.classList.remove("visible");
-    if (onNo) onNo();
-  };
-  prompt.classList.add("visible");
-}
-
-// Alerts don't work in iframes, so we use a custom alert div
-function showEditorAlert(message) {
-  const prompt = document.getElementById("editor-close");
-  const messageElement = document.getElementById("editor-prompt-message");
-  const yesButton = document.getElementById("editor-prompt-yes");
-  const noButton = document.getElementById("editor-prompt-no");
-  messageElement.textContent = message;
-  yesButton.textContent = "OK";
-  yesButton.style.display = "";
-  noButton.style.display = "none";
-  yesButton.onclick = () => {
-    prompt.classList.remove("visible");
-  };
-  prompt.classList.add("visible");
-}
-
 // Returns false if the selected answer index does not exist in the DOM anymore
 function validateAnswerIndex() {
   const answerInput = document.querySelector("#editor-answer-number");
@@ -163,7 +118,7 @@ function validateAnswerIndex() {
 
   if (val < 0 || val >= options.length) {
     answerInput.classList.add("input-error");
-    showEditorAlert("Invalid Index: The selected option no longer exists.");
+    showAlert("Invalid Index: The selected option no longer exists.");
     return false;
   }
 
@@ -171,7 +126,7 @@ function validateAnswerIndex() {
 }
 
 export function closeEditorConfirm() {
-  showEditorPrompt(
+  showPrompt(
     "Exit? Unsaved changes will be lost.",
     closeEditor,
     null,
@@ -216,15 +171,12 @@ export function saveEdit() {
 
   // Persist the actual changes (locally)
   if (saveLocalEdit(state.currentQuestionIndex, titleChanged)) {
-    showEditorAlert("Changes saved.");
+    showAlert("Changes saved.");
   }
 }
 
 function closeEditor() {
   const editor = document.getElementById("editor");
-  const prompt = document.getElementById("editor-close");
-
-  prompt.classList.remove("visible");
 
   editor.style.display = "none";
 
@@ -244,7 +196,7 @@ function closeEditor() {
 }
 
 export function restoreQuizToDefault() {
-  showEditorPrompt(
+  showPrompt(
     "Restore the quiz to its original state?\nAll local edits will be discarded.",
     () => {
       // Update using app-data from last download
@@ -259,7 +211,7 @@ export function restoreQuizToDefault() {
       removeAllLocalEdits();
 
       openEditor();
-      showEditorAlert("Quiz restored to default.");
+      showAlert("Quiz restored to default.");
     },
     null,
     "Yes",
@@ -268,7 +220,7 @@ export function restoreQuizToDefault() {
 }
 
 export function restoreQuestionToDefault() {
-  showEditorPrompt(
+  showPrompt(
     "Restore the current question to its original state?\nAll local edits will be discarded.",
     () => {
       const appData = JSON.parse(
@@ -284,7 +236,7 @@ export function restoreQuestionToDefault() {
       removeLocalEdit(index);
 
       openEditor();
-      showEditorAlert("Question restored to default.");
+      showAlert("Question restored to default.");
     },
     null,
     "Yes",
