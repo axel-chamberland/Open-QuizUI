@@ -17,16 +17,28 @@ export function showPrompt(
   yesButton.style.display = "";
   noButton.style.display = "";
 
-  yesButton.onclick = () => {
+  const close = (callback) => {
     prompt.classList.remove("visible");
-    if (onYes) onYes();
+    document.removeEventListener("keydown", keyHandler, true);
+    if (callback) callback();
   };
 
-  noButton.onclick = () => {
-    prompt.classList.remove("visible");
-    if (onNo) onNo();
-  };
+  yesButton.onclick = () => close(onYes);
+  noButton.onclick = () => close(onNo);
 
+  function keyHandler(e) {
+    if (e.key === "Enter" || e.key.toLowerCase() === "y") {
+      e.preventDefault();
+      e.stopPropagation();
+      close(onYes);
+    } else if (e.key.toLowerCase() === "n" || e.key === "Escape") {
+      e.preventDefault();
+      e.stopPropagation();
+      close(onNo);
+    }
+  }
+
+  document.addEventListener("keydown", keyHandler, true);
   prompt.classList.add("visible");
 }
 
@@ -42,9 +54,21 @@ export function showAlert(message) {
   yesButton.style.display = "";
   noButton.style.display = "none";
 
-  yesButton.onclick = () => {
+  const close = () => {
     prompt.classList.remove("visible");
+    document.removeEventListener("keydown", keyHandler, true);
   };
 
+  yesButton.onclick = close;
+
+  function keyHandler(e) {
+    if (e.key === "Enter" || e.key === "Escape") {
+      e.preventDefault();
+      e.stopPropagation();
+      close();
+    }
+  }
+
+  document.addEventListener("keydown", keyHandler, true);
   prompt.classList.add("visible");
 }

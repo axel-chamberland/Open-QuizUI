@@ -141,7 +141,7 @@
         <span class="timer">00:00</span>
       </div>
       <div class="navigation-scroll">
-        <div id="navigation" class="navigation">
+        <div class="navigation">
           <button class="prev-button" aria-label="Previous question">
             &lt;
           </button>
@@ -166,52 +166,12 @@
           >
             <svg><use href="#icon-reveal"></use></svg>
           </button>
-
-          <button
-            class="maximize-button"
-            title="Toggle Fullscreen"
-            aria-label="Fullscreen"
-          >
-            <svg><use href="#icon-fullscreen"></use></svg>
-          </button>
-
-          <button
-            class="download-button"
-            title="Download quiz"
-            aria-label="Download quiz"
-          >
-            <svg><use href="#icon-download"></use></svg>
-          </button>
-
           <button
             class="timer-toggle-button"
             title="Toggle timer"
             aria-label="Toggle timer"
           >
             <svg><use href="#icon-timer"></use></svg>
-          </button>
-
-          <button
-            class="copy-all-button"
-            title="Copy quiz"
-            aria-label="Copy quiz"
-          >
-            <svg><use href="#icon-copy-all"></use></svg>
-          </button>
-
-          <button
-            class="copy-question-button"
-            title="Copy question"
-            aria-label="Copy question"
-          >
-            <svg><use href="#icon-copy"></use></svg>
-          </button>
-          <button
-            class="editor-button"
-            title="Edit question"
-            aria-label="Edit question"
-          >
-            <svg><use href="#icon-editor"></use></svg>
           </button>
           <button
             class="mode-button"
@@ -220,7 +180,49 @@
           >
             <svg><use href="#switch-mode"></use></svg>
           </button>
+          <button
+            class="maximize-button"
+            title="Toggle Fullscreen"
+            aria-label="Fullscreen"
+          >
+            <svg><use href="#icon-fullscreen"></use></svg>
+          </button>
+          <button
+            class="copy-question-button"
+            title="Copy question"
+            aria-label="Copy question"
+          >
+            <svg><use href="#icon-copy"></use></svg>
+          </button>
+          <button class="dropdown-trigger" id="mcq-menu-button">
+            <svg><use href="#icon-more"></use></svg>
+          </button>
         </div>
+      </div>
+      <div class="dropdown-menu" id="mcq-dropdown-menu">
+        <button
+          class="editor-button"
+          title="Edit question"
+          aria-label="Edit question"
+        >
+          <svg><use href="#icon-editor"></use></svg>
+          Edit question
+        </button>
+        <button
+          class="download-button"
+          title="Download quiz"
+          aria-label="Download quiz"
+        >
+          <svg><use href="#icon-download"></use></svg>
+          Download
+        </button>
+        <button
+          class="copy-all-button"
+          title="Copy quiz"
+          aria-label="Copy quiz"
+        >
+          <svg><use href="#icon-copy-all"></use></svg>Copy Quiz
+        </button>
       </div>
       <div id="question-scroll">
         <p id="question"></p>
@@ -263,51 +265,11 @@
           </button>
 
           <button
-            class="maximize-button"
-            title="Toggle Fullscreen"
-            aria-label="Fullscreen"
-          >
-            <svg><use href="#icon-fullscreen"></use></svg>
-          </button>
-
-          <button
-            class="download-button"
-            title="Download flashcards"
-            aria-label="Download quiz"
-          >
-            <svg><use href="#icon-download"></use></svg>
-          </button>
-
-          <button
             class="timer-toggle-button"
             title="Toggle timer"
             aria-label="Toggle timer"
           >
             <svg><use href="#icon-timer"></use></svg>
-          </button>
-
-          <button
-            class="copy-all-button"
-            title="Copy flashcards"
-            aria-label="Copy flashcards"
-          >
-            <svg><use href="#icon-copy-all"></use></svg>
-          </button>
-
-          <button
-            class="copy-question-button"
-            title="Copy question"
-            aria-label="Copy question"
-          >
-            <svg><use href="#icon-copy"></use></svg>
-          </button>
-
-          <button
-            class="editor-button"
-            title="Edit question"
-            aria-label="Edit question"
-          >
-            <svg><use href="#icon-editor"></use></svg>
           </button>
           <button
             class="mode-button"
@@ -316,10 +278,52 @@
           >
             <svg><use href="#switch-mode"></use></svg>
           </button>
+          <button
+            class="maximize-button"
+            title="Toggle Fullscreen"
+            aria-label="Fullscreen"
+          >
+            <svg><use href="#icon-fullscreen"></use></svg>
+          </button>
+          <button
+            class="copy-question-button"
+            title="Copy question"
+            aria-label="Copy question"
+          >
+            <svg><use href="#icon-copy"></use></svg>
+          </button>
+          <button class="dropdown-trigger" id="flashcard-menu-button">
+            <svg><use href="#icon-more"></use></svg>
+          </button>
         </div>
       </div>
+      <div class="dropdown-menu" id="flashcard-dropdown-menu">
+        <button
+          class="editor-button"
+          title="Edit question"
+          aria-label="Edit question"
+        >
+          <svg><use href="#icon-editor"></use></svg>
+          Edit question
+        </button>
+        <button
+          class="download-button"
+          title="Download flashcards"
+          aria-label="Download quiz"
+        >
+          <svg><use href="#icon-download"></use></svg>
+          Download
+        </button>
+        <button
+          class="copy-all-button"
+          title="Copy flashcards"
+          aria-label="Copy flashcards"
+        >
+          <svg><use href="#icon-copy-all"></use></svg>Copy Quiz
+        </button>
+      </div>
 
-      <div class="question-scroll">
+      <div id="flashcard-scroll">
         <p class="flashcard-question"></p>
         <div class="flashcard-answer"></div>
       </div>

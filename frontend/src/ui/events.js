@@ -106,23 +106,75 @@ export function initializeEvents() {
   document.querySelectorAll(".dropdown-trigger").forEach((trigger) => {
     const menuId = trigger.id.replace("-menu-button", "-dropdown-menu");
     const menu = document.getElementById(menuId);
+    const navigation = trigger.closest(".navigation");
+    const navigationScroll = navigation.parentElement;
+
+    const positionMenu = () => {
+      if (!menu.classList.contains("show")) return;
+
+      const rect = trigger.getBoundingClientRect();
+      const navRect = navigationScroll.getBoundingClientRect();
+
+      // Clamp to page width
+      menu.style.left = `${Math.min(
+        rect.right,
+        navRect.right - menu.offsetWidth,
+      )}px`;
+
+      // Orientation is different in fullscreen
+      if (
+        document.fullscreenElement ||
+        document.documentElement.classList.contains("pseudo-fullscreen-active")
+      ) {
+        // Orient up
+        menu.style.top = "auto";
+        menu.style.bottom = `${
+          document.documentElement.clientHeight - navRect.top
+        }px`;
+      } else {
+        // Orient down, below navbar
+        menu.style.top = `${rect.bottom}px`;
+        menu.style.bottom = "auto";
+      }
+    };
 
     trigger.addEventListener("click", (e) => {
       e.stopPropagation();
+
       menu.classList.toggle("show");
+      positionMenu();
+    });
+
+    // Re-position on window resize
+    const observer = new ResizeObserver(positionMenu);
+    observer.observe(navigation);
+
+    menu.querySelectorAll("button").forEach((button) => {
+      button.addEventListener("click", () => {
+        menu.classList.remove("show");
+      });
     });
 
     document.addEventListener("click", (e) => {
-      if (!menu.contains(e.target) && !trigger.contains(e.target)) {
-        menu.classList.remove("show");
+      if (!e.target.closest(".dropdown-trigger, .dropdown-menu")) {
+        document.querySelectorAll(".dropdown-menu.show").forEach((menu) => {
+          menu.classList.remove("show");
+        });
       }
     });
   });
 
-  // Keybinds
+  // Quiz Keybinds
 
   document.addEventListener("keydown", (e) => {
     if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
+
+    if (
+      document.getElementById("question-box")?.style.display === "none" &&
+      document.getElementById("flashcard-box")?.style.display === "none"
+    ) {
+      return;
+    }
 
     const key = e.key.toLowerCase();
 

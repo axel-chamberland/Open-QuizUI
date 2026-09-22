@@ -67,14 +67,16 @@ h1 {
   font-size: 1.1rem;
 }
 
-#question-scroll {
+#question-scroll,
+#flashcard-scroll {
   display: flex;
   flex-direction: column;
   overflow-y: auto;
   min-height: 0;
 }
 
-:is(:fullscreen, .pseudo-fullscreen-active) #question-scroll {
+:is(:fullscreen, .pseudo-fullscreen-active)
+  :is(#question-scroll, #flashcard-scroll) {
   flex: 1;
   order: 0;
 }
@@ -443,22 +445,32 @@ textarea:focus {
   text-align: center;
 }
 
-#actions-button {
-  anchor-name: --actions-button;
-}
-
 .dropdown-menu {
   position: fixed;
-  position-anchor: --actions-button;
-
-  left: anchor(left);
-  top: anchor(bottom);
 
   display: none;
   z-index: 2000;
+  width: max-content;
 
   border: 1px solid var(--border);
   background: var(--bg);
+}
+
+.dropdown-menu button {
+  display: grid;
+  grid-template-columns: 1em 1fr;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  border: none;
+  border-radius: 0;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.dropdown-menu button svg {
+  width: 1em;
+  height: 1em;
 }
 
 .dropdown-menu.show {
@@ -475,11 +487,6 @@ textarea:focus {
   border-top: 1px solid var(--border);
 }
 
-:is(:fullscreen, .pseudo-fullscreen-active) .dropdown-menu {
-  top: auto;
-  bottom: anchor(top);
-}
-
 .global-prompt {
   display: none;
   position: fixed;
@@ -489,11 +496,12 @@ textarea:focus {
   z-index: 9999;
 
   padding: 1rem;
-  background: var(--btn);
+  background: var(--bg);
   color: var(--text);
   border: 1px solid var(--border);
   border-radius: 0.5rem;
   width: fit-content;
+  filter: drop-shadow(0 0 0.5rem var(--border));
 }
 
 .global-prompt.visible {
@@ -504,10 +512,6 @@ textarea:focus {
   display: flex;
   gap: 0.5rem;
   justify-content: flex-end;
-}
-
-.global-prompt .button-row button {
-  background: var(--bg);
 }
 
 /* image and embedded styles */
