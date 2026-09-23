@@ -1283,7 +1283,6 @@ h1 {
 #flashcard-scroll {
   display: flex;
   flex-direction: column;
-  overflow-y: auto;
   min-height: 0;
 }
 
@@ -1291,6 +1290,7 @@ h1 {
   :is(#question-scroll, #flashcard-scroll) {
   flex: 1;
   order: 0;
+  overflow-y: auto;
 }
 
 #options {
@@ -1376,16 +1376,20 @@ button:disabled {
   display: block;
 
   margin-top: 1rem;
-  padding: 1rem;
+  padding: 5rem;
 
-  text-align: center;
+  border-top: 1px solid var(--border);
+
   background: var(--btn);
   border: 1px solid var(--border);
   border-radius: 0.5rem;
+
+  text-align: center;
+  font-size: 1.1rem;
 }
 
 .flashcard-question {
-  padding: 1rem;
+  padding: 5rem;
   margin: 0;
 
   background: var(--btn);
@@ -1393,24 +1397,55 @@ button:disabled {
   border-radius: 0.5rem;
 
   text-align: center;
-  font-weight: 600;
+  font-size: 1.1rem;
 }
 
 .flashcard-explanation {
   margin-top: 1rem;
-  padding-top: 0.75rem;
-  border-top: 1px solid var(--border);
+  padding: 0.75rem;
 
-  font-size: 0.95em;
+  background: var(--btn);
+
+  border-radius: 0.5rem;
+  font-size: 1em;
   opacity: 0.8;
 }
 
+#flashcard-rating {
+  display: none;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.flashcard-rating-button {
+  width: 3rem;
+  height: 3rem;
+
+  font-size: 1.5rem;
+  line-height: 1;
+
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  background: var(--btn);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.known-button {
+  color: var(--success);
+}
+
+.unknown-button {
+  color: var(--danger);
+}
 #explanation {
   display: none;
   margin-top: 1rem;
   padding: 0.75rem;
   background: var(--btn);
   border-radius: 0.5rem;
+  opacity: 0.8;
 }
 
 .navigation-scroll {
@@ -1718,12 +1753,6 @@ textarea:focus {
   display: block;
 }
 
-.dropdown-menu button {
-  display: block;
-  width: 100%;
-  border: none;
-  border-radius: 0;
-}
 .dropdown-menu button + button {
   border-top: 1px solid var(--border);
 }
@@ -2099,6 +2128,11 @@ th {
         <p class="flashcard-question"></p>
         <div class="flashcard-answer"></div>
         <div class="flashcard-explanation"></div>
+      </div>
+
+      <div id="flashcard-rating" class="button-row">
+        <button class="flashcard-rating-button unknown-button">✗</button>
+        <button class="flashcard-rating-button known-button">✓</button>
       </div>
     </div>
 
@@ -2838,12 +2872,14 @@ async function renderFlashcard() {
   const questionText = flashcardBox.querySelector(".flashcard-question");
   const answerEl = flashcardBox.querySelector(".flashcard-answer");
   const explanationEl = flashcardBox.querySelector(".flashcard-explanation");
+  const ratingEl = flashcardBox.querySelector("#flashcard-rating");
   if (!state.quiz.questions || state.quiz.questions.length === 0) {
     questionText.textContent = "No valid questions parsed";
     return;
   }
   answerEl.classList.remove("visible");
   explanationEl.style.display = "none";
+  ratingEl.style.display = "none";
   const question = state.quiz.questions[state.currentQuestionIndex];
   state.currentQuestion = question;
   renderQuestion(questionText, question);
@@ -2874,6 +2910,14 @@ function showFlashcardExplanation(question) {
     explanationEl.innerHTML = "";
     explanationEl.style.display = "none";
   }
+}
+function rateFlashcard(correct) {
+  if (!state.answerRevealed) {
+    return;
+  }
+  state.questionResults[state.currentQuestionIndex] = correct ? CORRECT : WRONG;
+  saveStats();
+  nextQuestion();
 }
 
 // frontend/src/rendering/results.js
@@ -3118,6 +3162,7 @@ function revealAnswer() {
   if (document.getElementById("flashcard-box").style.display !== "none") {
     document.querySelector(".flashcard-answer").classList.add("visible");
     showFlashcardExplanation(state.currentQuestion);
+    document.getElementById("flashcard-rating").style.display = "flex";
     return;
   }
   state.currentQuestion = state.quiz.questions[state.currentQuestionIndex];
@@ -3643,6 +3688,8 @@ function initializeEvents() {
   document.querySelectorAll(".mode-button").forEach((button) => {
     button.addEventListener("click", switchMode);
   });
+  document.querySelector(".known-button").addEventListener("click", () => rateFlashcard(true));
+  document.querySelector(".unknown-button").addEventListener("click", () => rateFlashcard(false));
   document.getElementById("results-back-button").addEventListener("click", prevQuestion);
   document.getElementById("restart-button").addEventListener("click", confirmRestart);
   document.getElementById("confirm-restart-button").addEventListener("click", restartQuiz);
@@ -3698,6 +3745,16 @@ function initializeEvents() {
       return;
     }
     const key = e.key.toLowerCase();
+    if (state.mode === "flashcard") {
+      if (key === "1") {
+        rateFlashcard(false);
+        return;
+      }
+      if (key === "2") {
+        rateFlashcard(true);
+        return;
+      }
+    }
     let index = -1;
     if (/^[1-9]$/.test(key)) {
       index = Number(key) - 1;
@@ -3713,6 +3770,8 @@ function initializeEvents() {
       e.preventDefault();
       if (!state.answerRevealed) {
         revealAnswer();
+      } else if (state.mode === "flashcard") {
+        rateFlashcard(true);
       } else {
         nextQuestion();
       }

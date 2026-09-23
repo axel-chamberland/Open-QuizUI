@@ -1,13 +1,15 @@
-import { state } from "../state.js";
-import { renderQuestion, updateNavigation } from "../quiz.js";
+import { CORRECT, state, WRONG } from "../state.js";
+import { nextQuestion, renderQuestion, updateNavigation } from "../quiz.js";
 import { typesetMath } from "../shared/mathjax.js";
 import { renderMarkdown } from "../shared/markdown.js";
+import { saveStats } from "../persistence/stats.js";
 
 export async function renderFlashcard() {
   const flashcardBox = document.getElementById("flashcard-box");
   const questionText = flashcardBox.querySelector(".flashcard-question");
   const answerEl = flashcardBox.querySelector(".flashcard-answer");
   const explanationEl = flashcardBox.querySelector(".flashcard-explanation");
+  const ratingEl = flashcardBox.querySelector("#flashcard-rating");
 
   if (!state.quiz.questions || state.quiz.questions.length === 0) {
     questionText.textContent = "No valid questions parsed";
@@ -16,6 +18,7 @@ export async function renderFlashcard() {
 
   answerEl.classList.remove("visible");
   explanationEl.style.display = "none";
+  ratingEl.style.display = "none";
 
   const question = state.quiz.questions[state.currentQuestionIndex];
   state.currentQuestion = question;
@@ -58,4 +61,15 @@ export function showFlashcardExplanation(question) {
     explanationEl.innerHTML = "";
     explanationEl.style.display = "none";
   }
+}
+
+export function rateFlashcard(correct) {
+  if (!state.answerRevealed) {
+    return;
+  }
+
+  state.questionResults[state.currentQuestionIndex] = correct ? CORRECT : WRONG;
+
+  saveStats();
+  nextQuestion();
 }

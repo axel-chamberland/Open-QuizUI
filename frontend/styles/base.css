@@ -71,7 +71,6 @@ h1 {
 #flashcard-scroll {
   display: flex;
   flex-direction: column;
-  overflow-y: auto;
   min-height: 0;
 }
 
@@ -79,6 +78,7 @@ h1 {
   :is(#question-scroll, #flashcard-scroll) {
   flex: 1;
   order: 0;
+  overflow-y: auto;
 }
 
 #options {
@@ -164,16 +164,20 @@ button:disabled {
   display: block;
 
   margin-top: 1rem;
-  padding: 1rem;
+  padding: 5rem;
 
-  text-align: center;
+  border-top: 1px solid var(--border);
+
   background: var(--btn);
   border: 1px solid var(--border);
   border-radius: 0.5rem;
+
+  text-align: center;
+  font-size: 1.1rem;
 }
 
 .flashcard-question {
-  padding: 1rem;
+  padding: 5rem;
   margin: 0;
 
   background: var(--btn);
@@ -181,24 +185,55 @@ button:disabled {
   border-radius: 0.5rem;
 
   text-align: center;
-  font-weight: 600;
+  font-size: 1.1rem;
 }
 
 .flashcard-explanation {
   margin-top: 1rem;
-  padding-top: 0.75rem;
-  border-top: 1px solid var(--border);
+  padding: 0.75rem;
 
-  font-size: 0.95em;
+  background: var(--btn);
+
+  border-radius: 0.5rem;
+  font-size: 1em;
   opacity: 0.8;
 }
 
+#flashcard-rating {
+  display: none;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.flashcard-rating-button {
+  width: 3rem;
+  height: 3rem;
+
+  font-size: 1.5rem;
+  line-height: 1;
+
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  background: var(--btn);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.known-button {
+  color: var(--success);
+}
+
+.unknown-button {
+  color: var(--danger);
+}
 #explanation {
   display: none;
   margin-top: 1rem;
   padding: 0.75rem;
   background: var(--btn);
   border-radius: 0.5rem;
+  opacity: 0.8;
 }
 
 .navigation-scroll {
@@ -506,12 +541,6 @@ textarea:focus {
   display: block;
 }
 
-.dropdown-menu button {
-  display: block;
-  width: 100%;
-  border: none;
-  border-radius: 0;
-}
 .dropdown-menu button + button {
   border-top: 1px solid var(--border);
 }

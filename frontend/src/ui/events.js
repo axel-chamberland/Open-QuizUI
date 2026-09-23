@@ -23,6 +23,7 @@ import {
 } from "../rendering/editor.js";
 import { toggleFullscreen } from "./fullscreen.js";
 import { restartQuiz } from "../rendering/results.js";
+import { rateFlashcard } from "../rendering/flashcards.js";
 
 export function initializeEvents() {
   // Quiz page
@@ -64,6 +65,14 @@ export function initializeEvents() {
   document.querySelectorAll(".mode-button").forEach((button) => {
     button.addEventListener("click", switchMode);
   });
+
+  document
+    .querySelector(".known-button")
+    .addEventListener("click", () => rateFlashcard(true));
+
+  document
+    .querySelector(".unknown-button")
+    .addEventListener("click", () => rateFlashcard(false));
 
   // Results page
 
@@ -178,6 +187,19 @@ export function initializeEvents() {
 
     const key = e.key.toLowerCase();
 
+    // Flashcard rating
+    if (state.mode === "flashcard") {
+      if (key === "1") {
+        rateFlashcard(false); // ✗ unknown
+        return;
+      }
+
+      if (key === "2") {
+        rateFlashcard(true); // ✓ known
+        return;
+      }
+    }
+
     // Number = choose
     let index = -1;
 
@@ -203,6 +225,8 @@ export function initializeEvents() {
 
       if (!state.answerRevealed) {
         revealAnswer();
+      } else if (state.mode === "flashcard") {
+        rateFlashcard(true);
       } else {
         nextQuestion();
       }

@@ -116,6 +116,8 @@ export function revealAnswer() {
   if (document.getElementById("flashcard-box").style.display !== "none") {
     document.querySelector(".flashcard-answer").classList.add("visible");
     showFlashcardExplanation(state.currentQuestion);
+
+    document.getElementById("flashcard-rating").style.display = "flex";
     return;
   }
 
@@ -167,7 +169,7 @@ export function toggleMode() {
   const flashcardBox = document.getElementById("flashcard-box");
 
   // Toggle the mode
-  state.mode = state.mode === "flashcard" ? "question" : "flashcard";
+  state.mode = state.mode === "flashcard" ? "mcq" : "flashcard";
 
   // Show/hide the appropriate boxes
   if (state.mode === "flashcard") {
