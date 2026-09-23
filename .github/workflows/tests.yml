@@ -49,4 +49,4 @@ jobs:
         run: npm ci
 
       - name: Run tests
-        run: pytest
+        run: npm run test:all
