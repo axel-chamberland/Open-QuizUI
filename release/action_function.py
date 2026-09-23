@@ -1279,14 +1279,16 @@ h1 {
   font-size: 1.1rem;
 }
 
-#question-scroll {
+#question-scroll,
+#flashcard-scroll {
   display: flex;
   flex-direction: column;
   overflow-y: auto;
   min-height: 0;
 }
 
-:is(:fullscreen, .pseudo-fullscreen-active) #question-scroll {
+:is(:fullscreen, .pseudo-fullscreen-active)
+  :is(#question-scroll, #flashcard-scroll) {
   flex: 1;
   order: 0;
 }
@@ -1372,6 +1374,35 @@ button:disabled {
 
 .flashcard-answer.visible {
   display: block;
+
+  margin-top: 1rem;
+  padding: 1rem;
+
+  text-align: center;
+  background: var(--btn);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+}
+
+.flashcard-question {
+  padding: 1rem;
+  margin: 0;
+
+  background: var(--btn);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+
+  text-align: center;
+  font-weight: 600;
+}
+
+.flashcard-explanation {
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+
+  font-size: 0.95em;
+  opacity: 0.8;
 }
 
 #explanation {
@@ -1634,19 +1665,6 @@ textarea:focus {
   display: none;
 }
 
-.editor-prompt {
-  display: none;
-}
-
-.editor-prompt.visible {
-  display: block;
-}
-
-.editor-prompt .button-row {
-  display: flex;
-  gap: 0.5rem;
-}
-
 .answer-position {
   display: flex;
   align-items: center;
@@ -1668,22 +1686,32 @@ textarea:focus {
   text-align: center;
 }
 
-#actions-button {
-  anchor-name: --actions-button;
-}
-
 .dropdown-menu {
   position: fixed;
-  position-anchor: --actions-button;
-
-  left: anchor(left);
-  top: anchor(bottom);
 
   display: none;
   z-index: 2000;
+  width: max-content;
 
   border: 1px solid var(--border);
   background: var(--bg);
+}
+
+.dropdown-menu button {
+  display: grid;
+  grid-template-columns: 1em 1fr;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  border: none;
+  border-radius: 0;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.dropdown-menu button svg {
+  width: 1em;
+  height: 1em;
 }
 
 .dropdown-menu.show {
@@ -1700,9 +1728,31 @@ textarea:focus {
   border-top: 1px solid var(--border);
 }
 
-:is(:fullscreen, .pseudo-fullscreen-active) .dropdown-menu {
-  top: auto;
-  bottom: anchor(top);
+.global-prompt {
+  display: none;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 9999;
+
+  padding: 1rem;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  width: fit-content;
+  filter: drop-shadow(0 0 0.5rem var(--border));
+}
+
+.global-prompt.visible {
+  display: block;
+}
+
+.global-prompt .button-row {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
 }
 
 /* image and embedded styles */
@@ -1850,13 +1900,20 @@ th {
         <path d="M20 17H4" />
       </symbol>
     </svg>
+    <div id="global-prompt" class="global-prompt">
+      <p id="global-prompt-message"></p>
+      <div class="button-row">
+        <button id="global-prompt-yes">yes</button>
+        <button id="global-prompt-no">no</button>
+      </div>
+    </div>
     <div id="question-box" class="page" style="display: none">
       <div class="title-bar">
         <h1 class="title">Quiz</h1>
         <span class="timer">00:00</span>
       </div>
       <div class="navigation-scroll">
-        <div id="navigation" class="navigation">
+        <div class="navigation">
           <button class="prev-button" aria-label="Previous question">
             &lt;
           </button>
@@ -1881,52 +1938,12 @@ th {
           >
             <svg><use href="#icon-reveal"></use></svg>
           </button>
-
-          <button
-            class="maximize-button"
-            title="Toggle Fullscreen"
-            aria-label="Fullscreen"
-          >
-            <svg><use href="#icon-fullscreen"></use></svg>
-          </button>
-
-          <button
-            class="download-button"
-            title="Download quiz"
-            aria-label="Download quiz"
-          >
-            <svg><use href="#icon-download"></use></svg>
-          </button>
-
           <button
             class="timer-toggle-button"
             title="Toggle timer"
             aria-label="Toggle timer"
           >
             <svg><use href="#icon-timer"></use></svg>
-          </button>
-
-          <button
-            class="copy-all-button"
-            title="Copy quiz"
-            aria-label="Copy quiz"
-          >
-            <svg><use href="#icon-copy-all"></use></svg>
-          </button>
-
-          <button
-            class="copy-question-button"
-            title="Copy question"
-            aria-label="Copy question"
-          >
-            <svg><use href="#icon-copy"></use></svg>
-          </button>
-          <button
-            class="editor-button"
-            title="Edit question"
-            aria-label="Edit question"
-          >
-            <svg><use href="#icon-editor"></use></svg>
           </button>
           <button
             class="mode-button"
@@ -1935,7 +1952,49 @@ th {
           >
             <svg><use href="#switch-mode"></use></svg>
           </button>
+          <button
+            class="maximize-button"
+            title="Toggle Fullscreen"
+            aria-label="Fullscreen"
+          >
+            <svg><use href="#icon-fullscreen"></use></svg>
+          </button>
+          <button
+            class="copy-question-button"
+            title="Copy question"
+            aria-label="Copy question"
+          >
+            <svg><use href="#icon-copy"></use></svg>
+          </button>
+          <button class="dropdown-trigger" id="mcq-menu-button">
+            <svg><use href="#icon-more"></use></svg>
+          </button>
         </div>
+      </div>
+      <div class="dropdown-menu" id="mcq-dropdown-menu">
+        <button
+          class="editor-button"
+          title="Edit question"
+          aria-label="Edit question"
+        >
+          <svg><use href="#icon-editor"></use></svg>
+          Edit question
+        </button>
+        <button
+          class="download-button"
+          title="Download quiz"
+          aria-label="Download quiz"
+        >
+          <svg><use href="#icon-download"></use></svg>
+          Download
+        </button>
+        <button
+          class="copy-all-button"
+          title="Copy quiz"
+          aria-label="Copy quiz"
+        >
+          <svg><use href="#icon-copy-all"></use></svg>Copy Quiz
+        </button>
       </div>
       <div id="question-scroll">
         <p id="question"></p>
@@ -1978,51 +2037,11 @@ th {
           </button>
 
           <button
-            class="maximize-button"
-            title="Toggle Fullscreen"
-            aria-label="Fullscreen"
-          >
-            <svg><use href="#icon-fullscreen"></use></svg>
-          </button>
-
-          <button
-            class="download-button"
-            title="Download flashcards"
-            aria-label="Download quiz"
-          >
-            <svg><use href="#icon-download"></use></svg>
-          </button>
-
-          <button
             class="timer-toggle-button"
             title="Toggle timer"
             aria-label="Toggle timer"
           >
             <svg><use href="#icon-timer"></use></svg>
-          </button>
-
-          <button
-            class="copy-all-button"
-            title="Copy flashcards"
-            aria-label="Copy flashcards"
-          >
-            <svg><use href="#icon-copy-all"></use></svg>
-          </button>
-
-          <button
-            class="copy-question-button"
-            title="Copy question"
-            aria-label="Copy question"
-          >
-            <svg><use href="#icon-copy"></use></svg>
-          </button>
-
-          <button
-            class="editor-button"
-            title="Edit question"
-            aria-label="Edit question"
-          >
-            <svg><use href="#icon-editor"></use></svg>
           </button>
           <button
             class="mode-button"
@@ -2031,12 +2050,55 @@ th {
           >
             <svg><use href="#switch-mode"></use></svg>
           </button>
+          <button
+            class="maximize-button"
+            title="Toggle Fullscreen"
+            aria-label="Fullscreen"
+          >
+            <svg><use href="#icon-fullscreen"></use></svg>
+          </button>
+          <button
+            class="copy-question-button"
+            title="Copy question"
+            aria-label="Copy question"
+          >
+            <svg><use href="#icon-copy"></use></svg>
+          </button>
+          <button class="dropdown-trigger" id="flashcard-menu-button">
+            <svg><use href="#icon-more"></use></svg>
+          </button>
         </div>
       </div>
+      <div class="dropdown-menu" id="flashcard-dropdown-menu">
+        <button
+          class="editor-button"
+          title="Edit question"
+          aria-label="Edit question"
+        >
+          <svg><use href="#icon-editor"></use></svg>
+          Edit question
+        </button>
+        <button
+          class="download-button"
+          title="Download flashcards"
+          aria-label="Download quiz"
+        >
+          <svg><use href="#icon-download"></use></svg>
+          Download
+        </button>
+        <button
+          class="copy-all-button"
+          title="Copy flashcards"
+          aria-label="Copy flashcards"
+        >
+          <svg><use href="#icon-copy-all"></use></svg>Copy Quiz
+        </button>
+      </div>
 
-      <div class="question-scroll">
+      <div id="flashcard-scroll">
         <p class="flashcard-question"></p>
         <div class="flashcard-answer"></div>
+        <div class="flashcard-explanation"></div>
       </div>
     </div>
 
@@ -2149,7 +2211,7 @@ th {
           >
             <svg><use href="#icon-fullscreen"></use></svg>
           </button>
-          <button class="dropdown-trigger" id="actions-button">
+          <button class="dropdown-trigger" id="editor-menu-button">
             <svg><use href="#icon-more"></use></svg>
           </button>
           <button
@@ -2162,15 +2224,7 @@ th {
           </button>
         </div>
       </div>
-      <div id="editor-close" class="editor-prompt">
-        <p id="editor-prompt-message"></p>
-        <div class="button-row">
-          <button id="editor-prompt-yes">yes</button>
-          <button id="editor-prompt-no">no</button>
-        </div>
-      </div>
-
-      <div class="dropdown-menu" id="dropdown-menu">
+      <div class="dropdown-menu" id="editor-dropdown-menu">
         <button
           id="reset-quiz-button"
           title="Reset all questions"
@@ -2558,7 +2612,7 @@ async function typesetMath() {
 }
 
 // frontend/src/rendering/mcq.js
-function showExplanation(question) {
+function showMcqExplanation(question) {
   const explanationEl = document.getElementById("explanation");
   if (question.explanation) {
     explanationEl.innerHTML = renderMarkdown(
@@ -2783,11 +2837,13 @@ async function renderFlashcard() {
   const flashcardBox = document.getElementById("flashcard-box");
   const questionText = flashcardBox.querySelector(".flashcard-question");
   const answerEl = flashcardBox.querySelector(".flashcard-answer");
+  const explanationEl = flashcardBox.querySelector(".flashcard-explanation");
   if (!state.quiz.questions || state.quiz.questions.length === 0) {
     questionText.textContent = "No valid questions parsed";
     return;
   }
-  document.querySelector(".flashcard-answer").classList.remove("visible");
+  answerEl.classList.remove("visible");
+  explanationEl.style.display = "none";
   const question = state.quiz.questions[state.currentQuestionIndex];
   state.currentQuestion = question;
   renderQuestion(questionText, question);
@@ -2798,8 +2854,26 @@ async function renderFlashcard() {
   );
   state.answerRevealed = false;
   updateNavigation();
-  flashcardBox.querySelector(".question-scroll").scrollTop = 0;
+  flashcardBox.querySelector("#flashcard-scroll").scrollTop = 0;
   await typesetMath();
+}
+function showFlashcardExplanation(question) {
+  const explanationEl = document.querySelector(".flashcard-explanation");
+  if (question.explanation) {
+    explanationEl.innerHTML = renderMarkdown(
+      question.explanation,
+      state.mathReady
+    );
+    explanationEl.style.display = "block";
+    if (state.mathReady) {
+      window.MathJax.typesetPromise([explanationEl]).catch(
+        (err) => console.error("MathJax typesetting failed:", err)
+      );
+    }
+  } else {
+    explanationEl.innerHTML = "";
+    explanationEl.style.display = "none";
+  }
 }
 
 // frontend/src/rendering/results.js
@@ -3020,7 +3094,7 @@ function handleAnswer(index, button) {
       saveStats();
     }
     state.optionButtons.forEach((btn) => btn.disabled = true);
-    showExplanation(state.currentQuestion);
+    showMcqExplanation(state.currentQuestion);
   } else {
     button.classList.add("wrong");
     button.disabled = true;
@@ -3043,13 +3117,14 @@ function revealAnswer() {
   }
   if (document.getElementById("flashcard-box").style.display !== "none") {
     document.querySelector(".flashcard-answer").classList.add("visible");
+    showFlashcardExplanation(state.currentQuestion);
     return;
   }
   state.currentQuestion = state.quiz.questions[state.currentQuestionIndex];
   const optionsContainer = document.getElementById("options");
   const buttons = optionsContainer.querySelectorAll("button");
   buttons[state.currentQuestion.correct_index].classList.add("correct");
-  showExplanation(state.currentQuestion);
+  showMcqExplanation(state.currentQuestion);
 }
 function setQuizTitle(title) {
   const displayTitle = title.slice(0, 60);
@@ -3230,6 +3305,63 @@ function removeAllLocalEdits() {
   localStorage.removeItem(key);
 }
 
+// frontend/src/ui/alert.js
+function showPrompt(message, onYes = null, onNo = null, yesText = "yes", noText = "no") {
+  const prompt = document.getElementById("global-prompt");
+  const messageElement = document.getElementById("global-prompt-message");
+  const yesButton = document.getElementById("global-prompt-yes");
+  const noButton = document.getElementById("global-prompt-no");
+  messageElement.textContent = message;
+  yesButton.textContent = yesText;
+  noButton.textContent = noText;
+  yesButton.style.display = "";
+  noButton.style.display = "";
+  const close = (callback) => {
+    prompt.classList.remove("visible");
+    document.removeEventListener("keydown", keyHandler, true);
+    if (callback) callback();
+  };
+  yesButton.onclick = () => close(onYes);
+  noButton.onclick = () => close(onNo);
+  function keyHandler(e) {
+    if (e.key === "Enter" || e.key.toLowerCase() === "y") {
+      e.preventDefault();
+      e.stopPropagation();
+      close(onYes);
+    } else if (e.key.toLowerCase() === "n" || e.key === "Escape") {
+      e.preventDefault();
+      e.stopPropagation();
+      close(onNo);
+    }
+  }
+  document.addEventListener("keydown", keyHandler, true);
+  prompt.classList.add("visible");
+}
+function showAlert(message) {
+  const prompt = document.getElementById("global-prompt");
+  const messageElement = document.getElementById("global-prompt-message");
+  const yesButton = document.getElementById("global-prompt-yes");
+  const noButton = document.getElementById("global-prompt-no");
+  messageElement.textContent = message;
+  yesButton.textContent = "OK";
+  yesButton.style.display = "";
+  noButton.style.display = "none";
+  const close = () => {
+    prompt.classList.remove("visible");
+    document.removeEventListener("keydown", keyHandler, true);
+  };
+  yesButton.onclick = close;
+  function keyHandler(e) {
+    if (e.key === "Enter" || e.key === "Escape") {
+      e.preventDefault();
+      e.stopPropagation();
+      close();
+    }
+  }
+  document.addEventListener("keydown", keyHandler, true);
+  prompt.classList.add("visible");
+}
+
 // frontend/src/rendering/editor.js
 document.getElementById("editor-answer-number").addEventListener("input", (e) => {
   e.target.value = e.target.value.replace(/\D/g, "");
@@ -3242,8 +3374,6 @@ function cancelRestart() {
 }
 function openEditor() {
   const editor = document.getElementById("editor");
-  const prompt = document.getElementById("editor-close");
-  prompt.classList.remove("visible");
   if (state.mode === "flashcard") {
     const flashcardBox = document.getElementById("flashcard-box");
     flashcardBox.style.display = "none";
@@ -3302,40 +3432,6 @@ function addEditorOption(value) {
   article.appendChild(textarea);
   return article;
 }
-function showEditorPrompt(message, onYes = null, onNo = null, yesText = "yes", noText = "no") {
-  const prompt = document.getElementById("editor-close");
-  const messageElement = document.getElementById("editor-prompt-message");
-  const yesButton = document.getElementById("editor-prompt-yes");
-  const noButton = document.getElementById("editor-prompt-no");
-  messageElement.textContent = message;
-  yesButton.textContent = yesText;
-  noButton.textContent = noText;
-  yesButton.style.display = "";
-  noButton.style.display = "";
-  yesButton.onclick = () => {
-    prompt.classList.remove("visible");
-    if (onYes) onYes();
-  };
-  noButton.onclick = () => {
-    prompt.classList.remove("visible");
-    if (onNo) onNo();
-  };
-  prompt.classList.add("visible");
-}
-function showEditorAlert(message) {
-  const prompt = document.getElementById("editor-close");
-  const messageElement = document.getElementById("editor-prompt-message");
-  const yesButton = document.getElementById("editor-prompt-yes");
-  const noButton = document.getElementById("editor-prompt-no");
-  messageElement.textContent = message;
-  yesButton.textContent = "OK";
-  yesButton.style.display = "";
-  noButton.style.display = "none";
-  yesButton.onclick = () => {
-    prompt.classList.remove("visible");
-  };
-  prompt.classList.add("visible");
-}
 function validateAnswerIndex() {
   const answerInput = document.querySelector("#editor-answer-number");
   const val = parseInt(answerInput.value) - 1;
@@ -3343,13 +3439,13 @@ function validateAnswerIndex() {
   const options = optionsContainer.querySelectorAll("article");
   if (val < 0 || val >= options.length) {
     answerInput.classList.add("input-error");
-    showEditorAlert("Invalid Index: The selected option no longer exists.");
+    showAlert("Invalid Index: The selected option no longer exists.");
     return false;
   }
   return true;
 }
 function closeEditorConfirm() {
-  showEditorPrompt(
+  showPrompt(
     "Exit? Unsaved changes will be lost.",
     closeEditor,
     null,
@@ -3381,13 +3477,11 @@ function saveEdit() {
   state.quiz.questions[state.currentQuestionIndex].options = updatedOptions;
   state.quiz.questions[state.currentQuestionIndex].explanation = newExplanationText;
   if (saveLocalEdit(state.currentQuestionIndex, titleChanged)) {
-    showEditorAlert("Changes saved.");
+    showAlert("Changes saved.");
   }
 }
 function closeEditor() {
   const editor = document.getElementById("editor");
-  const prompt = document.getElementById("editor-close");
-  prompt.classList.remove("visible");
   editor.style.display = "none";
   const options = document.getElementById("editor-distractors");
   options.innerHTML = "";
@@ -3401,7 +3495,7 @@ function closeEditor() {
   renderMCQ();
 }
 function restoreQuizToDefault() {
-  showEditorPrompt(
+  showPrompt(
     "Restore the quiz to its original state?\nAll local edits will be discarded.",
     () => {
       const appData2 = JSON.parse(
@@ -3411,7 +3505,7 @@ function restoreQuizToDefault() {
       setQuizTitle(state.quiz.title);
       removeAllLocalEdits();
       openEditor();
-      showEditorAlert("Quiz restored to default.");
+      showAlert("Quiz restored to default.");
     },
     null,
     "Yes",
@@ -3419,7 +3513,7 @@ function restoreQuizToDefault() {
   );
 }
 function restoreQuestionToDefault() {
-  showEditorPrompt(
+  showPrompt(
     "Restore the current question to its original state?\nAll local edits will be discarded.",
     () => {
       const appData2 = JSON.parse(
@@ -3431,7 +3525,7 @@ function restoreQuestionToDefault() {
       );
       removeLocalEdit(index);
       openEditor();
-      showEditorAlert("Question restored to default.");
+      showAlert("Question restored to default.");
     },
     null,
     "Yes",
@@ -3557,19 +3651,52 @@ function initializeEvents() {
   document.getElementById("editor-close-button").addEventListener("click", closeEditorConfirm);
   document.getElementById("reset-quiz-button").addEventListener("click", restoreQuizToDefault);
   document.getElementById("reset-question-button").addEventListener("click", restoreQuestionToDefault);
-  const trigger = document.getElementById("actions-button");
-  const menu = document.getElementById("dropdown-menu");
-  trigger.addEventListener("click", (e) => {
-    e.stopPropagation();
-    menu.classList.toggle("show");
-  });
-  document.addEventListener("click", (e) => {
-    if (!menu.contains(e.target) && !trigger.contains(e.target)) {
-      menu.classList.remove("show");
-    }
+  document.querySelectorAll(".dropdown-trigger").forEach((trigger) => {
+    const menuId = trigger.id.replace("-menu-button", "-dropdown-menu");
+    const menu = document.getElementById(menuId);
+    const navigation = trigger.closest(".navigation");
+    const navigationScroll = navigation.parentElement;
+    const positionMenu = () => {
+      if (!menu.classList.contains("show")) return;
+      const rect = trigger.getBoundingClientRect();
+      const navRect = navigationScroll.getBoundingClientRect();
+      menu.style.left = `${Math.min(
+        rect.right,
+        navRect.right - menu.offsetWidth
+      )}px`;
+      if (document.fullscreenElement || document.documentElement.classList.contains("pseudo-fullscreen-active")) {
+        menu.style.top = "auto";
+        menu.style.bottom = `${document.documentElement.clientHeight - navRect.top}px`;
+      } else {
+        menu.style.top = `${rect.bottom}px`;
+        menu.style.bottom = "auto";
+      }
+    };
+    trigger.addEventListener("click", (e) => {
+      e.stopPropagation();
+      menu.classList.toggle("show");
+      positionMenu();
+    });
+    const observer = new ResizeObserver(positionMenu);
+    observer.observe(navigation);
+    menu.querySelectorAll("button").forEach((button) => {
+      button.addEventListener("click", () => {
+        menu.classList.remove("show");
+      });
+    });
+    document.addEventListener("click", (e) => {
+      if (!e.target.closest(".dropdown-trigger, .dropdown-menu")) {
+        document.querySelectorAll(".dropdown-menu.show").forEach((menu2) => {
+          menu2.classList.remove("show");
+        });
+      }
+    });
   });
   document.addEventListener("keydown", (e) => {
     if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
+    if (document.getElementById("question-box")?.style.display === "none" && document.getElementById("flashcard-box")?.style.display === "none") {
+      return;
+    }
     const key = e.key.toLowerCase();
     let index = -1;
     if (/^[1-9]$/.test(key)) {

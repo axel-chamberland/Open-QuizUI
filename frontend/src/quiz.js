@@ -1,10 +1,13 @@
-import { renderMCQ, showExplanation } from "./rendering/mcq.js";
+import { renderMCQ, showMcqExplanation } from "./rendering/mcq.js";
 import { saveStats } from "./persistence/stats.js";
 import { renderResults } from "./rendering/results.js";
 import { UNANSWERED, WRONG, CORRECT, SKIPPED, state } from "./state.js";
 import { setStoredQuestionIndex } from "./persistence/progress.js";
 import { renderMarkdown } from "./shared/markdown.js";
-import { renderFlashcard } from "./rendering/flashcards.js";
+import {
+  renderFlashcard,
+  showFlashcardExplanation,
+} from "./rendering/flashcards.js";
 
 const results = document.getElementById("results");
 
@@ -86,7 +89,7 @@ export function handleAnswer(index, button) {
       saveStats();
     }
     state.optionButtons.forEach((btn) => (btn.disabled = true));
-    showExplanation(state.currentQuestion);
+    showMcqExplanation(state.currentQuestion);
   } else {
     button.classList.add("wrong");
     button.disabled = true;
@@ -112,6 +115,7 @@ export function revealAnswer() {
   }
   if (document.getElementById("flashcard-box").style.display !== "none") {
     document.querySelector(".flashcard-answer").classList.add("visible");
+    showFlashcardExplanation(state.currentQuestion);
     return;
   }
 
@@ -121,7 +125,7 @@ export function revealAnswer() {
   const buttons = optionsContainer.querySelectorAll("button");
 
   buttons[state.currentQuestion.correct_index].classList.add("correct");
-  showExplanation(state.currentQuestion);
+  showMcqExplanation(state.currentQuestion);
 }
 
 export function setQuizTitle(title) {

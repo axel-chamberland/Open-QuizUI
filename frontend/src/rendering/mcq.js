@@ -3,7 +3,7 @@ import { renderMarkdown } from "../shared/markdown.js";
 import { handleAnswer, renderQuestion, updateNavigation } from "../quiz.js";
 import { typesetMath } from "../shared/mathjax.js";
 
-export function showExplanation(question) {
+export function showMcqExplanation(question) {
   const explanationEl = document.getElementById("explanation");
 
   if (question.explanation) {

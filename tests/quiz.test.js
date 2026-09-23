@@ -11,7 +11,7 @@ import {
 
 vi.mock("../frontend/src/rendering/mcq.js", () => ({
   renderMCQ: vi.fn(),
-  showExplanation: vi.fn(),
+  showMcqExplanation: vi.fn(),
 }));
 
 vi.mock("../frontend/src/persistence/progress.js", () => ({
@@ -28,7 +28,10 @@ vi.mock("../frontend/src/rendering/results.js", () => ({
 
 import { goTo } from "../frontend/src/quiz.js";
 import { state } from "../frontend/src/state.js";
-import { renderMCQ, showExplanation } from "../frontend/src/rendering/mcq.js";
+import {
+  renderMCQ,
+  showMcqExplanation,
+} from "../frontend/src/rendering/mcq.js";
 import { setStoredQuestionIndex } from "../frontend/src/persistence/progress.js";
 import { renderFlashcard } from "../frontend/src/rendering/flashcards.js";
 import { renderResults } from "../frontend/src/rendering/results.js";
@@ -244,7 +247,7 @@ describe("handleAnswer", () => {
     expect(state.questionResults[0]).toBe(CORRECT);
     expect(state.questionAnswers[0]).toBe(1);
 
-    expect(showExplanation).toHaveBeenCalledWith(state.currentQuestion);
+    expect(showMcqExplanation).toHaveBeenCalledWith(state.currentQuestion);
   });
 
   it("disables all options after a correct answer", () => {

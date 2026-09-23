@@ -162,6 +162,35 @@ button:disabled {
 
 .flashcard-answer.visible {
   display: block;
+
+  margin-top: 1rem;
+  padding: 1rem;
+
+  text-align: center;
+  background: var(--btn);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+}
+
+.flashcard-question {
+  padding: 1rem;
+  margin: 0;
+
+  background: var(--btn);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+
+  text-align: center;
+  font-weight: 600;
+}
+
+.flashcard-explanation {
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+
+  font-size: 0.95em;
+  opacity: 0.8;
 }
 
 #explanation {

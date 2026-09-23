@@ -98,7 +98,7 @@ describe("restoreQuestionToDefault", () => {
 
     restoreQuestionToDefault();
 
-    document.getElementById("editor-prompt-yes").click();
+    document.getElementById("global-prompt-yes").click();
 
     expect(state.quiz.questions[1]).toEqual(originalQuestions[1]);
     expect(state.quiz.questions[0]).toEqual(otherQuestion);
@@ -146,7 +146,7 @@ describe("restoreQuizToDefault", () => {
 
     restoreQuizToDefault();
 
-    document.getElementById("editor-prompt-yes").click();
+    document.getElementById("global-prompt-yes").click();
 
     expect(state.quiz).toEqual(originalQuiz);
     expect(setQuizTitle).toHaveBeenCalledWith(originalQuiz.title);

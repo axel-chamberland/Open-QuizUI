@@ -7,13 +7,15 @@ export async function renderFlashcard() {
   const flashcardBox = document.getElementById("flashcard-box");
   const questionText = flashcardBox.querySelector(".flashcard-question");
   const answerEl = flashcardBox.querySelector(".flashcard-answer");
+  const explanationEl = flashcardBox.querySelector(".flashcard-explanation");
 
   if (!state.quiz.questions || state.quiz.questions.length === 0) {
     questionText.textContent = "No valid questions parsed";
     return;
   }
 
-  document.querySelector(".flashcard-answer").classList.remove("visible");
+  answerEl.classList.remove("visible");
+  explanationEl.style.display = "none";
 
   const question = state.quiz.questions[state.currentQuestionIndex];
   state.currentQuestion = question;
@@ -32,7 +34,28 @@ export async function renderFlashcard() {
 
   updateNavigation();
 
-  flashcardBox.querySelector(".question-scroll").scrollTop = 0;
+  flashcardBox.querySelector("#flashcard-scroll").scrollTop = 0;
 
   await typesetMath();
+}
+
+export function showFlashcardExplanation(question) {
+  const explanationEl = document.querySelector(".flashcard-explanation");
+
+  if (question.explanation) {
+    explanationEl.innerHTML = renderMarkdown(
+      question.explanation,
+      state.mathReady,
+    );
+    explanationEl.style.display = "block";
+
+    if (state.mathReady) {
+      window.MathJax.typesetPromise([explanationEl]).catch((err) =>
+        console.error("MathJax typesetting failed:", err),
+      );
+    }
+  } else {
+    explanationEl.innerHTML = "";
+    explanationEl.style.display = "none";
+  }
 }
