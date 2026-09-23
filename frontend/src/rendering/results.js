@@ -235,3 +235,11 @@ export function restartQuiz() {
 
   renderMCQ();
 }
+
+export function confirmRestart() {
+  document.getElementById("restart-confirm").style.display = "flex";
+}
+
+export function cancelRestart() {
+  document.getElementById("restart-confirm").style.display = "none";
+}

@@ -387,6 +387,23 @@ mjx-container {
   overflow-y: auto;
 }
 
+#restart-confirm {
+  display: none;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--btn);
+}
+
+#restart-confirm button {
+  padding: 0.25rem 0.75rem;
+}
+
+#confirm-restart-button {
+  color: var(--danger);
+  border-color: var(--danger);
+}
+
 /* When embedded in an iframe */
 body.embedded #results-scroll {
   max-height: 600px;

@@ -16,13 +16,13 @@ import {
   restoreQuestionToDefault,
   saveEdit,
 } from "../rendering/editor.js";
-import {
-  confirmRestart,
-  cancelRestart,
-  restoreQuizToDefault,
-} from "../rendering/editor.js";
+import { restoreQuizToDefault } from "../rendering/editor.js";
 import { toggleFullscreen } from "./fullscreen.js";
-import { restartQuiz } from "../rendering/results.js";
+import {
+  cancelRestart,
+  confirmRestart,
+  restartQuiz,
+} from "../rendering/results.js";
 import { rateFlashcard } from "../rendering/flashcards.js";
 
 export function initializeEvents() {
