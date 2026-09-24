@@ -551,6 +551,7 @@ textarea:focus {
   border-radius: 0;
   text-align: left;
   white-space: nowrap;
+  padding: 0.5rem;
 }
 
 .dropdown-menu button svg {

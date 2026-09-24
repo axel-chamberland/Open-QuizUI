@@ -157,6 +157,7 @@ export function initializeEvents() {
     // Re-position on window resize
     const observer = new ResizeObserver(positionMenu);
     observer.observe(navigation);
+    window.addEventListener("scroll", positionMenu, true);
 
     menu.querySelectorAll("button").forEach((button) => {
       button.addEventListener("click", () => {

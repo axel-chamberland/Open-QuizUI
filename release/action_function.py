@@ -1763,6 +1763,7 @@ textarea:focus {
   border-radius: 0;
   text-align: left;
   white-space: nowrap;
+  padding: 0.5rem;
 }
 
 .dropdown-menu button svg {
@@ -3246,6 +3247,7 @@ function switchMode() {
 // frontend/src/shared/download.js
 function downloadQuizHTML() {
   const appData2 = {
+    mode: state.mode,
     enableMathJax: state.mathReady,
     quiz: state.quiz
   };
@@ -3253,10 +3255,22 @@ function downloadQuizHTML() {
   const documentClone = document.documentElement.cloneNode(true);
   const questionScroll = documentClone.querySelector("#question-scroll");
   if (questionScroll) {
-    questionScroll.querySelector("#question").replaceChildren();
-    questionScroll.querySelector("#options").replaceChildren();
-    questionScroll.querySelector("#explanation").replaceChildren();
+    questionScroll.querySelector("#question")?.replaceChildren();
+    questionScroll.querySelector("#options")?.replaceChildren();
+    questionScroll.querySelector("#explanation")?.replaceChildren();
   }
+  const flashcardBox = documentClone.querySelector("#flashcard-box");
+  if (flashcardBox) {
+    flashcardBox.querySelector(".flashcard-question")?.replaceChildren();
+    flashcardBox.querySelector(".flashcard-answer")?.replaceChildren();
+    flashcardBox.querySelector(".flashcard-explanation")?.replaceChildren();
+  }
+  documentClone.querySelectorAll(".dropdown-menu").forEach((menu) => {
+    menu.classList.remove("show");
+    menu.style.removeProperty("left");
+    menu.style.removeProperty("top");
+    menu.style.removeProperty("bottom");
+  });
   const dataScript = documentClone.querySelector("#app-data");
   if (!dataScript) {
     throw new Error("Could not find #app-data");
@@ -3756,6 +3770,7 @@ function initializeEvents() {
     });
     const observer = new ResizeObserver(positionMenu);
     observer.observe(navigation);
+    window.addEventListener("scroll", positionMenu, true);
     menu.querySelectorAll("button").forEach((button) => {
       button.addEventListener("click", () => {
         menu.classList.remove("show");
