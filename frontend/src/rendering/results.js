@@ -129,6 +129,12 @@ function showCorrectionSheet() {
 
   container.innerHTML = "";
 
+  const resultClass = {
+    [CORRECT]: "correct",
+    [WRONG]: "wrong",
+    [UNANSWERED]: "unanswered",
+    [SKIPPED]: "skipped",
+  };
   for (let index = 0; index < questions.length; index++) {
     const question = questions[index];
 
@@ -137,16 +143,25 @@ function showCorrectionSheet() {
     const userIndex = state.questionAnswers[index];
 
     const userAnswer =
-      state.questionResults[index] === SKIPPED
-        ? "Skipped"
-        : userIndex !== null
-          ? question.options[userIndex]
-          : "Unanswered";
+      state.mode === "flashcard"
+        ? state.questionResults[index] === CORRECT
+          ? "✓"
+          : state.questionResults[index] === WRONG
+            ? "✗"
+            : "Unanswered"
+        : state.questionResults[index] === SKIPPED
+          ? "Skipped"
+          : userIndex !== null
+            ? question.options[userIndex]
+            : "Unanswered";
 
     const article = document.createElement("article");
 
+    const currentClass = resultClass[state.questionResults[index]];
+
     article.innerHTML = `
-<h3>Question ${index + 1}</h3>
+
+<h3 class="${currentClass}">Question ${index + 1}</h3>
 
 <p>${renderMarkdown(question.question, state.mathReady)}</p>
 

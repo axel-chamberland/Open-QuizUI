@@ -345,19 +345,23 @@ mjx-container {
   display: inline-block;
 }
 
-#correct {
+#correct,
+.correct {
   color: var(--success);
 }
 
-#wrong {
+#wrong,
+.wrong {
   color: var(--danger);
 }
 
-#unanswered {
+#unanswered,
+.unanswered {
   color: var(--unanswered);
 }
 
-#skipped {
+#skipped,
+.skipped {
   color: var(--skipped);
 }
 

@@ -1557,19 +1557,23 @@ mjx-container {
   display: inline-block;
 }
 
-#correct {
+#correct,
+.correct {
   color: var(--success);
 }
 
-#wrong {
+#wrong,
+.wrong {
   color: var(--danger);
 }
 
-#unanswered {
+#unanswered,
+.unanswered {
   color: var(--unanswered);
 }
 
-#skipped {
+#skipped,
+.skipped {
   color: var(--skipped);
 }
 
@@ -1597,6 +1601,23 @@ mjx-container {
   margin: 0 auto;
   text-align: center;
   overflow-y: auto;
+}
+
+#restart-confirm {
+  display: none;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--btn);
+}
+
+#restart-confirm button {
+  padding: 0.25rem 0.75rem;
+}
+
+#confirm-restart-button {
+  color: var(--danger);
+  border-color: var(--danger);
 }
 
 /* When embedded in an iframe */
@@ -2195,8 +2216,9 @@ th {
         <button id="restart-button" aria-label="Restart quiz">
           Restart Quiz
         </button>
-        <div id="restart-confirm" style="display: none">
-          <span>Restart quiz?</span>
+
+        <div id="restart-confirm">
+          <span>Restart quiz? <i>Your results will be reset.</i></span>
           <button id="confirm-restart-button" aria-label="Confirm restart">
             Yes
           </button>
@@ -3004,14 +3026,22 @@ function showCorrectionSheet() {
   const container = document.getElementById("question-corrections");
   const questions = state.quiz.questions;
   container.innerHTML = "";
+  const resultClass = {
+    [CORRECT]: "correct",
+    [WRONG]: "wrong",
+    [UNANSWERED]: "unanswered",
+    [SKIPPED]: "skipped"
+  };
   for (let index = 0; index < questions.length; index++) {
     const question = questions[index];
     const correctAnswer = question.options[question.correct_index];
     const userIndex = state.questionAnswers[index];
-    const userAnswer = state.questionResults[index] === SKIPPED ? "Skipped" : userIndex !== null ? question.options[userIndex] : "Unanswered";
+    const userAnswer = state.mode === "flashcard" ? state.questionResults[index] === CORRECT ? "\u2713" : state.questionResults[index] === WRONG ? "\u2717" : "Unanswered" : state.questionResults[index] === SKIPPED ? "Skipped" : userIndex !== null ? question.options[userIndex] : "Unanswered";
     const article = document.createElement("article");
+    const currentClass = resultClass[state.questionResults[index]];
     article.innerHTML = `
-<h3>Question ${index + 1}</h3>
+
+<h3 class="${currentClass}">Question ${index + 1}</h3>
 
 <p>${renderMarkdown(question.question, state.mathReady)}</p>
 
@@ -3075,6 +3105,12 @@ function restartQuiz() {
   questionBox.style.display = "";
   document.getElementById("restart-confirm").style.display = "none";
   renderMCQ();
+}
+function confirmRestart() {
+  document.getElementById("restart-confirm").style.display = "flex";
+}
+function cancelRestart() {
+  document.getElementById("restart-confirm").style.display = "none";
 }
 
 // frontend/src/quiz.js
@@ -3411,12 +3447,6 @@ function showAlert(message) {
 document.getElementById("editor-answer-number").addEventListener("input", (e) => {
   e.target.value = e.target.value.replace(/\D/g, "");
 });
-function confirmRestart() {
-  document.getElementById("restart-confirm").style.display = "flex";
-}
-function cancelRestart() {
-  document.getElementById("restart-confirm").style.display = "none";
-}
 function openEditor() {
   const editor = document.getElementById("editor");
   if (state.mode === "flashcard") {
