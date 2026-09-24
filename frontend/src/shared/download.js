@@ -1,49 +1,67 @@
 import { state } from "../state.js";
 
-// Download as HTML.
+// Download the original HTML with the current app data.
 export function downloadQuizHTML() {
-    // quiz is the current runtime-modified quiz
-    const appData = {
-        enableMathJax: state.mathReady,
-        quiz: state.quiz,
-    };
+  // quiz is the current runtime-modified quiz
+  const appData = {
+    mode: state.mode,
+    enableMathJax: state.mathReady,
+    quiz: state.quiz,
+  };
 
-    const filename = state.quiz.title;
+  const filename = state.quiz.title;
 
-    // Clone the document so the live page is not modified.
-    const documentClone = document.documentElement.cloneNode(true);
+  // Clone the document so the live page is not modified.
+  const documentClone = document.documentElement.cloneNode(true);
 
-    const questionScroll = documentClone.querySelector("#question-scroll");
+  const questionScroll = documentClone.querySelector("#question-scroll");
 
-    // Empty current quiz
-    if (questionScroll) {
-        questionScroll.querySelector("#question").replaceChildren();
-        questionScroll.querySelector("#options").replaceChildren();
-        questionScroll.querySelector("#explanation").replaceChildren();
-    }
+  // Empty current quiz
+  if (questionScroll) {
+    questionScroll.querySelector("#question")?.replaceChildren();
+    questionScroll.querySelector("#options")?.replaceChildren();
+    questionScroll.querySelector("#explanation")?.replaceChildren();
+  }
 
-    // Replace the JSON payload in the cloned document.
-    const dataScript = documentClone.querySelector("#app-data");
+  // Reset flashcard-rendered content.
+  const flashcardBox = documentClone.querySelector("#flashcard-box");
 
-    if (!dataScript) {
-        throw new Error("Could not find #app-data");
-    }
+  if (flashcardBox) {
+    flashcardBox.querySelector(".flashcard-question")?.replaceChildren();
+    flashcardBox.querySelector(".flashcard-answer")?.replaceChildren();
+    flashcardBox.querySelector(".flashcard-explanation")?.replaceChildren();
+  }
 
-    dataScript.textContent = JSON.stringify(appData, null, 2);
+  // Reset Dropdown menus
+  documentClone.querySelectorAll(".dropdown-menu").forEach((menu) => {
+    menu.classList.remove("show");
+    menu.style.removeProperty("left");
+    menu.style.removeProperty("top");
+    menu.style.removeProperty("bottom");
+  });
 
-    // Serialize the cloned document.
-    const html = "<!DOCTYPE html>\n" + documentClone.outerHTML;
+  // Replace the JSON payload in the cloned document.
+  const dataScript = documentClone.querySelector("#app-data");
 
-    const blob = new Blob([html], { type: "text/html" });
-    const url = URL.createObjectURL(blob);
+  if (!dataScript) {
+    throw new Error("Could not find #app-data");
+  }
 
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename.endsWith(".html") ? filename : filename + ".html";
+  dataScript.textContent = JSON.stringify(appData, null, 2);
 
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
+  // Serialize the cloned document.
+  const html = "<!DOCTYPE html>\n" + documentClone.outerHTML;
 
-    URL.revokeObjectURL(url);
+  const blob = new Blob([html], { type: "text/html" });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename.endsWith(".html") ? filename : filename + ".html";
+
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+
+  URL.revokeObjectURL(url);
 }
