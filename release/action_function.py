@@ -1558,22 +1558,22 @@ mjx-container {
 }
 
 #correct,
-.correct {
+#results .correct {
   color: var(--success);
 }
 
 #wrong,
-.wrong {
+#results .wrong {
   color: var(--danger);
 }
 
 #unanswered,
-.unanswered {
+#results .unanswered {
   color: var(--unanswered);
 }
 
 #skipped,
-.skipped {
+#results .skipped {
   color: var(--skipped);
 }
 
