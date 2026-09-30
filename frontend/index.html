@@ -127,6 +127,25 @@
         <path d="m16 21 4-4-4-4" />
         <path d="M20 17H4" />
       </symbol>
+      <symbol
+        id="icon-srs"
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        class="lucide lucide-list-restart preview-icon"
+      >
+        <path d="M21 5H3" />
+        <path d="M7 12H3" />
+        <path d="M7 19H3" />
+        <path
+          d="M12 18a5 5 0 0 0 9-3 4.5 4.5 0 0 0-4.5-4.5c-1.33 0-2.54.54-3.41 1.41L11 14"
+        />
+        <path d="M11 10v4h4" />
+      </symbol>
     </svg>
     <div id="global-prompt" class="global-prompt">
       <p id="global-prompt-message"></p>
@@ -156,7 +175,11 @@
             <span class="separator">/</span>
             <span class="question-count">1</span>
           </div>
-
+          <div class="srs-selector">
+            <span class="srs-due-count" title="Due"></span>
+            <span class="srs-review-count" title="Reviewing"></span>
+            <span class="srs-completed-count" title="Completed"></span>
+          </div>
           <button class="next-button" aria-label="Next question">&gt;</button>
 
           <button
@@ -202,19 +225,27 @@
       <div class="dropdown-menu" id="mcq-dropdown-menu">
         <button
           class="editor-button"
-          title="Edit question"
-          aria-label="Edit question"
+          title="Edit Question"
+          aria-label="Edit Question"
         >
           <svg><use href="#icon-editor"></use></svg>
-          Edit question
+          Edit Question
+        </button>
+        <button
+          class="toggle-srs-button"
+          title="Toggle spaced repetition (FSRS)"
+          aria-label="Toggle spaced repetition (FSRS)"
+        >
+          <svg><use href="#icon-srs"></use></svg>
+          Toggle Repetition
         </button>
         <button
           class="download-button"
-          title="Download quiz"
-          aria-label="Download quiz"
+          title="Download as HTML"
+          aria-label="Download as HTML"
         >
           <svg><use href="#icon-download"></use></svg>
-          Download
+          Download HTML
         </button>
         <button
           class="copy-all-button"
@@ -252,6 +283,11 @@
             />
             <span class="separator">/</span>
             <span class="question-count">1</span>
+          </div>
+          <div class="srs-selector">
+            <span class="srs-due-count" title="Due"></span>
+            <span class="srs-review-count" title="Reviewing"></span>
+            <span class="srs-completed-count" title="Completed"></span>
           </div>
 
           <button class="next-button" aria-label="Next question">&gt;</button>
@@ -300,24 +336,32 @@
       <div class="dropdown-menu" id="flashcard-dropdown-menu">
         <button
           class="editor-button"
-          title="Edit question"
-          aria-label="Edit question"
+          title="Edit Question"
+          aria-label="Edit Question"
         >
           <svg><use href="#icon-editor"></use></svg>
-          Edit question
+          Edit Question
+        </button>
+        <button
+          class="toggle-srs-button"
+          title="Toggle spaced repetition (FSRS)"
+          aria-label="Toggle spaced repetition (FSRS)"
+        >
+          <svg><use href="#icon-srs"></use></svg>
+          Toggle Repetition
         </button>
         <button
           class="download-button"
-          title="Download flashcards"
-          aria-label="Download quiz"
+          title="Download as HTML"
+          aria-label="Download as HTML"
         >
           <svg><use href="#icon-download"></use></svg>
-          Download
+          Download HTML
         </button>
         <button
           class="copy-all-button"
-          title="Copy flashcards"
-          aria-label="Copy flashcards"
+          title="Copy quiz"
+          aria-label="Copy quiz"
         >
           <svg><use href="#icon-copy-all"></use></svg>Copy Quiz
         </button>
@@ -356,8 +400,8 @@
 
           <button
             class="download-button"
-            title="Download quiz"
-            aria-label="Download quiz"
+            title="Download as HTML"
+            aria-label="Download as HTML"
           >
             <svg><use href="#icon-download"></use></svg>
           </button>

@@ -1,5 +1,3 @@
-import { state } from "../state.js";
-
 export function hashQuiz(quiz) {
   // Hash derived from the quiz's content to avoid overlap
   const data = JSON.stringify(quiz);
@@ -17,7 +15,7 @@ function getProgressKey(quizStorageKey) {
   return `currentQuestionIndex_${quizStorageKey}`;
 }
 
-export function getStoredQuestionIndex(quizStorageKey) {
+export function getStoredQuestionIndex(quizStorageKey, max_count) {
   try {
     const index = Number(localStorage.getItem(getProgressKey(quizStorageKey)));
 
@@ -26,7 +24,7 @@ export function getStoredQuestionIndex(quizStorageKey) {
     }
 
     // n+1 means at the results page
-    return Math.max(0, Math.min(index, state.quiz.questions.length));
+    return Math.max(0, Math.min(index, max_count));
   } catch {
     return 0;
   }

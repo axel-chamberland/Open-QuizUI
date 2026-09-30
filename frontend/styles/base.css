@@ -274,7 +274,8 @@ button:disabled {
 .reveal-button,
 .maximize-button,
 .download-button,
-.question-selector {
+.question-selector,
+.srs-selector {
   flex: 0 0 auto;
   min-width: 2rem;
 }
@@ -300,6 +301,53 @@ button:disabled {
   font-size: 1.1rem;
 
   gap: 0.2rem;
+}
+
+.srs-mode .question-selector {
+  display: none;
+}
+
+.srs-mode .srs-selector {
+  display: flex;
+}
+
+.srs-selector {
+  display: none;
+  align-items: center;
+  white-space: nowrap;
+
+  background: var(--btn);
+  color: var(--text);
+
+  border: 1px solid var(--border);
+  border-radius: 0.25rem;
+
+  font-size: 1.1rem;
+
+  gap: 0.7rem;
+  padding: 0 0.6rem;
+}
+
+.srs-selector > span {
+  font-variant-numeric: tabular-nums;
+  cursor: default;
+}
+
+.srs-due-count {
+  color: var(--skipped);
+}
+
+.srs-review-count {
+  color: var(--danger);
+}
+
+.srs-completed-count {
+  color: var(--success);
+}
+
+.srs-selector .current {
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
 }
 
 .question-number {

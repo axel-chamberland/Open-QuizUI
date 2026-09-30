@@ -166,6 +166,7 @@ describe("restartQuiz", () => {
     state.wrongAnswerCount = 3;
     state.questionResults = ["correct", "wrong", "correct"];
     state.questionAnswers = [0, 1, 2];
+    state.questionOrder = [0, 1, 2];
 
     state.timer = {
       interval: null,
@@ -184,8 +185,8 @@ describe("restartQuiz", () => {
     vi.clearAllMocks();
   });
 
-  it("resets the quiz state and returns to the first question", () => {
-    restartQuiz();
+  it("resets the quiz state and returns to the first question", async () => {
+    await restartQuiz();
 
     expect(state.currentQuestionIndex).toBe(0);
     expect(state.answerRevealed).toBe(false);

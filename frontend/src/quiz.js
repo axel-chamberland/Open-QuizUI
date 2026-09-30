@@ -8,45 +8,136 @@ import {
   renderFlashcard,
   showFlashcardExplanation,
 } from "./rendering/flashcards.js";
+import {
+  getSRSCounts,
+  getSRSCurrentCategory,
+  initSRS,
+  nextSRSQuestion,
+  prevSRSQuestion,
+  updateSRS,
+} from "./srs.js";
 
 const results = document.getElementById("results");
 
-export function nextQuestion() {
-  goTo(state.currentQuestionIndex + 1);
+/**
+ * Returns the actual index of the current question in quiz.questions.
+ *
+ * @returns {number}
+ */
+export function getCurrentQuestionArrayIndex() {
+  return state.currentQuestionIndex;
 }
 
-export function prevQuestion() {
-  if (state.currentQuestionIndex <= 0) return;
+/**
+ * Moves to the next question.
+ *
+ * Normal mode uses state.questionOrder as the navigation order.
+ * SRS mode uses the SRS priority queue to select the next question.
+ *
+ * @returns {Promise<void>}
+ */
+export async function nextQuestion() {
+  if (state.srs) {
+    const questionIndex = nextSRSQuestion(state.currentQuestionIndex);
 
-  const results = document.getElementById("results");
-  results.style.display = "none";
-  goTo(state.currentQuestionIndex - 1);
-}
+    if (questionIndex === null) {
+      renderResults();
+      return;
+    }
 
-export function goTo(questionIndex) {
-  const questionCount = state.quiz.questions.length;
-
-  if (questionIndex < 0) {
-    questionIndex = 0;
+    goTo(questionIndex);
+    return;
   }
 
-  // Results page
-  if (questionIndex >= questionCount) {
-    state.currentQuestionIndex = questionCount;
-    setStoredQuestionIndex(state.quizStorageKey, state.currentQuestionIndex);
+  const currentOrderIndex = state.questionOrder.indexOf(
+    state.currentQuestionIndex,
+  );
 
+  if (currentOrderIndex === -1) {
+    return;
+  }
+
+  const questionIndex = state.questionOrder[currentOrderIndex + 1];
+
+  if (questionIndex === undefined) {
     renderResults();
     return;
   }
 
-  state.currentQuestionIndex = questionIndex;
-  setStoredQuestionIndex(state.quizStorageKey, state.currentQuestionIndex);
+  goTo(questionIndex);
+}
 
+/**
+ * Moves to the previous question.
+ *
+ * Normal mode moves backward through state.questionOrder.
+ * SRS mode undoes the most recent SRS answer.
+ *
+ * @returns {void}
+ */
+export function prevQuestion() {
+  if (state.srs) {
+    const questionIndex = prevSRSQuestion(state.quizStorageKey);
+
+    if (questionIndex === null) {
+      return;
+    }
+
+    results.style.display = "none";
+    goTo(questionIndex);
+    return;
+  }
+
+  const currentOrderIndex = state.questionOrder.indexOf(
+    state.currentQuestionIndex,
+  );
+
+  if (currentOrderIndex <= 0) {
+    return;
+  }
+
+  results.style.display = "none";
+
+  const questionIndex = state.questionOrder[currentOrderIndex - 1];
+
+  goTo(questionIndex);
+}
+
+/**
+ * Displays a question by its actual index in quiz.questions.
+ *
+ * @param {number} questionIndex
+ */
+export function goTo(questionIndex) {
+  if (questionIndex < 0) {
+    questionIndex = 0;
+  }
+
+  state.currentQuestionIndex = questionIndex;
+
+  if (questionIndex >= state.quiz.questions.length) {
+    renderResults();
+    return;
+  }
+
+  state.currentQuestion = state.quiz.questions[questionIndex];
   state.answerRevealed = false;
 
-  updateQuestionNumbers();
+  if (!state.srs) {
+    setStoredQuestionIndex(state.quizStorageKey, questionIndex);
+  }
 
-  const question = state.quiz.questions[questionIndex];
+  updateQuestionNumbers();
+  renderCurrentQuestion();
+}
+
+/**
+ * Renders state.currentQuestion in the current display mode.
+ *
+ * @returns {void}
+ */
+function renderCurrentQuestion() {
+  const question = state.currentQuestion;
   const distractorCount = question.options.length - 1;
 
   let mode = state.mode;
@@ -74,32 +165,71 @@ export function goTo(questionIndex) {
 
 export function updateQuestionNumbers() {
   document.querySelectorAll(".question-number").forEach((element) => {
-    element.value = state.currentQuestionIndex + 1;
+    if (state.srs) {
+      element.value = state.currentQuestionIndex + 1;
+      return;
+    }
+
+    element.value = state.questionOrder.indexOf(state.currentQuestionIndex) + 1;
   });
 }
-export function handleAnswer(index, button) {
+
+export function updateQuestionCounts() {
+  document.querySelectorAll(".question-count").forEach((element) => {
+    element.textContent = state.questionOrder.length;
+  });
+}
+
+/**
+ * Handles a user's answer to a multiple-choice question.
+ *
+ * Updates the question result, records the answer, reveals the explanation,
+ * and updates the SRS scheduler when SRS mode is active.
+ *
+ * @param {number} index - Index of the selected answer.
+ * @param {HTMLButtonElement} button - Button corresponding to the selected answer.
+ * @returns {Promise<void>}
+ */
+export async function handleAnswer(index, button) {
   saveStats();
+
+  const questionArrayIndex = getCurrentQuestionArrayIndex();
+
   if (index === state.currentQuestion.correct_index) {
     button.classList.add("correct");
     button.disabled = true;
     state.answerRevealed = true;
+
     if (state.wrongAnswerCount === 0) {
-      state.questionResults[state.currentQuestionIndex] = CORRECT;
-      state.questionAnswers[state.currentQuestionIndex] = index;
+      state.questionResults[questionArrayIndex] = CORRECT;
+      state.questionAnswers[questionArrayIndex] = index;
       saveStats();
     }
+
+    if (state.srs) {
+      await updateSRS("Good", state.quizStorageKey);
+    }
+
     state.optionButtons.forEach((btn) => (btn.disabled = true));
+
     showMcqExplanation(state.currentQuestion);
   } else {
     button.classList.add("wrong");
     button.disabled = true;
-    state.questionResults[state.currentQuestionIndex] = WRONG;
 
-    if (state.questionAnswers[state.currentQuestionIndex] === null) {
-      state.questionAnswers[state.currentQuestionIndex] = index;
+    state.questionResults[questionArrayIndex] = WRONG;
+
+    if (state.questionAnswers[questionArrayIndex] === null) {
+      state.questionAnswers[questionArrayIndex] = index;
     }
+
     saveStats();
     state.wrongAnswerCount++;
+
+    if (state.srs && state.wrongAnswerCount == 1) {
+      await updateSRS("Again", state.quizStorageKey);
+    }
+
     if (state.wrongAnswerCount === state.currentQuestion.options.length - 1) {
       revealAnswer();
     }
@@ -109,24 +239,29 @@ export function handleAnswer(index, button) {
 export function revealAnswer() {
   state.answerRevealed = true;
 
-  if (state.questionResults[state.currentQuestionIndex] === UNANSWERED) {
-    state.questionResults[state.currentQuestionIndex] = SKIPPED;
+  const questionArrayIndex = getCurrentQuestionArrayIndex();
+
+  if (state.questionResults[questionArrayIndex] === UNANSWERED) {
+    state.questionResults[questionArrayIndex] = SKIPPED;
     saveStats();
   }
+
   if (document.getElementById("flashcard-box").style.display !== "none") {
     document.querySelector(".flashcard-answer").classList.add("visible");
+
     showFlashcardExplanation(state.currentQuestion);
 
     document.getElementById("flashcard-rating").style.display = "flex";
+
     return;
   }
 
-  state.currentQuestion = state.quiz.questions[state.currentQuestionIndex];
-
   const optionsContainer = document.getElementById("options");
+
   const buttons = optionsContainer.querySelectorAll("button");
 
   buttons[state.currentQuestion.correct_index].classList.add("correct");
+
   showMcqExplanation(state.currentQuestion);
 }
 
@@ -134,27 +269,58 @@ export function setQuizTitle(title) {
   const displayTitle = title.slice(0, 60);
 
   document.title = displayTitle;
-  document.querySelectorAll(".title").forEach((e) => (e.textContent = title));
+
+  document.querySelectorAll(".title").forEach((e) => {
+    e.textContent = title;
+  });
 }
 
 export function renderQuestion(questionText, question) {
   questionText.innerHTML = renderMarkdown(question.question, state.mathReady);
+
+  if (state.srs) {
+    updateSRSCounts();
+  }
+}
+
+/** Update the due/reviewing/completed counts and underline the one corresponding
+ to current question
+ */
+function updateSRSCounts() {
+  const { due, reviewing, completed } = getSRSCounts();
+  const currentCategory = getSRSCurrentCategory();
+
+  document.querySelectorAll(".srs-due-count").forEach((element) => {
+    element.textContent = String(due);
+    element.classList.toggle("current", currentCategory === "due");
+  });
+
+  document.querySelectorAll(".srs-review-count").forEach((element) => {
+    element.textContent = String(reviewing);
+    element.classList.toggle("current", currentCategory === "reviewing");
+  });
+
+  document.querySelectorAll(".srs-completed-count").forEach((element) => {
+    element.textContent = String(completed);
+    element.classList.toggle("current", currentCategory === "completed");
+  });
 }
 
 export function updateNavigation() {
   document.querySelectorAll(".prev-button").forEach((button) => {
-    button.disabled = state.currentQuestionIndex === 0;
-  });
-}
+    if (state.srs) {
+      button.disabled = false;
+      return;
+    }
 
-export function updateQuestionCounts() {
-  document.querySelectorAll(".question-count").forEach((element) => {
-    element.textContent = state.quiz.questions.length;
+    button.disabled =
+      state.questionOrder.indexOf(state.currentQuestionIndex) <= 0;
   });
 }
 
 export function setMode(mode) {
   state.mode = mode;
+
   const quizPage = document.getElementById("question-box");
   const flashcardPage = document.getElementById("flashcard-box");
 
@@ -166,12 +332,11 @@ export function setMode(mode) {
 
 export function toggleMode() {
   const questionBox = document.getElementById("question-box");
+
   const flashcardBox = document.getElementById("flashcard-box");
 
-  // Toggle the mode
   state.mode = state.mode === "flashcard" ? "mcq" : "flashcard";
 
-  // Show/hide the appropriate boxes
   if (state.mode === "flashcard") {
     flashcardBox.style.display = "";
     questionBox.style.display = "none";
@@ -183,11 +348,37 @@ export function toggleMode() {
 
 export function switchMode() {
   state.mode = state.mode === "mcq" ? "flashcard" : "mcq";
+
   setMode(state.mode);
 
   if (state.mode === "mcq") {
     renderMCQ();
   } else {
     renderFlashcard();
+  }
+}
+
+/**
+ * Enables or disables spaced recognition system.
+ *
+ * When enabling SRS, initializes the SRS scheduler for the quiz.
+ *
+ * @returns {Promise<void>}
+ */
+export async function toggleSRS() {
+  state.srs = !state.srs;
+
+  // Change CSS class for state relative layout
+  document.body.classList.toggle("srs-mode", state.srs);
+
+  if (state.srs) {
+    await initSRS(state.quizStorageKey, state.currentQuestionIndex);
+    updateSRSCounts();
+
+    const questionIndex = nextSRSQuestion(state.currentQuestionIndex);
+
+    if (questionIndex !== null) {
+      goTo(questionIndex);
+    }
   }
 }

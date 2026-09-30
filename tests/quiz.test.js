@@ -58,7 +58,7 @@ describe("goTo", () => {
         { options: ["A", "B", "C"], correct_index: 0 },
       ],
     };
-
+    state.questionOrder = [0, 1, 2, 3, 4];
     state.quizStorageKey = "test-quiz";
     state.currentQuestionIndex = 0;
     state.answerRevealed = true;
@@ -169,6 +169,7 @@ describe("revealAnswer", () => {
   `;
 
     state.currentQuestionIndex = 0;
+
     state.quiz = {
       questions: [
         {
@@ -178,7 +179,9 @@ describe("revealAnswer", () => {
       ],
     };
 
-    state.mode == "mcq";
+    state.currentQuestion = state.quiz.questions[0];
+
+    state.mode = "mcq";
 
     state.questionResults = [UNANSWERED];
 

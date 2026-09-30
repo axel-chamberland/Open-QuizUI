@@ -5,6 +5,7 @@ import {
   handleAnswer,
   revealAnswer,
   switchMode,
+  toggleSRS,
 } from "../quiz.js";
 import { downloadQuizHTML } from "../shared/download.js";
 import { state } from "../state.js";
@@ -74,6 +75,9 @@ export function initializeEvents() {
     .querySelector(".unknown-button")
     .addEventListener("click", () => rateFlashcard(false));
 
+  document.querySelectorAll(".toggle-srs-button").forEach((button) => {
+    button.addEventListener("click", toggleSRS);
+  });
   // Results page
 
   document
@@ -98,7 +102,6 @@ export function initializeEvents() {
     .getElementById("editor-save-button")
     .addEventListener("click", saveEdit);
 
-  // TODO: Change to alert system
   document
     .getElementById("editor-close-button")
     .addEventListener("click", closeEditorConfirm);

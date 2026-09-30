@@ -1,4 +1,5 @@
 import { hashQuiz, getStoredQuestionIndex } from "./persistence/progress.js";
+import { loadQuestionOrder } from "./persistence/question_order.js";
 
 export const UNANSWERED = 0;
 export const CORRECT = 1;
@@ -20,6 +21,14 @@ export const state = {
   answerRevealed: false,
   currentQuestionIndex: 0,
 
+  questionOrder: [],
+  questionSRSQueue: null,
+  srs: false,
+  srsQueueSize: 20,
+
+  // Maximum level before removing from queue
+  srsLevel: 5,
+
   questionResults: [],
   questionAnswers: [],
 
@@ -38,14 +47,21 @@ export const state = {
 export function initializeState(quiz) {
   state.quiz = quiz;
   state.quizStorageKey = hashQuiz(quiz);
-  state.currentQuestionIndex = getStoredQuestionIndex(state.quizStorageKey);
+  state.currentQuestionIndex = getStoredQuestionIndex(
+    state.quizStorageKey,
+    state.quiz.questions.length,
+  );
   state.currentQuestion = null;
   state.optionButtons = [];
   state.wrongAnswerCount = 0;
   state.answerRevealed = false;
 
-  state.questionResults = new Array(quiz.questions.length).fill(UNANSWERED);
+  state.questionOrder = loadQuestionOrder(
+    state.quizStorageKey,
+    state.quiz.questions.length,
+  );
 
+  state.questionResults = new Array(quiz.questions.length).fill(UNANSWERED);
   state.questionAnswers = new Array(quiz.questions.length).fill(null);
 
   state.defaultStartDate = Date.now();

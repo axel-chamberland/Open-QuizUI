@@ -83,6 +83,7 @@ describe("renderResults", () => {
     state.questionResults = [CORRECT, WRONG, UNANSWERED, SKIPPED];
 
     state.questionAnswers = [0, 0, null, null];
+    state.questionOrder = [0, 1, 2, 3];
 
     state.timer.visible = false;
     state.defaultStartDate = Date.now();

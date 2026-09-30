@@ -1,8 +1,14 @@
 import { CORRECT, state, WRONG } from "../state.js";
-import { nextQuestion, renderQuestion, updateNavigation } from "../quiz.js";
+import {
+  nextQuestion,
+  renderQuestion,
+  updateNavigation,
+  getCurrentQuestionArrayIndex,
+} from "../quiz.js";
 import { typesetMath } from "../shared/mathjax.js";
 import { renderMarkdown } from "../shared/markdown.js";
 import { saveStats } from "../persistence/stats.js";
+import { updateSRS } from "../srs.js";
 
 export async function renderFlashcard() {
   const flashcardBox = document.getElementById("flashcard-box");
@@ -20,7 +26,8 @@ export async function renderFlashcard() {
   explanationEl.style.display = "none";
   ratingEl.style.display = "none";
 
-  const question = state.quiz.questions[state.currentQuestionIndex];
+  const questionArrayIndex = getCurrentQuestionArrayIndex();
+  const question = state.quiz.questions[questionArrayIndex];
   state.currentQuestion = question;
 
   renderQuestion(questionText, question);
@@ -63,12 +70,20 @@ export function showFlashcardExplanation(question) {
   }
 }
 
-export function rateFlashcard(correct) {
+export async function rateFlashcard(correct) {
   if (!state.answerRevealed) {
     return;
   }
 
-  state.questionResults[state.currentQuestionIndex] = correct ? CORRECT : WRONG;
+  const questionArrayIndex = getCurrentQuestionArrayIndex();
+
+  state.questionResults[questionArrayIndex] = correct ? CORRECT : WRONG;
+
+  const rating = correct ? "Good" : "Again";
+
+  if (state.srs) {
+    await updateSRS(rating, state.quizStorageKey);
+  }
 
   saveStats();
   nextQuestion();

@@ -1,8 +1,10 @@
 import { setStoredQuestionIndex } from "../persistence/progress.js";
+import { resetQuestionSRSState } from "../persistence/question_order.js";
 import { updateQuestionNumbers } from "../quiz.js";
 import { formatTime } from "../shared/formatting.js";
 import { renderMarkdown } from "../shared/markdown.js";
 import { typesetMath } from "../shared/mathjax.js";
+import { initSRS } from "../srs.js";
 import { UNANSWERED, WRONG, CORRECT, SKIPPED, state } from "../state.js";
 import { saveTimer, updateTimer } from "../timer.js";
 import { renderFlashcard } from "./flashcards.js";
@@ -26,7 +28,7 @@ export async function renderResults() {
   ).length;
   const skipped = state.questionResults.filter((x) => x === SKIPPED).length;
 
-  const total = state.quiz.questions.length;
+  const total = state.questionOrder.length;
   const answered = correct + wrong;
 
   const accuracy = answered > 0 ? (correct / answered) * 100 : 0;
@@ -135,11 +137,16 @@ function showCorrectionSheet() {
     [UNANSWERED]: "unanswered",
     [SKIPPED]: "skipped",
   };
-  for (let index = 0; index < questions.length; index++) {
+
+  for (
+    let orderIndex = 0;
+    orderIndex < state.questionOrder.length;
+    orderIndex++
+  ) {
+    const index = state.questionOrder[orderIndex];
     const question = questions[index];
 
     const correctAnswer = question.options[question.correct_index];
-
     const userIndex = state.questionAnswers[index];
 
     const userAnswer =
@@ -160,8 +167,7 @@ function showCorrectionSheet() {
     const currentClass = resultClass[state.questionResults[index]];
 
     article.innerHTML = `
-
-<h3 class="${currentClass}">Question ${index + 1}</h3>
+<h3 class="${currentClass}">Question ${orderIndex + 1}</h3>
 
 <p>${renderMarkdown(question.question, state.mathReady)}</p>
 
@@ -191,11 +197,9 @@ ${
   }
 }
 
-const questionNumber = document.getElementById("question-number");
-
-export function restartQuiz() {
+export async function restartQuiz() {
   // Reset question state
-  state.currentQuestionIndex = 0;
+  state.currentQuestionIndex = state.questionOrder[0];
   updateQuestionNumbers();
   state.answerRevealed = false;
   state.wrongAnswerCount = 0;
@@ -228,7 +232,13 @@ export function restartQuiz() {
   saveTimer();
 
   // Reset stored question
-  setStoredQuestionIndex(state.quizStorageKey, 0);
+  setStoredQuestionIndex(state.quizStorageKey, state.currentQuestionIndex);
+
+  // Reset SRS
+  resetQuestionSRSState(state.quizStorageKey);
+  if (state.srs) {
+    await initSRS(state.quizStorageKey, state.currentQuestionIndex);
+  }
 
   // Return to quiz
   const results = document.getElementById("results");

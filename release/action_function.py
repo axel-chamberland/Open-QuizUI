@@ -1486,7 +1486,8 @@ button:disabled {
 .reveal-button,
 .maximize-button,
 .download-button,
-.question-selector {
+.question-selector,
+.srs-selector {
   flex: 0 0 auto;
   min-width: 2rem;
 }
@@ -1512,6 +1513,53 @@ button:disabled {
   font-size: 1.1rem;
 
   gap: 0.2rem;
+}
+
+.srs-mode .question-selector {
+  display: none;
+}
+
+.srs-mode .srs-selector {
+  display: flex;
+}
+
+.srs-selector {
+  display: none;
+  align-items: center;
+  white-space: nowrap;
+
+  background: var(--btn);
+  color: var(--text);
+
+  border: 1px solid var(--border);
+  border-radius: 0.25rem;
+
+  font-size: 1.1rem;
+
+  gap: 0.7rem;
+  padding: 0 0.6rem;
+}
+
+.srs-selector > span {
+  font-variant-numeric: tabular-nums;
+  cursor: default;
+}
+
+.srs-due-count {
+  color: var(--skipped);
+}
+
+.srs-review-count {
+  color: var(--danger);
+}
+
+.srs-completed-count {
+  color: var(--success);
+}
+
+.srs-selector .current {
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
 }
 
 .question-number {
@@ -1950,6 +1998,25 @@ th {
         <path d="m16 21 4-4-4-4" />
         <path d="M20 17H4" />
       </symbol>
+      <symbol
+        id="icon-srs"
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        class="lucide lucide-list-restart preview-icon"
+      >
+        <path d="M21 5H3" />
+        <path d="M7 12H3" />
+        <path d="M7 19H3" />
+        <path
+          d="M12 18a5 5 0 0 0 9-3 4.5 4.5 0 0 0-4.5-4.5c-1.33 0-2.54.54-3.41 1.41L11 14"
+        />
+        <path d="M11 10v4h4" />
+      </symbol>
     </svg>
     <div id="global-prompt" class="global-prompt">
       <p id="global-prompt-message"></p>
@@ -1979,7 +2046,11 @@ th {
             <span class="separator">/</span>
             <span class="question-count">1</span>
           </div>
-
+          <div class="srs-selector">
+            <span class="srs-due-count" title="Due"></span>
+            <span class="srs-review-count" title="Reviewing"></span>
+            <span class="srs-completed-count" title="Completed"></span>
+          </div>
           <button class="next-button" aria-label="Next question">&gt;</button>
 
           <button
@@ -2025,19 +2096,27 @@ th {
       <div class="dropdown-menu" id="mcq-dropdown-menu">
         <button
           class="editor-button"
-          title="Edit question"
-          aria-label="Edit question"
+          title="Edit Question"
+          aria-label="Edit Question"
         >
           <svg><use href="#icon-editor"></use></svg>
-          Edit question
+          Edit Question
+        </button>
+        <button
+          class="toggle-srs-button"
+          title="Toggle spaced repetition (FSRS)"
+          aria-label="Toggle spaced repetition (FSRS)"
+        >
+          <svg><use href="#icon-srs"></use></svg>
+          Toggle Repetition
         </button>
         <button
           class="download-button"
-          title="Download quiz"
-          aria-label="Download quiz"
+          title="Download as HTML"
+          aria-label="Download as HTML"
         >
           <svg><use href="#icon-download"></use></svg>
-          Download
+          Download HTML
         </button>
         <button
           class="copy-all-button"
@@ -2075,6 +2154,11 @@ th {
             />
             <span class="separator">/</span>
             <span class="question-count">1</span>
+          </div>
+          <div class="srs-selector">
+            <span class="srs-due-count" title="Due"></span>
+            <span class="srs-review-count" title="Reviewing"></span>
+            <span class="srs-completed-count" title="Completed"></span>
           </div>
 
           <button class="next-button" aria-label="Next question">&gt;</button>
@@ -2123,24 +2207,32 @@ th {
       <div class="dropdown-menu" id="flashcard-dropdown-menu">
         <button
           class="editor-button"
-          title="Edit question"
-          aria-label="Edit question"
+          title="Edit Question"
+          aria-label="Edit Question"
         >
           <svg><use href="#icon-editor"></use></svg>
-          Edit question
+          Edit Question
+        </button>
+        <button
+          class="toggle-srs-button"
+          title="Toggle spaced repetition (FSRS)"
+          aria-label="Toggle spaced repetition (FSRS)"
+        >
+          <svg><use href="#icon-srs"></use></svg>
+          Toggle Repetition
         </button>
         <button
           class="download-button"
-          title="Download flashcards"
-          aria-label="Download quiz"
+          title="Download as HTML"
+          aria-label="Download as HTML"
         >
           <svg><use href="#icon-download"></use></svg>
-          Download
+          Download HTML
         </button>
         <button
           class="copy-all-button"
-          title="Copy flashcards"
-          aria-label="Copy flashcards"
+          title="Copy quiz"
+          aria-label="Copy quiz"
         >
           <svg><use href="#icon-copy-all"></use></svg>Copy Quiz
         </button>
@@ -2179,8 +2271,8 @@ th {
 
           <button
             class="download-button"
-            title="Download quiz"
-            aria-label="Download quiz"
+            title="Download as HTML"
+            aria-label="Download as HTML"
           >
             <svg><use href="#icon-download"></use></svg>
           </button>
@@ -2337,13 +2429,13 @@ function hashQuiz(quiz2) {
 function getProgressKey(quizStorageKey) {
   return `currentQuestionIndex_${quizStorageKey}`;
 }
-function getStoredQuestionIndex(quizStorageKey) {
+function getStoredQuestionIndex(quizStorageKey, max_count) {
   try {
     const index = Number(localStorage.getItem(getProgressKey(quizStorageKey)));
     if (!Number.isInteger(index)) {
       return 0;
     }
-    return Math.max(0, Math.min(index, state.quiz.questions.length));
+    return Math.max(0, Math.min(index, max_count));
   } catch {
     return 0;
   }
@@ -2351,6 +2443,50 @@ function getStoredQuestionIndex(quizStorageKey) {
 function setStoredQuestionIndex(quizStorageKey, value) {
   try {
     localStorage.setItem(getProgressKey(quizStorageKey), String(value));
+  } catch {
+  }
+}
+
+// frontend/src/persistence/question_order.js
+function loadQuestionOrder(quizStorageKey, questionCount) {
+  try {
+    const data = JSON.parse(
+      localStorage.getItem(`questionOrder_${quizStorageKey}`)
+    );
+    if (Array.isArray(data)) {
+      return data;
+    }
+  } catch {
+  }
+  return Array.from({ length: questionCount }, (_, index) => index);
+}
+function loadQuestionSRSState(quizStorageKey) {
+  try {
+    const data = JSON.parse(
+      localStorage.getItem(`questionSRSQueue_${quizStorageKey}`)
+    );
+    if (data && typeof data === "object" && Array.isArray(data.queue)) {
+      return {
+        score: data.score ?? 0,
+        queue: data.queue
+      };
+    }
+  } catch {
+  }
+  return null;
+}
+function saveQuestionSRSState(quizStorageKey, srsState) {
+  try {
+    localStorage.setItem(
+      `questionSRSQueue_${quizStorageKey}`,
+      JSON.stringify(srsState)
+    );
+  } catch {
+  }
+}
+function resetQuestionSRSState(quizStorageKey) {
+  try {
+    localStorage.removeItem(`questionSRSQueue_${quizStorageKey}`);
   } catch {
   }
 }
@@ -2369,6 +2505,12 @@ var state = {
   currentQuestion: null,
   answerRevealed: false,
   currentQuestionIndex: 0,
+  questionOrder: [],
+  questionSRSQueue: null,
+  srs: false,
+  srsQueueSize: 20,
+  // Maximum level before removing from queue
+  srsLevel: 5,
   questionResults: [],
   questionAnswers: [],
   defaultStartDate: Date.now(),
@@ -2383,11 +2525,18 @@ var state = {
 function initializeState(quiz2) {
   state.quiz = quiz2;
   state.quizStorageKey = hashQuiz(quiz2);
-  state.currentQuestionIndex = getStoredQuestionIndex(state.quizStorageKey);
+  state.currentQuestionIndex = getStoredQuestionIndex(
+    state.quizStorageKey,
+    state.quiz.questions.length
+  );
   state.currentQuestion = null;
   state.optionButtons = [];
   state.wrongAnswerCount = 0;
   state.answerRevealed = false;
+  state.questionOrder = loadQuestionOrder(
+    state.quizStorageKey,
+    state.quiz.questions.length
+  );
   state.questionResults = new Array(quiz2.questions.length).fill(UNANSWERED);
   state.questionAnswers = new Array(quiz2.questions.length).fill(null);
   state.defaultStartDate = Date.now();
@@ -2827,6 +2976,226 @@ function formatQuizAsText(quiz2) {
   return lines.join("\n").trim();
 }
 
+// frontend/src/srs.js
+var SRS_CONFIG = {
+  request_retention: 0.9,
+  // TODO: expose this as state
+  maximum_interval: 365,
+  enable_fuzz: true,
+  enable_short_term: true
+};
+var VALID_RATINGS = /* @__PURE__ */ new Set(["Again", "Hard", "Good", "Easy"]);
+var fsrsPromise = null;
+var fsrsModule = null;
+var scheduler = null;
+var cards = /* @__PURE__ */ new Map();
+var history = [];
+async function loadFSRS() {
+  if (scheduler) return;
+  if (!fsrsPromise) {
+    fsrsPromise = import("https://cdn.jsdelivr.net/npm/ts-fsrs@5.4.2/+esm");
+  }
+  try {
+    fsrsModule = await fsrsPromise;
+    scheduler = fsrsModule.fsrs(SRS_CONFIG);
+  } catch (error) {
+    fsrsPromise = null;
+    fsrsModule = null;
+    scheduler = null;
+    throw error;
+  }
+}
+function restoreCard(card) {
+  return {
+    ...card,
+    due: new Date(card.due),
+    last_review: card.last_review ? new Date(card.last_review) : void 0
+  };
+}
+function compareSRSItems(a, b) {
+  const aDue = new Date(a.card.due).getTime();
+  const bDue = new Date(b.card.due).getTime();
+  if (aDue !== bDue) {
+    return aDue - bDue;
+  }
+  return a.index - b.index;
+}
+function sortSRSQueue() {
+  state.questionSRSQueue.sort(compareSRSItems);
+}
+function saveSRS(quizStorageKey) {
+  const active = new Set(state.questionSRSQueue.map(({ index }) => index));
+  saveQuestionSRSState(quizStorageKey, {
+    queue: Array.from(cards, ([index, card]) => ({
+      index,
+      card,
+      active: active.has(index)
+    }))
+  });
+}
+function addNewSRSQuestion() {
+  const queue = state.questionSRSQueue;
+  if (queue.length >= state.srsQueueSize) {
+    return null;
+  }
+  const active = new Set(queue.map(({ index: index2 }) => index2));
+  const index = state.questionOrder.find(
+    (questionIndex) => !cards.has(questionIndex) && !active.has(questionIndex)
+  );
+  if (index === void 0) {
+    return null;
+  }
+  const card = fsrsModule.createEmptyCard();
+  cards.set(index, card);
+  queue.push({
+    index,
+    card
+  });
+  return index;
+}
+function addNextSRSQuestion() {
+  return addNewSRSQuestion();
+}
+async function initSRS(quizStorageKey, currentQuestionIndex) {
+  await loadFSRS();
+  history.length = 0;
+  cards.clear();
+  state.questionSRSQueue = [];
+  const savedState = loadQuestionSRSState(quizStorageKey);
+  if (savedState) {
+    const validIndices = new Set(state.questionOrder);
+    for (const item of savedState.queue) {
+      if (!validIndices.has(item.index) || !item.card || cards.has(item.index)) {
+        continue;
+      }
+      const card = restoreCard(item.card);
+      cards.set(item.index, card);
+      if (item.active !== false && state.questionSRSQueue.length < state.srsQueueSize) {
+        state.questionSRSQueue.push({
+          index: item.index,
+          card
+        });
+      }
+    }
+  }
+  if (!savedState && state.questionOrder.includes(currentQuestionIndex)) {
+    const card = fsrsModule.createEmptyCard();
+    cards.set(currentQuestionIndex, card);
+    state.questionSRSQueue.push({
+      index: currentQuestionIndex,
+      card
+    });
+  }
+  const initialSize = Math.min(state.srsQueueSize, state.questionOrder.length);
+  while (state.questionSRSQueue.length < initialSize) {
+    if (addNextSRSQuestion() === null) {
+      break;
+    }
+  }
+  sortSRSQueue();
+  saveSRS(quizStorageKey);
+}
+function nextSRSQuestion(currentQuestionIndex) {
+  return state.questionSRSQueue[0]?.index ?? null;
+}
+async function updateSRS(rating, quizStorageKey) {
+  if (!VALID_RATINGS.has(rating)) {
+    return false;
+  }
+  await loadFSRS();
+  const queue = state.questionSRSQueue;
+  if (!queue?.length) {
+    return false;
+  }
+  const questionIndex = state.currentQuestionIndex;
+  const position = queue.findIndex(({ index }) => index === questionIndex);
+  if (position === -1) {
+    return false;
+  }
+  const item = queue[position];
+  const previousQueue = queue.map(({ index }) => index);
+  const fsrsRating = fsrsModule.Rating[rating];
+  const result = scheduler.next(item.card, /* @__PURE__ */ new Date(), fsrsRating);
+  item.card = result.card;
+  cards.set(questionIndex, result.card);
+  const change = {
+    questionIndex,
+    reviewLog: result.log,
+    previousQueue,
+    addedIndices: [],
+    quizStorageKey
+  };
+  if (result.card.state === fsrsModule.State.Review) {
+    queue.splice(position, 1);
+    const addedIndex = addNewSRSQuestion();
+    if (addedIndex !== null) {
+      change.addedIndices.push(addedIndex);
+    }
+  }
+  sortSRSQueue();
+  history.push(change);
+  saveSRS(quizStorageKey);
+  return true;
+}
+function prevSRSQuestion(quizStorageKey) {
+  const change = history.at(-1);
+  if (!change) {
+    return null;
+  }
+  if (change.quizStorageKey !== quizStorageKey) {
+    return null;
+  }
+  history.pop();
+  for (const index of change.addedIndices) {
+    cards.delete(index);
+  }
+  const card = cards.get(change.questionIndex);
+  if (card) {
+    const previousCard = scheduler.rollback(card, change.reviewLog);
+    cards.set(change.questionIndex, previousCard);
+  }
+  state.questionSRSQueue = change.previousQueue.map((index) => {
+    const card2 = cards.get(index);
+    if (!card2) {
+      return null;
+    }
+    return {
+      index,
+      card: card2
+    };
+  }).filter(Boolean);
+  sortSRSQueue();
+  saveSRS(quizStorageKey);
+  return change.questionIndex;
+}
+function getSRSCounts() {
+  const total = state.questionOrder.length;
+  const due = state.questionOrder.filter((index) => {
+    const card = cards.get(index);
+    return !card?.last_review;
+  }).length;
+  const reviewing = state.questionSRSQueue.filter(({ card }) => {
+    return card.last_review;
+  }).length;
+  const completed = total - due - reviewing;
+  return {
+    due,
+    reviewing,
+    completed
+  };
+}
+function getSRSCurrentCategory() {
+  const currentIndex = state.currentQuestionIndex;
+  const card = cards.get(currentIndex);
+  if (!card?.last_review) {
+    return "due";
+  }
+  const isInQueue = state.questionSRSQueue.some(
+    ({ index }) => index === currentIndex
+  );
+  return isInQueue ? "reviewing" : "completed";
+}
+
 // frontend/src/timer.js
 var timerElements = document.querySelectorAll(".timer");
 function getTimerKey(quizStorageKey) {
@@ -2903,7 +3272,8 @@ async function renderFlashcard() {
   answerEl.classList.remove("visible");
   explanationEl.style.display = "none";
   ratingEl.style.display = "none";
-  const question = state.quiz.questions[state.currentQuestionIndex];
+  const questionArrayIndex = getCurrentQuestionArrayIndex();
+  const question = state.quiz.questions[questionArrayIndex];
   state.currentQuestion = question;
   renderQuestion(questionText, question);
   const answerIndex = question.options.length === 1 ? 0 : question.correct_index;
@@ -2934,11 +3304,16 @@ function showFlashcardExplanation(question) {
     explanationEl.style.display = "none";
   }
 }
-function rateFlashcard(correct) {
+async function rateFlashcard(correct) {
   if (!state.answerRevealed) {
     return;
   }
-  state.questionResults[state.currentQuestionIndex] = correct ? CORRECT : WRONG;
+  const questionArrayIndex = getCurrentQuestionArrayIndex();
+  state.questionResults[questionArrayIndex] = correct ? CORRECT : WRONG;
+  const rating = correct ? "Good" : "Again";
+  if (state.srs) {
+    await updateSRS(rating, state.quizStorageKey);
+  }
   saveStats();
   nextQuestion();
 }
@@ -2957,7 +3332,7 @@ async function renderResults() {
     (x) => x === UNANSWERED
   ).length;
   const skipped = state.questionResults.filter((x) => x === SKIPPED).length;
-  const total = state.quiz.questions.length;
+  const total = state.questionOrder.length;
   const answered = correct + wrong;
   const accuracy = answered > 0 ? correct / answered * 100 : 0;
   const elapsed = state.timer.visible ? state.timer.elapsed + Math.floor((Date.now() - state.timer.start) / 1e3) : Math.floor((Date.now() - state.defaultStartDate) / 1e3);
@@ -3033,7 +3408,8 @@ function showCorrectionSheet() {
     [UNANSWERED]: "unanswered",
     [SKIPPED]: "skipped"
   };
-  for (let index = 0; index < questions.length; index++) {
+  for (let orderIndex = 0; orderIndex < state.questionOrder.length; orderIndex++) {
+    const index = state.questionOrder[orderIndex];
     const question = questions[index];
     const correctAnswer = question.options[question.correct_index];
     const userIndex = state.questionAnswers[index];
@@ -3041,8 +3417,7 @@ function showCorrectionSheet() {
     const article = document.createElement("article");
     const currentClass = resultClass[state.questionResults[index]];
     article.innerHTML = `
-
-<h3 class="${currentClass}">Question ${index + 1}</h3>
+<h3 class="${currentClass}">Question ${orderIndex + 1}</h3>
 
 <p>${renderMarkdown(question.question, state.mathReady)}</p>
 
@@ -3066,9 +3441,8 @@ ${question.explanation ? `
     container.appendChild(article);
   }
 }
-var questionNumber = document.getElementById("question-number");
-function restartQuiz() {
-  state.currentQuestionIndex = 0;
+async function restartQuiz() {
+  state.currentQuestionIndex = state.questionOrder[0];
   updateQuestionNumbers();
   state.answerRevealed = false;
   state.wrongAnswerCount = 0;
@@ -3092,7 +3466,11 @@ function restartQuiz() {
     });
   }
   saveTimer();
-  setStoredQuestionIndex(state.quizStorageKey, 0);
+  setStoredQuestionIndex(state.quizStorageKey, state.currentQuestionIndex);
+  resetQuestionSRSState(state.quizStorageKey);
+  if (state.srs) {
+    await initSRS(state.quizStorageKey, state.currentQuestionIndex);
+  }
   const results2 = document.getElementById("results");
   results2.style.display = "none";
   document.getElementById("restart-confirm").style.display = "none";
@@ -3116,31 +3494,71 @@ function cancelRestart() {
 
 // frontend/src/quiz.js
 var results = document.getElementById("results");
-function nextQuestion() {
-  goTo(state.currentQuestionIndex + 1);
+function getCurrentQuestionArrayIndex() {
+  return state.currentQuestionIndex;
 }
-function prevQuestion() {
-  if (state.currentQuestionIndex <= 0) return;
-  const results2 = document.getElementById("results");
-  results2.style.display = "none";
-  goTo(state.currentQuestionIndex - 1);
-}
-function goTo(questionIndex) {
-  const questionCount = state.quiz.questions.length;
-  if (questionIndex < 0) {
-    questionIndex = 0;
+async function nextQuestion() {
+  if (state.srs) {
+    const questionIndex2 = nextSRSQuestion(state.currentQuestionIndex);
+    if (questionIndex2 === null) {
+      renderResults();
+      return;
+    }
+    goTo(questionIndex2);
+    return;
   }
-  if (questionIndex >= questionCount) {
-    state.currentQuestionIndex = questionCount;
-    setStoredQuestionIndex(state.quizStorageKey, state.currentQuestionIndex);
+  const currentOrderIndex = state.questionOrder.indexOf(
+    state.currentQuestionIndex
+  );
+  if (currentOrderIndex === -1) {
+    return;
+  }
+  const questionIndex = state.questionOrder[currentOrderIndex + 1];
+  if (questionIndex === void 0) {
     renderResults();
     return;
   }
+  goTo(questionIndex);
+}
+function prevQuestion() {
+  if (state.srs) {
+    const questionIndex2 = prevSRSQuestion(state.quizStorageKey);
+    if (questionIndex2 === null) {
+      return;
+    }
+    results.style.display = "none";
+    goTo(questionIndex2);
+    return;
+  }
+  const currentOrderIndex = state.questionOrder.indexOf(
+    state.currentQuestionIndex
+  );
+  if (currentOrderIndex <= 0) {
+    return;
+  }
+  results.style.display = "none";
+  const questionIndex = state.questionOrder[currentOrderIndex - 1];
+  goTo(questionIndex);
+}
+function goTo(questionIndex) {
+  if (questionIndex < 0) {
+    questionIndex = 0;
+  }
   state.currentQuestionIndex = questionIndex;
-  setStoredQuestionIndex(state.quizStorageKey, state.currentQuestionIndex);
+  if (questionIndex >= state.quiz.questions.length) {
+    renderResults();
+    return;
+  }
+  state.currentQuestion = state.quiz.questions[questionIndex];
   state.answerRevealed = false;
+  if (!state.srs) {
+    setStoredQuestionIndex(state.quizStorageKey, questionIndex);
+  }
   updateQuestionNumbers();
-  const question = state.quiz.questions[questionIndex];
+  renderCurrentQuestion();
+}
+function renderCurrentQuestion() {
+  const question = state.currentQuestion;
   const distractorCount = question.options.length - 1;
   let mode2 = state.mode;
   if (mode2 === "flashcard" || distractorCount < 2) {
@@ -3160,31 +3578,47 @@ function goTo(questionIndex) {
 }
 function updateQuestionNumbers() {
   document.querySelectorAll(".question-number").forEach((element) => {
-    element.value = state.currentQuestionIndex + 1;
+    if (state.srs) {
+      element.value = state.currentQuestionIndex + 1;
+      return;
+    }
+    element.value = state.questionOrder.indexOf(state.currentQuestionIndex) + 1;
   });
 }
-function handleAnswer(index, button) {
+function updateQuestionCounts() {
+  document.querySelectorAll(".question-count").forEach((element) => {
+    element.textContent = state.questionOrder.length;
+  });
+}
+async function handleAnswer(index, button) {
   saveStats();
+  const questionArrayIndex = getCurrentQuestionArrayIndex();
   if (index === state.currentQuestion.correct_index) {
     button.classList.add("correct");
     button.disabled = true;
     state.answerRevealed = true;
     if (state.wrongAnswerCount === 0) {
-      state.questionResults[state.currentQuestionIndex] = CORRECT;
-      state.questionAnswers[state.currentQuestionIndex] = index;
+      state.questionResults[questionArrayIndex] = CORRECT;
+      state.questionAnswers[questionArrayIndex] = index;
       saveStats();
+    }
+    if (state.srs) {
+      await updateSRS("Good", state.quizStorageKey);
     }
     state.optionButtons.forEach((btn) => btn.disabled = true);
     showMcqExplanation(state.currentQuestion);
   } else {
     button.classList.add("wrong");
     button.disabled = true;
-    state.questionResults[state.currentQuestionIndex] = WRONG;
-    if (state.questionAnswers[state.currentQuestionIndex] === null) {
-      state.questionAnswers[state.currentQuestionIndex] = index;
+    state.questionResults[questionArrayIndex] = WRONG;
+    if (state.questionAnswers[questionArrayIndex] === null) {
+      state.questionAnswers[questionArrayIndex] = index;
     }
     saveStats();
     state.wrongAnswerCount++;
+    if (state.srs && state.wrongAnswerCount == 1) {
+      await updateSRS("Again", state.quizStorageKey);
+    }
     if (state.wrongAnswerCount === state.currentQuestion.options.length - 1) {
       revealAnswer();
     }
@@ -3192,8 +3626,9 @@ function handleAnswer(index, button) {
 }
 function revealAnswer() {
   state.answerRevealed = true;
-  if (state.questionResults[state.currentQuestionIndex] === UNANSWERED) {
-    state.questionResults[state.currentQuestionIndex] = SKIPPED;
+  const questionArrayIndex = getCurrentQuestionArrayIndex();
+  if (state.questionResults[questionArrayIndex] === UNANSWERED) {
+    state.questionResults[questionArrayIndex] = SKIPPED;
     saveStats();
   }
   if (document.getElementById("flashcard-box").style.display !== "none") {
@@ -3202,7 +3637,6 @@ function revealAnswer() {
     document.getElementById("flashcard-rating").style.display = "flex";
     return;
   }
-  state.currentQuestion = state.quiz.questions[state.currentQuestionIndex];
   const optionsContainer = document.getElementById("options");
   const buttons = optionsContainer.querySelectorAll("button");
   buttons[state.currentQuestion.correct_index].classList.add("correct");
@@ -3211,19 +3645,39 @@ function revealAnswer() {
 function setQuizTitle(title) {
   const displayTitle = title.slice(0, 60);
   document.title = displayTitle;
-  document.querySelectorAll(".title").forEach((e) => e.textContent = title);
+  document.querySelectorAll(".title").forEach((e) => {
+    e.textContent = title;
+  });
 }
 function renderQuestion(questionText, question) {
   questionText.innerHTML = renderMarkdown(question.question, state.mathReady);
+  if (state.srs) {
+    updateSRSCounts();
+  }
+}
+function updateSRSCounts() {
+  const { due, reviewing, completed } = getSRSCounts();
+  const currentCategory = getSRSCurrentCategory();
+  document.querySelectorAll(".srs-due-count").forEach((element) => {
+    element.textContent = String(due);
+    element.classList.toggle("current", currentCategory === "due");
+  });
+  document.querySelectorAll(".srs-review-count").forEach((element) => {
+    element.textContent = String(reviewing);
+    element.classList.toggle("current", currentCategory === "reviewing");
+  });
+  document.querySelectorAll(".srs-completed-count").forEach((element) => {
+    element.textContent = String(completed);
+    element.classList.toggle("current", currentCategory === "completed");
+  });
 }
 function updateNavigation() {
   document.querySelectorAll(".prev-button").forEach((button) => {
-    button.disabled = state.currentQuestionIndex === 0;
-  });
-}
-function updateQuestionCounts() {
-  document.querySelectorAll(".question-count").forEach((element) => {
-    element.textContent = state.quiz.questions.length;
+    if (state.srs) {
+      button.disabled = false;
+      return;
+    }
+    button.disabled = state.questionOrder.indexOf(state.currentQuestionIndex) <= 0;
   });
 }
 function setMode(mode2) {
@@ -3241,6 +3695,18 @@ function switchMode() {
     renderMCQ();
   } else {
     renderFlashcard();
+  }
+}
+async function toggleSRS() {
+  state.srs = !state.srs;
+  document.body.classList.toggle("srs-mode", state.srs);
+  if (state.srs) {
+    await initSRS(state.quizStorageKey, state.currentQuestionIndex);
+    updateSRSCounts();
+    const questionIndex = nextSRSQuestion(state.currentQuestionIndex);
+    if (questionIndex !== null) {
+      goTo(questionIndex);
+    }
   }
 }
 
@@ -3295,18 +3761,10 @@ async function copyQuestion() {
     title: state.quiz.title,
     questions: [question]
   };
-  await copyToClipboard(
-    formatQuizAsText(
-      quiz2
-    )
-  );
+  await copyToClipboard(formatQuizAsText(quiz2));
 }
 async function copyQuiz() {
-  await copyToClipboard(
-    formatQuizAsText(
-      state.quiz
-    )
-  );
+  await copyToClipboard(formatQuizAsText(state.quiz));
 }
 async function copyToClipboard(text) {
   if (navigator.clipboard?.writeText) {
@@ -3314,10 +3772,29 @@ async function copyToClipboard(text) {
       await navigator.clipboard.writeText(text);
       return true;
     } catch (error) {
-      console.error("Failed to copy:", error);
+      console.warn("Clipboard API failed, trying fallback:", error);
     }
   }
-  return false;
+  return copyToClipboardFallback(text);
+}
+function copyToClipboardFallback(text) {
+  const textarea = document.createElement("textarea");
+  textarea.value = text;
+  textarea.style.position = "fixed";
+  textarea.style.left = "-9999px";
+  textarea.style.top = "0";
+  textarea.setAttribute("readonly", "");
+  document.body.appendChild(textarea);
+  textarea.select();
+  textarea.setSelectionRange(0, textarea.value.length);
+  let success = false;
+  try {
+    success = document.execCommand("copy");
+  } catch (error) {
+    console.error("Fallback copy failed:", error);
+  }
+  document.body.removeChild(textarea);
+  return success;
 }
 
 // frontend/src/persistence/quiz_edits.js
@@ -3734,6 +4211,9 @@ function initializeEvents() {
   });
   document.querySelector(".known-button").addEventListener("click", () => rateFlashcard(true));
   document.querySelector(".unknown-button").addEventListener("click", () => rateFlashcard(false));
+  document.querySelectorAll(".toggle-srs-button").forEach((button) => {
+    button.addEventListener("click", toggleSRS);
+  });
   document.getElementById("results-back-button").addEventListener("click", prevQuestion);
   document.getElementById("restart-button").addEventListener("click", confirmRestart);
   document.getElementById("confirm-restart-button").addEventListener("click", restartQuiz);
@@ -3855,17 +4335,17 @@ function initializeEvents() {
   questionBox.addEventListener("click", handleBoxClick);
   flashcardBox.addEventListener("click", handleBoxClick);
   document.querySelectorAll(".question-selector").forEach((questionSelector) => {
-    const questionNumber2 = questionSelector.querySelector(".question-number");
+    const questionNumber = questionSelector.querySelector(".question-number");
     questionSelector.addEventListener("click", () => {
-      questionNumber2.focus();
-      questionNumber2.select();
+      questionNumber.focus();
+      questionNumber.select();
     });
-    questionNumber2.addEventListener("input", () => {
-      questionNumber2.value = questionNumber2.value.replace(/\D/g, "");
+    questionNumber.addEventListener("input", () => {
+      questionNumber.value = questionNumber.value.replace(/\D/g, "");
     });
-    questionNumber2.addEventListener("change", () => {
-      if (!questionNumber2.value) return;
-      goTo(Number(questionNumber2.value) - 1);
+    questionNumber.addEventListener("change", () => {
+      if (!questionNumber.value) return;
+      goTo(Number(questionNumber.value) - 1);
     });
   });
 }
