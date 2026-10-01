@@ -15,7 +15,6 @@ export async function renderFlashcard() {
   const questionText = flashcardBox.querySelector(".flashcard-question");
   const answerEl = flashcardBox.querySelector(".flashcard-answer");
   const explanationEl = flashcardBox.querySelector(".flashcard-explanation");
-  const ratingEl = flashcardBox.querySelector("#flashcard-rating");
 
   if (!state.quiz.questions || state.quiz.questions.length === 0) {
     questionText.textContent = "No valid questions parsed";
@@ -24,7 +23,6 @@ export async function renderFlashcard() {
 
   answerEl.classList.remove("visible");
   explanationEl.style.display = "none";
-  ratingEl.style.display = "none";
 
   const questionArrayIndex = getCurrentQuestionArrayIndex();
   const question = state.quiz.questions[questionArrayIndex];
@@ -78,12 +76,6 @@ export async function rateFlashcard(correct) {
   const questionArrayIndex = getCurrentQuestionArrayIndex();
 
   state.questionResults[questionArrayIndex] = correct ? CORRECT : WRONG;
-
-  const rating = correct ? "Good" : "Again";
-
-  if (state.srs) {
-    await updateSRS(rating, state.quizStorageKey);
-  }
 
   saveStats();
   nextQuestion();

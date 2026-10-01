@@ -1411,11 +1411,16 @@ button:disabled {
   opacity: 0.8;
 }
 
-#flashcard-rating {
+#flashcard-rating,
+.fsrs-rating {
   display: none;
   justify-content: center;
   gap: 1rem;
   margin-top: 1rem;
+}
+
+.answer-revealed #flashcard-rating {
+  display: flex;
 }
 
 .flashcard-rating-button {
@@ -1519,6 +1524,10 @@ button:disabled {
   display: none;
 }
 
+.srs-mode .next-button {
+  display: none;
+}
+
 .srs-mode .srs-selector {
   display: flex;
 }
@@ -1538,6 +1547,47 @@ button:disabled {
 
   gap: 0.7rem;
   padding: 0 0.6rem;
+}
+
+.srs-mode #flashcard-rating {
+  display: none;
+}
+
+.fsrs-rating {
+  display: none;
+}
+
+.fsrs-rating-button {
+  width: 4.5rem;
+  height: 3rem;
+
+  font-size: 1.1rem;
+  line-height: 1;
+
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  background: var(--btn);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.fsrs-rating-button.again-button {
+  background: var(--wrong_bg);
+}
+
+.fsrs-rating-button.hard-button {
+  background: color-mix(in srgb, var(--skipped) 30%, var(--btn));
+}
+
+.fsrs-rating-button.good-button {
+  background: var(--correct_bg);
+}
+
+.fsrs-rating-button.easy-button {
+  background: color-mix(in srgb, var(--success) 45%, var(--btn));
+}
+.srs-mode.answer-revealed .fsrs-rating {
+  display: flex;
 }
 
 .srs-selector > span {
@@ -2131,6 +2181,20 @@ th {
         <div id="options"></div>
         <div id="explanation"></div>
       </div>
+      <div class="fsrs-rating button-row">
+        <button class="fsrs-rating-button again-button" data-rating="1">
+          Again
+        </button>
+        <button class="fsrs-rating-button hard-button" data-rating="2">
+          Hard
+        </button>
+        <button class="fsrs-rating-button good-button" data-rating="3">
+          Good
+        </button>
+        <button class="fsrs-rating-button easy-button" data-rating="4">
+          Easy
+        </button>
+      </div>
     </div>
 
     <div id="flashcard-box" class="page" style="display: none">
@@ -2247,6 +2311,21 @@ th {
       <div id="flashcard-rating" class="button-row">
         <button class="flashcard-rating-button unknown-button">✗</button>
         <button class="flashcard-rating-button known-button">✓</button>
+      </div>
+
+      <div class="fsrs-rating button-row">
+        <button class="fsrs-rating-button again-button" data-rating="1">
+          Again
+        </button>
+        <button class="fsrs-rating-button hard-button" data-rating="2">
+          Hard
+        </button>
+        <button class="fsrs-rating-button good-button" data-rating="3">
+          Good
+        </button>
+        <button class="fsrs-rating-button easy-button" data-rating="4">
+          Easy
+        </button>
       </div>
     </div>
 
@@ -3095,7 +3174,7 @@ async function initSRS(quizStorageKey, currentQuestionIndex) {
   sortSRSQueue();
   saveSRS(quizStorageKey);
 }
-function nextSRSQuestion(currentQuestionIndex) {
+function nextSRSQuestion() {
   return state.questionSRSQueue[0]?.index ?? null;
 }
 async function updateSRS(rating, quizStorageKey) {
@@ -3264,14 +3343,12 @@ async function renderFlashcard() {
   const questionText = flashcardBox.querySelector(".flashcard-question");
   const answerEl = flashcardBox.querySelector(".flashcard-answer");
   const explanationEl = flashcardBox.querySelector(".flashcard-explanation");
-  const ratingEl = flashcardBox.querySelector("#flashcard-rating");
   if (!state.quiz.questions || state.quiz.questions.length === 0) {
     questionText.textContent = "No valid questions parsed";
     return;
   }
   answerEl.classList.remove("visible");
   explanationEl.style.display = "none";
-  ratingEl.style.display = "none";
   const questionArrayIndex = getCurrentQuestionArrayIndex();
   const question = state.quiz.questions[questionArrayIndex];
   state.currentQuestion = question;
@@ -3310,10 +3387,6 @@ async function rateFlashcard(correct) {
   }
   const questionArrayIndex = getCurrentQuestionArrayIndex();
   state.questionResults[questionArrayIndex] = correct ? CORRECT : WRONG;
-  const rating = correct ? "Good" : "Again";
-  if (state.srs) {
-    await updateSRS(rating, state.quizStorageKey);
-  }
   saveStats();
   nextQuestion();
 }
@@ -3594,18 +3667,12 @@ async function handleAnswer(index, button) {
   saveStats();
   const questionArrayIndex = getCurrentQuestionArrayIndex();
   if (index === state.currentQuestion.correct_index) {
-    button.classList.add("correct");
-    button.disabled = true;
-    state.answerRevealed = true;
+    revealAnswer();
     if (state.wrongAnswerCount === 0) {
       state.questionResults[questionArrayIndex] = CORRECT;
       state.questionAnswers[questionArrayIndex] = index;
       saveStats();
     }
-    if (state.srs) {
-      await updateSRS("Good", state.quizStorageKey);
-    }
-    state.optionButtons.forEach((btn) => btn.disabled = true);
     showMcqExplanation(state.currentQuestion);
   } else {
     button.classList.add("wrong");
@@ -3616,9 +3683,6 @@ async function handleAnswer(index, button) {
     }
     saveStats();
     state.wrongAnswerCount++;
-    if (state.srs && state.wrongAnswerCount == 1) {
-      await updateSRS("Again", state.quizStorageKey);
-    }
     if (state.wrongAnswerCount === state.currentQuestion.options.length - 1) {
       revealAnswer();
     }
@@ -3627,20 +3691,36 @@ async function handleAnswer(index, button) {
 function revealAnswer() {
   state.answerRevealed = true;
   const questionArrayIndex = getCurrentQuestionArrayIndex();
+  state.optionButtons.forEach((btn) => btn.disabled = true);
   if (state.questionResults[questionArrayIndex] === UNANSWERED) {
     state.questionResults[questionArrayIndex] = SKIPPED;
     saveStats();
   }
+  document.body.classList.add("answer-revealed");
   if (document.getElementById("flashcard-box").style.display !== "none") {
     document.querySelector(".flashcard-answer").classList.add("visible");
     showFlashcardExplanation(state.currentQuestion);
-    document.getElementById("flashcard-rating").style.display = "flex";
     return;
   }
   const optionsContainer = document.getElementById("options");
   const buttons = optionsContainer.querySelectorAll("button");
   buttons[state.currentQuestion.correct_index].classList.add("correct");
   showMcqExplanation(state.currentQuestion);
+}
+async function rateFSRS(rating) {
+  if (!state.answerRevealed) {
+    return;
+  }
+  const questionArrayIndex = getCurrentQuestionArrayIndex();
+  const ratingNames = {
+    1: "Again",
+    2: "Hard",
+    3: "Good",
+    4: "Easy"
+  };
+  state.questionResults[questionArrayIndex] = rating === 1 ? WRONG : CORRECT;
+  await updateSRS(ratingNames[rating], state.quizStorageKey);
+  saveStats();
 }
 function setQuizTitle(title) {
   const displayTitle = title.slice(0, 60);
@@ -3650,6 +3730,7 @@ function setQuizTitle(title) {
   });
 }
 function renderQuestion(questionText, question) {
+  document.body.classList.remove("answer-revealed");
   questionText.innerHTML = renderMarkdown(question.question, state.mathReady);
   if (state.srs) {
     updateSRSCounts();
@@ -4209,8 +4290,14 @@ function initializeEvents() {
   document.querySelectorAll(".mode-button").forEach((button) => {
     button.addEventListener("click", switchMode);
   });
-  document.querySelector(".known-button").addEventListener("click", () => rateFlashcard(true));
-  document.querySelector(".unknown-button").addEventListener("click", () => rateFlashcard(false));
+  document.querySelector(".known-button").addEventListener("click", () => rateFlashcard(3));
+  document.querySelector(".unknown-button").addEventListener("click", () => rateFlashcard(1));
+  document.querySelectorAll(".fsrs-rating-button").forEach((button) => {
+    button.addEventListener("click", async () => {
+      await rateFSRS(Number(button.dataset.rating));
+      nextQuestion();
+    });
+  });
   document.querySelectorAll(".toggle-srs-button").forEach((button) => {
     button.addEventListener("click", toggleSRS);
   });
@@ -4264,19 +4351,26 @@ function initializeEvents() {
       }
     });
   });
-  document.addEventListener("keydown", (e) => {
+  document.addEventListener("keydown", async (e) => {
     if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
     if (document.getElementById("question-box")?.style.display === "none" && document.getElementById("flashcard-box")?.style.display === "none") {
       return;
     }
     const key = e.key.toLowerCase();
+    if (state.answerRevealed && state.srs) {
+      if (["1", "2", "3", "4"].includes(key)) {
+        await rateFSRS(Number(key));
+        nextQuestion();
+        return;
+      }
+    }
     if (state.mode === "flashcard") {
       if (key === "1") {
-        rateFlashcard(false);
+        rateFlashcard(1);
         return;
       }
       if (key === "2") {
-        rateFlashcard(true);
+        rateFlashcard(1);
         return;
       }
     }
@@ -4295,8 +4389,11 @@ function initializeEvents() {
       e.preventDefault();
       if (!state.answerRevealed) {
         revealAnswer();
+      } else if (state.srs) {
+        await rateFSRS(3);
+        nextQuestion();
       } else if (state.mode === "flashcard") {
-        rateFlashcard(true);
+        rateFlashcard(3);
       } else {
         nextQuestion();
       }
@@ -4315,7 +4412,7 @@ function initializeEvents() {
   });
   const questionBox = document.getElementById("question-box");
   const flashcardBox = document.getElementById("flashcard-box");
-  function handleBoxClick(e) {
+  async function handleBoxClick(e) {
     if (e.target.closest("button, input")) return;
     const selection = window.getSelection();
     if (selection && selection.toString().length > 0) return;
@@ -4326,10 +4423,20 @@ function initializeEvents() {
       if (!state.answerRevealed) {
         revealAnswer();
       } else {
+        if (state.srs) {
+          await rateFSRS(3);
+        }
         nextQuestion();
       }
     } else if (x < rect.width * 0.3) {
-      prevQuestion();
+      if (state.srs) {
+        if (state.answerRevealed) {
+          await rateFSRS(1);
+          nextQuestion();
+        }
+      } else {
+        prevQuestion();
+      }
     }
   }
   questionBox.addEventListener("click", handleBoxClick);

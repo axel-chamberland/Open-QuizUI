@@ -199,11 +199,16 @@ button:disabled {
   opacity: 0.8;
 }
 
-#flashcard-rating {
+#flashcard-rating,
+.fsrs-rating {
   display: none;
   justify-content: center;
   gap: 1rem;
   margin-top: 1rem;
+}
+
+.answer-revealed #flashcard-rating {
+  display: flex;
 }
 
 .flashcard-rating-button {
@@ -307,6 +312,10 @@ button:disabled {
   display: none;
 }
 
+.srs-mode .next-button {
+  display: none;
+}
+
 .srs-mode .srs-selector {
   display: flex;
 }
@@ -326,6 +335,47 @@ button:disabled {
 
   gap: 0.7rem;
   padding: 0 0.6rem;
+}
+
+.srs-mode #flashcard-rating {
+  display: none;
+}
+
+.fsrs-rating {
+  display: none;
+}
+
+.fsrs-rating-button {
+  width: 4.5rem;
+  height: 3rem;
+
+  font-size: 1.1rem;
+  line-height: 1;
+
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  background: var(--btn);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.fsrs-rating-button.again-button {
+  background: var(--wrong_bg);
+}
+
+.fsrs-rating-button.hard-button {
+  background: color-mix(in srgb, var(--skipped) 30%, var(--btn));
+}
+
+.fsrs-rating-button.good-button {
+  background: var(--correct_bg);
+}
+
+.fsrs-rating-button.easy-button {
+  background: color-mix(in srgb, var(--success) 45%, var(--btn));
+}
+.srs-mode.answer-revealed .fsrs-rating {
+  display: flex;
 }
 
 .srs-selector > span {

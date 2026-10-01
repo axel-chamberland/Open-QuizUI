@@ -6,6 +6,7 @@ import {
   revealAnswer,
   switchMode,
   toggleSRS,
+  rateFSRS,
 } from "../quiz.js";
 import { downloadQuizHTML } from "../shared/download.js";
 import { state } from "../state.js";
@@ -69,11 +70,18 @@ export function initializeEvents() {
 
   document
     .querySelector(".known-button")
-    .addEventListener("click", () => rateFlashcard(true));
+    .addEventListener("click", () => rateFlashcard(3));
 
   document
     .querySelector(".unknown-button")
-    .addEventListener("click", () => rateFlashcard(false));
+    .addEventListener("click", () => rateFlashcard(1));
+
+  document.querySelectorAll(".fsrs-rating-button").forEach((button) => {
+    button.addEventListener("click", async () => {
+      await rateFSRS(Number(button.dataset.rating));
+      nextQuestion();
+    });
+  });
 
   document.querySelectorAll(".toggle-srs-button").forEach((button) => {
     button.addEventListener("click", toggleSRS);
@@ -179,7 +187,7 @@ export function initializeEvents() {
 
   // Quiz Keybinds
 
-  document.addEventListener("keydown", (e) => {
+  document.addEventListener("keydown", async (e) => {
     if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
 
     if (
@@ -191,15 +199,25 @@ export function initializeEvents() {
 
     const key = e.key.toLowerCase();
 
+    // SRS rating
+
+    if (state.answerRevealed && state.srs) {
+      if (["1", "2", "3", "4"].includes(key)) {
+        await rateFSRS(Number(key));
+        nextQuestion();
+        return;
+      }
+    }
+
     // Flashcard rating
     if (state.mode === "flashcard") {
       if (key === "1") {
-        rateFlashcard(false); // ✗ unknown
+        rateFlashcard(1);
         return;
       }
 
       if (key === "2") {
-        rateFlashcard(true); // ✓ known
+        rateFlashcard(1);
         return;
       }
     }
@@ -229,8 +247,11 @@ export function initializeEvents() {
 
       if (!state.answerRevealed) {
         revealAnswer();
+      } else if (state.srs) {
+        await rateFSRS(3);
+        nextQuestion();
       } else if (state.mode === "flashcard") {
-        rateFlashcard(true);
+        rateFlashcard(3);
       } else {
         nextQuestion();
       }
@@ -257,7 +278,7 @@ export function initializeEvents() {
 
   const flashcardBox = document.getElementById("flashcard-box");
 
-  function handleBoxClick(e) {
+  async function handleBoxClick(e) {
     if (e.target.closest("button, input")) return;
 
     // Don't navigate if the user just made a text selection
@@ -271,10 +292,22 @@ export function initializeEvents() {
       if (!state.answerRevealed) {
         revealAnswer();
       } else {
+        if (state.srs) {
+          // Rate as "Good"
+          await rateFSRS(3);
+        }
         nextQuestion();
       }
     } else if (x < rect.width * 0.3) {
-      prevQuestion();
+      if (state.srs) {
+        if (state.answerRevealed) {
+          // Rate as "Again"
+          await rateFSRS(1);
+          nextQuestion();
+        }
+      } else {
+        prevQuestion();
+      }
     }
   }
 

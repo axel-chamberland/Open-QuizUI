@@ -196,21 +196,13 @@ export async function handleAnswer(index, button) {
   const questionArrayIndex = getCurrentQuestionArrayIndex();
 
   if (index === state.currentQuestion.correct_index) {
-    button.classList.add("correct");
-    button.disabled = true;
-    state.answerRevealed = true;
+    revealAnswer();
 
     if (state.wrongAnswerCount === 0) {
       state.questionResults[questionArrayIndex] = CORRECT;
       state.questionAnswers[questionArrayIndex] = index;
       saveStats();
     }
-
-    if (state.srs) {
-      await updateSRS("Good", state.quizStorageKey);
-    }
-
-    state.optionButtons.forEach((btn) => (btn.disabled = true));
 
     showMcqExplanation(state.currentQuestion);
   } else {
@@ -226,10 +218,6 @@ export async function handleAnswer(index, button) {
     saveStats();
     state.wrongAnswerCount++;
 
-    if (state.srs && state.wrongAnswerCount == 1) {
-      await updateSRS("Again", state.quizStorageKey);
-    }
-
     if (state.wrongAnswerCount === state.currentQuestion.options.length - 1) {
       revealAnswer();
     }
@@ -241,17 +229,19 @@ export function revealAnswer() {
 
   const questionArrayIndex = getCurrentQuestionArrayIndex();
 
+  state.optionButtons.forEach((btn) => (btn.disabled = true));
+
   if (state.questionResults[questionArrayIndex] === UNANSWERED) {
     state.questionResults[questionArrayIndex] = SKIPPED;
     saveStats();
   }
 
+  document.body.classList.add("answer-revealed");
+
   if (document.getElementById("flashcard-box").style.display !== "none") {
     document.querySelector(".flashcard-answer").classList.add("visible");
 
     showFlashcardExplanation(state.currentQuestion);
-
-    document.getElementById("flashcard-rating").style.display = "flex";
 
     return;
   }
@@ -265,6 +255,27 @@ export function revealAnswer() {
   showMcqExplanation(state.currentQuestion);
 }
 
+export async function rateFSRS(rating) {
+  if (!state.answerRevealed) {
+    return;
+  }
+
+  const questionArrayIndex = getCurrentQuestionArrayIndex();
+
+  const ratingNames = {
+    1: "Again",
+    2: "Hard",
+    3: "Good",
+    4: "Easy",
+  };
+
+  state.questionResults[questionArrayIndex] = rating === 1 ? WRONG : CORRECT;
+
+  await updateSRS(ratingNames[rating], state.quizStorageKey);
+
+  saveStats();
+}
+
 export function setQuizTitle(title) {
   const displayTitle = title.slice(0, 60);
 
@@ -276,6 +287,7 @@ export function setQuizTitle(title) {
 }
 
 export function renderQuestion(questionText, question) {
+  document.body.classList.remove("answer-revealed");
   questionText.innerHTML = renderMarkdown(question.question, state.mathReady);
 
   if (state.srs) {

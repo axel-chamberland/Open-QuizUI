@@ -269,14 +269,9 @@ export async function initSRS(quizStorageKey, currentQuestionIndex) {
 /**
  * Gets the next active SRS question.
  *
- * The current question is skipped when another active card
- * exists. If it is the only remaining active card, it is
- * returned so the quiz does not incorrectly end.
- *
- * @param {number} currentQuestionIndex
  * @returns {number|null}
  */
-export function nextSRSQuestion(currentQuestionIndex) {
+export function nextSRSQuestion() {
   return state.questionSRSQueue[0]?.index ?? null;
 }
 
