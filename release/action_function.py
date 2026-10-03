@@ -3075,18 +3075,20 @@ var scheduler = null;
 var cards = /* @__PURE__ */ new Map();
 var history = [];
 async function loadFSRS() {
-  if (scheduler) return;
+  if (scheduler) return true;
   if (!fsrsPromise) {
     fsrsPromise = import("https://cdn.jsdelivr.net/npm/ts-fsrs@5.4.2/+esm");
   }
   try {
     fsrsModule = await fsrsPromise;
     scheduler = fsrsModule.fsrs(SRS_CONFIG);
+    return true;
   } catch (error) {
+    console.error("Failed to import FSRS:", error);
     fsrsPromise = null;
     fsrsModule = null;
     scheduler = null;
-    throw error;
+    return false;
   }
 }
 function restoreCard(card) {
@@ -3141,7 +3143,9 @@ function addNextSRSQuestion() {
   return addNewSRSQuestion();
 }
 async function initSRS(quizStorageKey, currentQuestionIndex) {
-  await loadFSRS();
+  if (!await loadFSRS()) {
+    return false;
+  }
   history.length = 0;
   cards.clear();
   state.questionSRSQueue = [];
@@ -3178,6 +3182,7 @@ async function initSRS(quizStorageKey, currentQuestionIndex) {
   }
   sortSRSQueue();
   saveSRS(quizStorageKey);
+  return true;
 }
 function nextSRSQuestion() {
   return state.questionSRSQueue[0]?.index ?? null;
@@ -3570,6 +3575,63 @@ function cancelRestart() {
   document.getElementById("restart-confirm").style.display = "none";
 }
 
+// frontend/src/ui/alert.js
+function showPrompt(message, onYes = null, onNo = null, yesText = "yes", noText = "no") {
+  const prompt = document.getElementById("global-prompt");
+  const messageElement = document.getElementById("global-prompt-message");
+  const yesButton = document.getElementById("global-prompt-yes");
+  const noButton = document.getElementById("global-prompt-no");
+  messageElement.textContent = message;
+  yesButton.textContent = yesText;
+  noButton.textContent = noText;
+  yesButton.style.display = "";
+  noButton.style.display = "";
+  const close = (callback) => {
+    prompt.classList.remove("visible");
+    document.removeEventListener("keydown", keyHandler, true);
+    if (callback) callback();
+  };
+  yesButton.onclick = () => close(onYes);
+  noButton.onclick = () => close(onNo);
+  function keyHandler(e) {
+    if (e.key === "Enter" || e.key.toLowerCase() === "y") {
+      e.preventDefault();
+      e.stopPropagation();
+      close(onYes);
+    } else if (e.key.toLowerCase() === "n" || e.key === "Escape") {
+      e.preventDefault();
+      e.stopPropagation();
+      close(onNo);
+    }
+  }
+  document.addEventListener("keydown", keyHandler, true);
+  prompt.classList.add("visible");
+}
+function showAlert(message) {
+  const prompt = document.getElementById("global-prompt");
+  const messageElement = document.getElementById("global-prompt-message");
+  const yesButton = document.getElementById("global-prompt-yes");
+  const noButton = document.getElementById("global-prompt-no");
+  messageElement.textContent = message;
+  yesButton.textContent = "OK";
+  yesButton.style.display = "";
+  noButton.style.display = "none";
+  const close = () => {
+    prompt.classList.remove("visible");
+    document.removeEventListener("keydown", keyHandler, true);
+  };
+  yesButton.onclick = close;
+  function keyHandler(e) {
+    if (e.key === "Enter" || e.key === "Escape") {
+      e.preventDefault();
+      e.stopPropagation();
+      close();
+    }
+  }
+  document.addEventListener("keydown", keyHandler, true);
+  prompt.classList.add("visible");
+}
+
 // frontend/src/quiz.js
 var results = document.getElementById("results");
 function getCurrentQuestionArrayIndex() {
@@ -3787,9 +3849,20 @@ async function toggleSRS() {
   state.srs = !state.srs;
   document.body.classList.toggle("srs-mode", state.srs);
   if (state.srs) {
-    await initSRS(state.quizStorageKey, state.currentQuestionIndex);
+    const initialized = await initSRS(
+      state.quizStorageKey,
+      state.currentQuestionIndex
+    );
+    if (!initialized) {
+      state.srs = false;
+      document.body.classList.toggle("srs-mode", state.srs);
+      showAlert(
+        "Unable to load the FSRS library from the CDN. If it is not already cached, an internet connection is required. Please check your connection and try again."
+      );
+      return;
+    }
     updateSRSCounts();
-    const questionIndex = nextSRSQuestion(state.currentQuestionIndex);
+    const questionIndex = nextSRSQuestion();
     if (questionIndex !== null) {
       goTo(questionIndex);
     }
@@ -3961,63 +4034,6 @@ function removeLocalEdit(index) {
 function removeAllLocalEdits() {
   const key = getQuizEditsKey(state.quizStorageKey);
   localStorage.removeItem(key);
-}
-
-// frontend/src/ui/alert.js
-function showPrompt(message, onYes = null, onNo = null, yesText = "yes", noText = "no") {
-  const prompt = document.getElementById("global-prompt");
-  const messageElement = document.getElementById("global-prompt-message");
-  const yesButton = document.getElementById("global-prompt-yes");
-  const noButton = document.getElementById("global-prompt-no");
-  messageElement.textContent = message;
-  yesButton.textContent = yesText;
-  noButton.textContent = noText;
-  yesButton.style.display = "";
-  noButton.style.display = "";
-  const close = (callback) => {
-    prompt.classList.remove("visible");
-    document.removeEventListener("keydown", keyHandler, true);
-    if (callback) callback();
-  };
-  yesButton.onclick = () => close(onYes);
-  noButton.onclick = () => close(onNo);
-  function keyHandler(e) {
-    if (e.key === "Enter" || e.key.toLowerCase() === "y") {
-      e.preventDefault();
-      e.stopPropagation();
-      close(onYes);
-    } else if (e.key.toLowerCase() === "n" || e.key === "Escape") {
-      e.preventDefault();
-      e.stopPropagation();
-      close(onNo);
-    }
-  }
-  document.addEventListener("keydown", keyHandler, true);
-  prompt.classList.add("visible");
-}
-function showAlert(message) {
-  const prompt = document.getElementById("global-prompt");
-  const messageElement = document.getElementById("global-prompt-message");
-  const yesButton = document.getElementById("global-prompt-yes");
-  const noButton = document.getElementById("global-prompt-no");
-  messageElement.textContent = message;
-  yesButton.textContent = "OK";
-  yesButton.style.display = "";
-  noButton.style.display = "none";
-  const close = () => {
-    prompt.classList.remove("visible");
-    document.removeEventListener("keydown", keyHandler, true);
-  };
-  yesButton.onclick = close;
-  function keyHandler(e) {
-    if (e.key === "Enter" || e.key === "Escape") {
-      e.preventDefault();
-      e.stopPropagation();
-      close();
-    }
-  }
-  document.addEventListener("keydown", keyHandler, true);
-  prompt.classList.add("visible");
 }
 
 // frontend/src/rendering/editor.js

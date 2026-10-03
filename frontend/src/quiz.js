@@ -16,6 +16,7 @@ import {
   prevSRSQuestion,
   updateSRS,
 } from "./srs.js";
+import { showAlert } from "./ui/alert.js";
 
 const results = document.getElementById("results");
 
@@ -384,10 +385,23 @@ export async function toggleSRS() {
   document.body.classList.toggle("srs-mode", state.srs);
 
   if (state.srs) {
-    await initSRS(state.quizStorageKey, state.currentQuestionIndex);
+    const initialized = await initSRS(
+      state.quizStorageKey,
+      state.currentQuestionIndex,
+    );
+
+    if (!initialized) {
+      state.srs = false;
+      document.body.classList.toggle("srs-mode", state.srs);
+      showAlert(
+        "Unable to load the FSRS library from the CDN. If it is not already cached, an internet connection is required. Please check your connection and try again.",
+      );
+      return;
+    }
+
     updateSRSCounts();
 
-    const questionIndex = nextSRSQuestion(state.currentQuestionIndex);
+    const questionIndex = nextSRSQuestion();
 
     if (questionIndex !== null) {
       goTo(questionIndex);

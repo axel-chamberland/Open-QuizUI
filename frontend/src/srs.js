@@ -48,10 +48,10 @@ const history = [];
 /**
  * Lazily loads the FSRS library and creates the scheduler.
  *
- * @returns {Promise<void>}
+ * @returns {Promise<boolean>}
  */
 async function loadFSRS() {
-  if (scheduler) return;
+  if (scheduler) return true;
 
   if (!fsrsPromise) {
     fsrsPromise = import("https://cdn.jsdelivr.net/npm/ts-fsrs@5.4.2/+esm");
@@ -60,11 +60,13 @@ async function loadFSRS() {
   try {
     fsrsModule = await fsrsPromise;
     scheduler = fsrsModule.fsrs(SRS_CONFIG);
+    return true;
   } catch (error) {
+    console.error("Failed to import FSRS:", error);
     fsrsPromise = null;
     fsrsModule = null;
     scheduler = null;
-    throw error;
+    return false;
   }
 }
 
@@ -194,10 +196,12 @@ function addNextSRSQuestion() {
  *
  * @param {string} quizStorageKey
  * @param {number} currentQuestionIndex
- * @returns {Promise<void>}
+ * @returns {Promise<boolean>}
  */
 export async function initSRS(quizStorageKey, currentQuestionIndex) {
-  await loadFSRS();
+  if (!(await loadFSRS())) {
+    return false;
+  }
 
   history.length = 0;
   cards.clear();
@@ -264,6 +268,8 @@ export async function initSRS(quizStorageKey, currentQuestionIndex) {
 
   sortSRSQueue();
   saveSRS(quizStorageKey);
+
+  return true;
 }
 
 /**
