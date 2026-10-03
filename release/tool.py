@@ -734,6 +734,10 @@ h1 {
   margin: 0;
 }
 
+:is(:fullscreen, .pseudo-fullscreen-active) .title {
+  display: none;
+}
+
 .page {
   display: flex;
   flex-direction: column;
@@ -885,7 +889,8 @@ button:disabled {
   display: none;
   justify-content: center;
   gap: 1rem;
-  margin-top: 1rem;
+  padding: 1rem;
+  border-top: 1px solid var(--border);
 }
 
 .answer-revealed #flashcard-rating {
