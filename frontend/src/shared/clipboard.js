@@ -6,17 +6,46 @@ export async function copyQuestion() {
 
   const quiz = {
     title: state.quiz.title,
-    questions: [question],
+    questions: normalizeSingleChoiceQuestions([question]),
   };
 
   await copyToClipboard(formatQuizAsText(quiz));
 }
 
-// TODO: add new order for using questionOrder
-// instead of default quiz order (future proof for when adding
-// and moving questions is supported).
+/**
+ * Copies the quiz using state.questionOrder as the question order.
+ *
+ * @returns {Promise<void>}
+ */
 export async function copyQuiz() {
-  await copyToClipboard(formatQuizAsText(state.quiz));
+  const quiz = {
+    ...state.quiz,
+    questions: normalizeSingleChoiceQuestions(
+      state.questionOrder.map(
+        (questionIndex) => state.quiz.questions[questionIndex],
+      ),
+    ),
+  };
+
+  await copyToClipboard(formatQuizAsText(quiz));
+}
+
+/**
+ * Adds a second option to questions with only one choice so that the
+ * text representation remains parseable.
+ *
+ * @param {Array<{ options: string[] }>} questions
+ * @returns {Array<{ options: string[] }>}
+ */
+function normalizeSingleChoiceQuestions(questions) {
+  return questions.map((question) =>
+    question.options.length === 1
+      ? {
+          ...question,
+          options: [...question.options, "N/A"],
+        }
+      : question,
+  );
 }
 
 async function copyToClipboard(text) {

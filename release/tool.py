@@ -3387,12 +3387,28 @@ async function copyQuestion() {
   const question = state.quiz.questions[state.currentQuestionIndex];
   const quiz2 = {
     title: state.quiz.title,
-    questions: [question]
+    questions: normalizeSingleChoiceQuestions([question])
   };
   await copyToClipboard(formatQuizAsText(quiz2));
 }
 async function copyQuiz() {
-  await copyToClipboard(formatQuizAsText(state.quiz));
+  const quiz2 = {
+    ...state.quiz,
+    questions: normalizeSingleChoiceQuestions(
+      state.questionOrder.map(
+        (questionIndex) => state.quiz.questions[questionIndex]
+      )
+    )
+  };
+  await copyToClipboard(formatQuizAsText(quiz2));
+}
+function normalizeSingleChoiceQuestions(questions) {
+  return questions.map(
+    (question) => question.options.length === 1 ? {
+      ...question,
+      options: [...question.options, "N/A"]
+    } : question
+  );
 }
 async function copyToClipboard(text) {
   if (navigator.clipboard?.writeText) {
