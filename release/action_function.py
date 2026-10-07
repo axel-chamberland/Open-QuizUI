@@ -1168,18 +1168,25 @@ def refers_to_other_options(
 
 
 def wrap_html(
-    quiz, enable_mathjax: bool, light_theme="default_light", dark_theme="default_dark", default_mode="mcq"
+    quiz,
+    enable_mathjax: bool,
+    light_theme="default_light",
+    dark_theme="default_dark",
+    default_mode="mcq",
 ):
 
     import json
 
-    payload = {"enableMathJax": bool(enable_mathjax), "mode": default_mode, "quiz": quiz}
+    payload = {
+        "enableMathJax": bool(enable_mathjax),
+        "mode": default_mode,
+        "quiz": quiz,
+    }
 
     app_data = json.dumps(payload, ensure_ascii=False)
 
     return (
-        HTML_TEMPLATE
-        .replace("__APP_DATA__", app_data)
+        HTML_TEMPLATE.replace("__APP_DATA__", app_data)
         .replace("__LIGHT_THEME__", light_theme)
         .replace("__DARK_THEME__", dark_theme)
     )
@@ -1872,6 +1879,10 @@ textarea:focus {
 .dropdown-menu button svg {
   width: 1em;
   height: 1em;
+}
+
+.dropdown-menu button:not(:has(svg)) {
+  grid-template-columns: 1fr;
 }
 
 .dropdown-menu.show {

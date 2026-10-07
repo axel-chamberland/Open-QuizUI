@@ -662,6 +662,10 @@ textarea:focus {
   height: 1em;
 }
 
+.dropdown-menu button:not(:has(svg)) {
+  grid-template-columns: 1fr;
+}
+
 .dropdown-menu.show {
   display: block;
 }
