@@ -5,7 +5,7 @@ import {
   removeLocalEdit,
   saveLocalEdit,
 } from "../persistence/quiz_edits.js";
-import { setQuizTitle } from "../quiz.js";
+import { renderCurrentQuestionView, setQuizTitle } from "../quiz.js";
 import { showAlert, showPrompt } from "../ui/alert.js";
 
 document
@@ -18,13 +18,8 @@ export function openEditor() {
   const editor = document.getElementById("editor");
 
   // Hide current page
-  if (state.mode === "flashcard") {
-    const flashcardBox = document.getElementById("flashcard-box");
-    flashcardBox.style.display = "none";
-  } else {
-    const questionBox = document.getElementById("question-box");
-    questionBox.style.display = "none";
-  }
+  document.getElementById("flashcard-box").style.display = "none";
+  document.getElementById("question-box").style.display = "none";
 
   // Show editor page
   editor.style.display = "";
@@ -176,15 +171,7 @@ function closeEditor() {
   const options = document.getElementById("editor-distractors");
   options.innerHTML = "";
 
-  if (state.mode === "flashcard") {
-    const flashcardBox = document.getElementById("flashcard-box");
-    flashcardBox.style.display = "";
-  } else {
-    const questionBox = document.getElementById("question-box");
-    questionBox.style.display = "";
-  }
-
-  renderMCQ();
+  renderCurrentQuestionView();
 }
 
 export function restoreQuizToDefault() {

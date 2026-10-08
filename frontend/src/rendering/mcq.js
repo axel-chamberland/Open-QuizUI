@@ -3,32 +3,10 @@ import { renderMarkdown } from "../shared/markdown.js";
 import { handleAnswer, renderQuestion, updateNavigation } from "../quiz.js";
 import { typesetMath } from "../shared/mathjax.js";
 
-export function showMcqExplanation(question) {
-  const explanationEl = document.getElementById("explanation");
-
-  if (question.explanation) {
-    explanationEl.innerHTML = renderMarkdown(
-      question.explanation,
-      state.mathReady,
-    );
-    explanationEl.style.display = "block";
-
-    if (state.mathReady) {
-      window.MathJax.typesetPromise([explanationEl]).catch((err) =>
-        console.error("MathJax typesetting failed:", err),
-      );
-    }
-  } else {
-    explanationEl.innerHTML = "";
-    explanationEl.style.display = "none";
-  }
-}
-
 export async function renderMCQ() {
   const questionBox = document.getElementById("question-box");
   const questionText = questionBox.querySelector("#question");
   const optionsContainer = document.getElementById("options");
-  const navigationContainer = questionBox.querySelector("#navigation");
   const explanationEl = document.getElementById("explanation");
 
   if (!state.quiz.questions || state.quiz.questions.length === 0) {
@@ -43,9 +21,10 @@ export async function renderMCQ() {
 
   renderQuestion(questionText, question);
 
-  // Clear explanation
-  explanationEl.textContent = "";
-  explanationEl.style.display = "none";
+  // Add explanation
+  explanationEl.innerHTML = question.explanation
+    ? renderMarkdown(question.explanation, state.mathReady)
+    : "";
 
   // Clear and rebuild options
   renderOptions(optionsContainer, question);

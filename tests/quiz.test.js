@@ -11,7 +11,6 @@ import {
 
 vi.mock("../frontend/src/rendering/mcq.js", () => ({
   renderMCQ: vi.fn(),
-  showMcqExplanation: vi.fn(),
 }));
 
 vi.mock("../frontend/src/persistence/progress.js", () => ({
@@ -28,10 +27,7 @@ vi.mock("../frontend/src/rendering/results.js", () => ({
 
 import { goTo } from "../frontend/src/quiz.js";
 import { state } from "../frontend/src/state.js";
-import {
-  renderMCQ,
-  showMcqExplanation,
-} from "../frontend/src/rendering/mcq.js";
+import { renderMCQ } from "../frontend/src/rendering/mcq.js";
 import { setStoredQuestionIndex } from "../frontend/src/persistence/progress.js";
 import { renderFlashcard } from "../frontend/src/rendering/flashcards.js";
 import { renderResults } from "../frontend/src/rendering/results.js";
@@ -105,7 +101,7 @@ describe("goTo", () => {
   it("falls back to flashcard when MCQ has a single distractor (choice)", () => {
     state.mode = "mcq";
     state.quiz.questions[2] = {
-      options: ["A", "B"],
+      options: ["A"],
       correct_index: 0,
     };
 
@@ -249,8 +245,6 @@ describe("handleAnswer", () => {
     expect(state.answerRevealed).toBe(true);
     expect(state.questionResults[0]).toBe(CORRECT);
     expect(state.questionAnswers[0]).toBe(1);
-
-    expect(showMcqExplanation).toHaveBeenCalledWith(state.currentQuestion);
   });
 
   it("disables all options after a correct answer", () => {

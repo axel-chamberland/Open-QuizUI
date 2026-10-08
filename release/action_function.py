@@ -142,6 +142,13 @@ class Action:
             ),
         )
 
+        quiz_mode: Literal["multiple-choice questions", "flashcards"] = Field(
+            default="multiple-choice questions",
+            description=(
+                "Default mode to start quiz in. Does not affect the parsing (still requires multiple-choice questions)"
+            ),
+        )
+
         theme_mode: Literal["browser", "light", "dark"] = Field(
             default="browser",
         )
@@ -271,7 +278,13 @@ class Action:
 
             # Generate quiz
             content = wrap_html(
-                quiz, self.valves.enable_mathjax, light_theme, dark_theme
+                quiz,
+                self.valves.enable_mathjax,
+                light_theme,
+                dark_theme,
+                "mcq"
+                if self.valves.quiz_mode == "multiple-choice questions"
+                else "flashcard",
             )
 
             return HTMLResponse(
@@ -1168,25 +1181,18 @@ def refers_to_other_options(
 
 
 def wrap_html(
-    quiz,
-    enable_mathjax: bool,
-    light_theme="default_light",
-    dark_theme="default_dark",
-    default_mode="mcq",
+    quiz, enable_mathjax: bool, light_theme="default_light", dark_theme="default_dark", default_mode="mcq"
 ):
 
     import json
 
-    payload = {
-        "enableMathJax": bool(enable_mathjax),
-        "mode": default_mode,
-        "quiz": quiz,
-    }
+    payload = {"enableMathJax": bool(enable_mathjax), "mode": default_mode, "quiz": quiz}
 
     app_data = json.dumps(payload, ensure_ascii=False)
 
     return (
-        HTML_TEMPLATE.replace("__APP_DATA__", app_data)
+        HTML_TEMPLATE
+        .replace("__APP_DATA__", app_data)
         .replace("__LIGHT_THEME__", light_theme)
         .replace("__DARK_THEME__", dark_theme)
     )
@@ -1380,10 +1386,7 @@ button:disabled {
 }
 
 .flashcard-answer {
-  display: none;
-}
-
-.flashcard-answer.visible {
+  visibility: hidden;
   display: block;
 
   margin-top: 1rem;
@@ -1399,6 +1402,10 @@ button:disabled {
   font-size: 1.1rem;
 }
 
+.answer-revealed .flashcard-answer {
+  visibility: visible;
+}
+
 .flashcard-question {
   padding: 5rem;
   margin: 0;
@@ -1412,6 +1419,8 @@ button:disabled {
 }
 
 .flashcard-explanation {
+  visibility: hidden;
+  display: block;
   margin-top: 1rem;
   padding: 0.75rem;
 
@@ -1421,10 +1430,14 @@ button:disabled {
   font-size: 1em;
   opacity: 0.8;
 }
+.answer-revealed .flashcard-explanation {
+  visibility: visible;
+}
 
 #flashcard-rating,
 .fsrs-rating {
-  display: none;
+  visibility: hidden;
+  display: flex;
   justify-content: center;
   gap: 1rem;
   padding: 1rem;
@@ -1432,7 +1445,7 @@ button:disabled {
 }
 
 .answer-revealed #flashcard-rating {
-  display: flex;
+  visibility: visible;
 }
 
 .flashcard-rating-button {
@@ -1457,12 +1470,16 @@ button:disabled {
   color: var(--danger);
 }
 #explanation {
-  display: none;
+  visibility: hidden;
+  display: block;
   margin-top: 1rem;
   padding: 0.75rem;
   background: var(--btn);
   border-radius: 0.5rem;
   opacity: 0.8;
+}
+.answer-revealed #explanation {
+  visibility: visible;
 }
 
 .navigation-scroll {
@@ -1599,7 +1616,7 @@ button:disabled {
   background: color-mix(in srgb, var(--success) 45%, var(--btn));
 }
 .srs-mode.answer-revealed .fsrs-rating {
-  display: flex;
+  visibility: visible;
 }
 
 .srs-selector > span {
@@ -2913,29 +2930,10 @@ async function typesetMath() {
 }
 
 // frontend/src/rendering/mcq.js
-function showMcqExplanation(question) {
-  const explanationEl = document.getElementById("explanation");
-  if (question.explanation) {
-    explanationEl.innerHTML = renderMarkdown(
-      question.explanation,
-      state.mathReady
-    );
-    explanationEl.style.display = "block";
-    if (state.mathReady) {
-      window.MathJax.typesetPromise([explanationEl]).catch(
-        (err) => console.error("MathJax typesetting failed:", err)
-      );
-    }
-  } else {
-    explanationEl.innerHTML = "";
-    explanationEl.style.display = "none";
-  }
-}
 async function renderMCQ() {
   const questionBox = document.getElementById("question-box");
   const questionText = questionBox.querySelector("#question");
   const optionsContainer = document.getElementById("options");
-  const navigationContainer = questionBox.querySelector("#navigation");
   const explanationEl = document.getElementById("explanation");
   if (!state.quiz.questions || state.quiz.questions.length === 0) {
     document.getElementById("question").textContent = "No valid questions parsed";
@@ -2944,8 +2942,7 @@ async function renderMCQ() {
   const question = state.quiz.questions[state.currentQuestionIndex];
   state.currentQuestion = question;
   renderQuestion(questionText, question);
-  explanationEl.textContent = "";
-  explanationEl.style.display = "none";
+  explanationEl.innerHTML = question.explanation ? renderMarkdown(question.explanation, state.mathReady) : "";
   renderOptions(optionsContainer, question);
   updateNavigation();
   document.getElementById("question-scroll").scrollTop = 0;
@@ -3368,8 +3365,6 @@ async function renderFlashcard() {
     questionText.textContent = "No valid questions parsed";
     return;
   }
-  answerEl.classList.remove("visible");
-  explanationEl.style.display = "none";
   const questionArrayIndex = getCurrentQuestionArrayIndex();
   const question = state.quiz.questions[questionArrayIndex];
   state.currentQuestion = question;
@@ -3379,28 +3374,11 @@ async function renderFlashcard() {
     question.options[answerIndex],
     state.mathReady
   );
+  explanationEl.innerHTML = question.explanation ? renderMarkdown(question.explanation, state.mathReady) : "";
   state.answerRevealed = false;
   updateNavigation();
   flashcardBox.querySelector("#flashcard-scroll").scrollTop = 0;
   await typesetMath();
-}
-function showFlashcardExplanation(question) {
-  const explanationEl = document.querySelector(".flashcard-explanation");
-  if (question.explanation) {
-    explanationEl.innerHTML = renderMarkdown(
-      question.explanation,
-      state.mathReady
-    );
-    explanationEl.style.display = "block";
-    if (state.mathReady) {
-      window.MathJax.typesetPromise([explanationEl]).catch(
-        (err) => console.error("MathJax typesetting failed:", err)
-      );
-    }
-  } else {
-    explanationEl.innerHTML = "";
-    explanationEl.style.display = "none";
-  }
 }
 async function rateFlashcard(correct) {
   if (!state.answerRevealed) {
@@ -3650,7 +3628,7 @@ function getCurrentQuestionArrayIndex() {
 }
 async function nextQuestion() {
   if (state.srs) {
-    const questionIndex2 = nextSRSQuestion(state.currentQuestionIndex);
+    const questionIndex2 = nextSRSQuestion();
     if (questionIndex2 === null) {
       renderResults();
       return;
@@ -3706,13 +3684,12 @@ function goTo(questionIndex) {
     setStoredQuestionIndex(state.quizStorageKey, questionIndex);
   }
   updateQuestionNumbers();
-  renderCurrentQuestion();
+  renderCurrentQuestionView();
 }
-function renderCurrentQuestion() {
+function renderCurrentQuestionView() {
   const question = state.currentQuestion;
-  const distractorCount = question.options.length - 1;
   let mode2 = state.mode;
-  if (mode2 === "flashcard" || distractorCount < 2) {
+  if (mode2 === "flashcard" || question.options.length < 2) {
     mode2 = "flashcard";
   }
   const quizPage = document.getElementById("question-box");
@@ -3751,7 +3728,6 @@ async function handleAnswer(index, button) {
       state.questionAnswers[questionArrayIndex] = index;
       saveStats();
     }
-    showMcqExplanation(state.currentQuestion);
   } else {
     button.classList.add("wrong");
     button.disabled = true;
@@ -3775,15 +3751,12 @@ function revealAnswer() {
     saveStats();
   }
   document.body.classList.add("answer-revealed");
-  if (document.getElementById("flashcard-box").style.display !== "none") {
-    document.querySelector(".flashcard-answer").classList.add("visible");
-    showFlashcardExplanation(state.currentQuestion);
+  if (document.getElementById("question-box").style.display === "none") {
     return;
   }
   const optionsContainer = document.getElementById("options");
   const buttons = optionsContainer.querySelectorAll("button");
   buttons[state.currentQuestion.correct_index].classList.add("correct");
-  showMcqExplanation(state.currentQuestion);
 }
 async function rateFSRS(rating) {
   if (!state.answerRevealed) {
@@ -4069,13 +4042,8 @@ document.getElementById("editor-answer-number").addEventListener("input", (e) =>
 });
 function openEditor() {
   const editor = document.getElementById("editor");
-  if (state.mode === "flashcard") {
-    const flashcardBox = document.getElementById("flashcard-box");
-    flashcardBox.style.display = "none";
-  } else {
-    const questionBox = document.getElementById("question-box");
-    questionBox.style.display = "none";
-  }
+  document.getElementById("flashcard-box").style.display = "none";
+  document.getElementById("question-box").style.display = "none";
   editor.style.display = "";
   const titleField = document.getElementById("editor-title");
   const questionField = document.getElementById("editor-question");
@@ -4180,14 +4148,7 @@ function closeEditor() {
   editor.style.display = "none";
   const options = document.getElementById("editor-distractors");
   options.innerHTML = "";
-  if (state.mode === "flashcard") {
-    const flashcardBox = document.getElementById("flashcard-box");
-    flashcardBox.style.display = "";
-  } else {
-    const questionBox = document.getElementById("question-box");
-    questionBox.style.display = "";
-  }
-  renderMCQ();
+  renderCurrentQuestionView();
 }
 function restoreQuizToDefault() {
   showPrompt(

@@ -142,6 +142,13 @@ class Action:
             ),
         )
 
+        quiz_mode: Literal["multiple-choice questions", "flashcards"] = Field(
+            default="multiple-choice questions",
+            description=(
+                "Default mode to start quiz in. Does not affect the parsing (still requires multiple-choice questions)"
+            ),
+        )
+
         theme_mode: Literal["browser", "light", "dark"] = Field(
             default="browser",
         )
@@ -271,7 +278,13 @@ class Action:
 
             # Generate quiz
             content = wrap_html(
-                quiz, self.valves.enable_mathjax, light_theme, dark_theme
+                quiz,
+                self.valves.enable_mathjax,
+                light_theme,
+                dark_theme,
+                "mcq"
+                if self.valves.quiz_mode == "multiple-choice questions"
+                else "flashcard",
             )
 
             return HTMLResponse(

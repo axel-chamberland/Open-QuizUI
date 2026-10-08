@@ -1,13 +1,10 @@
-import { renderMCQ, showMcqExplanation } from "./rendering/mcq.js";
+import { renderMCQ } from "./rendering/mcq.js";
 import { saveStats } from "./persistence/stats.js";
 import { renderResults } from "./rendering/results.js";
 import { UNANSWERED, WRONG, CORRECT, SKIPPED, state } from "./state.js";
 import { setStoredQuestionIndex } from "./persistence/progress.js";
 import { renderMarkdown } from "./shared/markdown.js";
-import {
-  renderFlashcard,
-  showFlashcardExplanation,
-} from "./rendering/flashcards.js";
+import { renderFlashcard } from "./rendering/flashcards.js";
 import {
   getSRSCounts,
   getSRSCurrentCategory,
@@ -39,7 +36,7 @@ export function getCurrentQuestionArrayIndex() {
  */
 export async function nextQuestion() {
   if (state.srs) {
-    const questionIndex = nextSRSQuestion(state.currentQuestionIndex);
+    const questionIndex = nextSRSQuestion();
 
     if (questionIndex === null) {
       renderResults();
@@ -129,7 +126,7 @@ export function goTo(questionIndex) {
   }
 
   updateQuestionNumbers();
-  renderCurrentQuestion();
+  renderCurrentQuestionView();
 }
 
 /**
@@ -137,13 +134,12 @@ export function goTo(questionIndex) {
  *
  * @returns {void}
  */
-function renderCurrentQuestion() {
+export function renderCurrentQuestionView() {
   const question = state.currentQuestion;
-  const distractorCount = question.options.length - 1;
 
   let mode = state.mode;
 
-  if (mode === "flashcard" || distractorCount < 2) {
+  if (mode === "flashcard" || question.options.length < 2) {
     mode = "flashcard";
   }
 
@@ -204,8 +200,6 @@ export async function handleAnswer(index, button) {
       state.questionAnswers[questionArrayIndex] = index;
       saveStats();
     }
-
-    showMcqExplanation(state.currentQuestion);
   } else {
     button.classList.add("wrong");
     button.disabled = true;
@@ -239,11 +233,7 @@ export function revealAnswer() {
 
   document.body.classList.add("answer-revealed");
 
-  if (document.getElementById("flashcard-box").style.display !== "none") {
-    document.querySelector(".flashcard-answer").classList.add("visible");
-
-    showFlashcardExplanation(state.currentQuestion);
-
+  if (document.getElementById("question-box").style.display === "none") {
     return;
   }
 
@@ -252,8 +242,6 @@ export function revealAnswer() {
   const buttons = optionsContainer.querySelectorAll("button");
 
   buttons[state.currentQuestion.correct_index].classList.add("correct");
-
-  showMcqExplanation(state.currentQuestion);
 }
 
 export async function rateFSRS(rating) {
@@ -341,22 +329,6 @@ export function setMode(mode) {
 
   quizPage.style.display = isFlashcard ? "none" : "";
   flashcardPage.style.display = isFlashcard ? "" : "none";
-}
-
-export function toggleMode() {
-  const questionBox = document.getElementById("question-box");
-
-  const flashcardBox = document.getElementById("flashcard-box");
-
-  state.mode = state.mode === "flashcard" ? "mcq" : "flashcard";
-
-  if (state.mode === "flashcard") {
-    flashcardBox.style.display = "";
-    questionBox.style.display = "none";
-  } else {
-    questionBox.style.display = "";
-    flashcardBox.style.display = "none";
-  }
 }
 
 export function switchMode() {

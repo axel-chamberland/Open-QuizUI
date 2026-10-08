@@ -8,7 +8,6 @@ import {
 import { typesetMath } from "../shared/mathjax.js";
 import { renderMarkdown } from "../shared/markdown.js";
 import { saveStats } from "../persistence/stats.js";
-import { updateSRS } from "../srs.js";
 
 export async function renderFlashcard() {
   const flashcardBox = document.getElementById("flashcard-box");
@@ -20,9 +19,6 @@ export async function renderFlashcard() {
     questionText.textContent = "No valid questions parsed";
     return;
   }
-
-  answerEl.classList.remove("visible");
-  explanationEl.style.display = "none";
 
   const questionArrayIndex = getCurrentQuestionArrayIndex();
   const question = state.quiz.questions[questionArrayIndex];
@@ -38,6 +34,10 @@ export async function renderFlashcard() {
     state.mathReady,
   );
 
+  explanationEl.innerHTML = question.explanation
+    ? renderMarkdown(question.explanation, state.mathReady)
+    : "";
+
   state.answerRevealed = false;
 
   updateNavigation();
@@ -45,27 +45,6 @@ export async function renderFlashcard() {
   flashcardBox.querySelector("#flashcard-scroll").scrollTop = 0;
 
   await typesetMath();
-}
-
-export function showFlashcardExplanation(question) {
-  const explanationEl = document.querySelector(".flashcard-explanation");
-
-  if (question.explanation) {
-    explanationEl.innerHTML = renderMarkdown(
-      question.explanation,
-      state.mathReady,
-    );
-    explanationEl.style.display = "block";
-
-    if (state.mathReady) {
-      window.MathJax.typesetPromise([explanationEl]).catch((err) =>
-        console.error("MathJax typesetting failed:", err),
-      );
-    }
-  } else {
-    explanationEl.innerHTML = "";
-    explanationEl.style.display = "none";
-  }
 }
 
 export async function rateFlashcard(correct) {
