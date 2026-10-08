@@ -194,6 +194,27 @@ class Action:
                 "Separate multiple patterns with |."
             ),
         )
+        request_retention: float = Field(
+            default=0.9,
+            ge=0.0,
+            le=1.0,
+            description=(
+                "Target probability of recalling a card when it is scheduled for review "
+                "in spaced repetition mode. "
+                "Higher values generally result in shorter review intervals and more "
+                "frequent reviews; lower values generally result in longer intervals "
+                "and less frequent reviews."
+            ),
+        )
+        spaced_repetition_queue_size: int = Field(
+            default=20,
+            ge=1,
+            description=(
+                "Number of questions available at a time in spaced repetition mode. "
+                "Larger values provide a larger pool of questions to review before "
+                "the queue needs to be replenished."
+            ),
+        )
 
     def __init__(self):
         self.valves = self.Valves()
@@ -285,6 +306,8 @@ class Action:
                 "mcq"
                 if self.valves.quiz_mode == "multiple-choice questions"
                 else "flashcard",
+                self.valves.request_retention,
+                self.valves.spaced_repetition_queue_size,
             )
 
             return HTMLResponse(
@@ -1181,12 +1204,24 @@ def refers_to_other_options(
 
 
 def wrap_html(
-    quiz, enable_mathjax: bool, light_theme="default_light", dark_theme="default_dark", default_mode="mcq"
+    quiz,
+    enable_mathjax: bool,
+    light_theme="default_light",
+    dark_theme="default_dark",
+    default_mode="mcq",
+    request_retention=20,
+    spaced_repetition_queue_size=0.9,
 ):
 
     import json
 
-    payload = {"enableMathJax": bool(enable_mathjax), "mode": default_mode, "quiz": quiz}
+    payload = {
+        "enableMathJax": bool(enable_mathjax),
+        "mode": default_mode,
+        "srsQueueSize": spaced_repetition_queue_size,
+        "requestRetention": request_retention,
+        "quiz": quiz,
+    }
 
     app_data = json.dumps(payload, ensure_ascii=False)
 
@@ -1579,10 +1614,6 @@ button:disabled {
 }
 
 .srs-mode #flashcard-rating {
-  display: none;
-}
-
-.fsrs-rating {
   display: none;
 }
 
@@ -2621,6 +2652,7 @@ var state = {
   questionSRSQueue: null,
   srs: false,
   srsQueueSize: 20,
+  request_retention: 0.9,
   // Maximum level before removing from queue
   srsLevel: 5,
   questionResults: [],
@@ -3070,8 +3102,7 @@ function formatQuizAsText(quiz2) {
 
 // frontend/src/srs.js
 var SRS_CONFIG = {
-  request_retention: 0.9,
-  // TODO: expose this as state
+  request_retention: state.request_retention,
   maximum_interval: 365,
   enable_fuzz: true,
   enable_short_term: true
@@ -4494,6 +4525,8 @@ try {
 } catch {
 }
 initializeState(quiz);
+state.srsQueueSize = appData.srsQueueSize;
+state.request_retention = appData.request_retention;
 loadStats();
 loadQuizEdits(state);
 async function initializeApp() {

@@ -11,7 +11,7 @@ import {
  * application-specific scheduling rules are applied.
  */
 const SRS_CONFIG = {
-  request_retention: 0.9, // TODO: expose this as state
+  request_retention: state.request_retention,
   maximum_interval: 365,
   enable_fuzz: true,
   enable_short_term: true,

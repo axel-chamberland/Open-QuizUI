@@ -33,6 +33,10 @@ try {
 }
 
 initializeState(quiz);
+
+state.srsQueueSize = appData.srsQueueSize;
+state.request_retention = appData.request_retention;
+
 loadStats();
 loadQuizEdits(state);
 

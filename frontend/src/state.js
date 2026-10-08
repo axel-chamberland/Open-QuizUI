@@ -25,6 +25,7 @@ export const state = {
   questionSRSQueue: null,
   srs: false,
   srsQueueSize: 20,
+  request_retention: 0.9,
 
   // Maximum level before removing from queue
   srsLevel: 5,
