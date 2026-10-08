@@ -351,26 +351,27 @@ export function switchMode() {
  * @returns {Promise<void>}
  */
 export async function toggleSRS() {
-  state.srs = !state.srs;
-
-  // Change CSS class for state relative layout
-  document.body.classList.toggle("srs-mode", state.srs);
-
-  if (state.srs) {
+  if (!state.srs) {
     const initialized = await initSRS(
       state.quizStorageKey,
       state.currentQuestionIndex,
     );
 
     if (!initialized) {
-      state.srs = false;
-      document.body.classList.toggle("srs-mode", state.srs);
       showAlert(
         "Unable to load the FSRS library from the CDN. If it is not already cached, an internet connection is required. Please check your connection and try again.",
       );
       return;
     }
+  }
 
+  // Toggle srs
+  state.srs = !state.srs;
+
+  // Change CSS class for state relative layout
+  document.body.classList.toggle("srs-mode", state.srs);
+
+  if (state.srs) {
     updateSRSCounts();
 
     const questionIndex = nextSRSQuestion();

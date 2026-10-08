@@ -747,6 +747,7 @@ body {
   min-height: 0;
   display: flex;
   flex-direction: column;
+  padding: 0 8px 8px;
 }
 
 :is(:fullscreen, .pseudo-fullscreen-active) .navigation-scroll {
@@ -783,7 +784,6 @@ h1 {
 }
 
 #question {
-  margin-bottom: 2em;
   font-size: 1.1rem;
 }
 
@@ -881,7 +881,7 @@ button:disabled {
   display: block;
 
   margin-top: 1rem;
-  padding: 5rem;
+  padding: clamp(1.5rem, 8vw, 5rem);
 
   border-top: 1px solid var(--border);
 
@@ -898,7 +898,7 @@ button:disabled {
 }
 
 .flashcard-question {
-  padding: 5rem;
+  padding: clamp(1.5rem, 8vw, 5rem);
   margin: 0;
 
   background: var(--btn);
@@ -923,6 +923,9 @@ button:disabled {
 }
 .answer-revealed .flashcard-explanation {
   visibility: visible;
+}
+.flashcard-explanation:empty {
+  display: none;
 }
 
 #flashcard-rating,
@@ -969,6 +972,11 @@ button:disabled {
   border-radius: 0.5rem;
   opacity: 0.8;
 }
+
+#explanation:empty {
+  display: none;
+}
+
 .answer-revealed #explanation {
   visibility: visible;
 }
@@ -1071,6 +1079,27 @@ button:disabled {
 
 .srs-mode #flashcard-rating {
   display: none;
+}
+
+:is(:fullscreen, .pseudo-fullscreen-active) #flashcard-rating,
+:is(:fullscreen, .pseudo-fullscreen-active) .fsrs-rating {
+  display: none;
+}
+
+:is(:fullscreen, .pseudo-fullscreen-active) .answer-revealed #flashcard-rating {
+  display: flex;
+}
+
+:is(:fullscreen, .pseudo-fullscreen-active)
+  .srs-mode.answer-revealed
+  #flashcard-rating {
+  display: none;
+}
+
+:is(:fullscreen, .pseudo-fullscreen-active)
+  .srs-mode.answer-revealed
+  .fsrs-rating {
+  display: flex;
 }
 
 .fsrs-rating-button {
@@ -3317,21 +3346,21 @@ function switchMode() {
   }
 }
 async function toggleSRS() {
-  state.srs = !state.srs;
-  document.body.classList.toggle("srs-mode", state.srs);
-  if (state.srs) {
+  if (!state.srs) {
     const initialized = await initSRS(
       state.quizStorageKey,
       state.currentQuestionIndex
     );
     if (!initialized) {
-      state.srs = false;
-      document.body.classList.toggle("srs-mode", state.srs);
       showAlert(
         "Unable to load the FSRS library from the CDN. If it is not already cached, an internet connection is required. Please check your connection and try again."
       );
       return;
     }
+  }
+  state.srs = !state.srs;
+  document.body.classList.toggle("srs-mode", state.srs);
+  if (state.srs) {
     updateSRSCounts();
     const questionIndex = nextSRSQuestion();
     if (questionIndex !== null) {
