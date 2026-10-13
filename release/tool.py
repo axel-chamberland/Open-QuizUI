@@ -2137,7 +2137,7 @@ var state = {
   questionSRSQueue: null,
   srs: false,
   srsQueueSize: 20,
-  request_retention: 0.9,
+  requestRetention: 0.9,
   // Maximum level before removing from queue
   srsLevel: 5,
   questionResults: [],
@@ -2587,7 +2587,7 @@ function formatQuizAsText(quiz2) {
 
 // frontend/src/srs.js
 var SRS_CONFIG = {
-  request_retention: state.request_retention,
+  request_retention: state.requestRetention,
   maximum_interval: 365,
   enable_fuzz: true,
   enable_short_term: true
@@ -2698,7 +2698,10 @@ async function initSRS(quizStorageKey, currentQuestionIndex) {
       card
     });
   }
-  const initialSize = Math.min(state.srsQueueSize, state.questionOrder.length);
+  const initialSize = Math.min(
+    state.srsQueueSize,
+    state.questionOrder.length
+  );
   while (state.questionSRSQueue.length < initialSize) {
     if (addNextSRSQuestion() === null) {
       break;
@@ -3374,7 +3377,9 @@ function downloadQuizHTML() {
   const appData2 = {
     mode: state.mode,
     enableMathJax: state.mathReady,
-    quiz: state.quiz
+    quiz: state.quiz,
+    srsQueueSize: state.srsQueueSize,
+    requestRetention: state.requestRetention
   };
   const filename = state.quiz.title;
   const documentClone = document.documentElement.cloneNode(true);
@@ -4011,7 +4016,11 @@ try {
 }
 initializeState(quiz);
 state.srsQueueSize = appData.srsQueueSize;
-state.request_retention = appData.request_retention;
+state.requestRetention = appData.requestRetention;
+console.log("SRS settings:", {
+  srsQueueSize: state.srsQueueSize,
+  requestRetention: state.requestRetention
+});
 loadStats();
 loadQuizEdits(state);
 async function initializeApp() {
