@@ -1,5 +1,6 @@
 import { initializeState } from "./state.js";
 import { initializeEvents } from "./ui/events.js";
+import { loadAppData } from "./persistence/app_data.js";
 import { loadQuizEdits } from "./persistence/quiz_edits.js";
 import { loadStats } from "./persistence/stats.js";
 import { loadMathJax } from "./shared/mathjax.js";
@@ -14,7 +15,7 @@ import {
   toggleSRS,
 } from "./quiz.js";
 
-const appData = JSON.parse(document.getElementById("app-data").textContent);
+const appData = loadAppData();
 
 export const ENABLE_MATHJAX = appData.enableMathJax;
 export const quiz = appData.quiz;

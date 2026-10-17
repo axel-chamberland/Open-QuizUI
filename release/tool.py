@@ -3105,6 +3105,40 @@ function cancelRestart() {
   document.getElementById("restart-confirm").style.display = "none";
 }
 
+// frontend/src/persistence/app_data.js
+function loadAppData() {
+  const appData2 = JSON.parse(document.getElementById("app-data").textContent);
+  return { ...appData2, ...getStoredAppDataOverrides(hashQuiz(appData2.quiz)) };
+}
+function getAppDataOverridesKey(quizStorageKey) {
+  return `appDataOverrides_${quizStorageKey}`;
+}
+function getStoredAppDataOverrides(quizStorageKey) {
+  try {
+    const data = JSON.parse(
+      localStorage.getItem(getAppDataOverridesKey(quizStorageKey))
+    );
+    if (data && typeof data === "object" && !Array.isArray(data)) {
+      return data;
+    }
+  } catch {
+  }
+  return {};
+}
+function saveAppDataOverrides(quizStorageKey, overrides) {
+  if (!quizStorageKey) {
+    return;
+  }
+  try {
+    const stored = getStoredAppDataOverrides(quizStorageKey);
+    localStorage.setItem(
+      getAppDataOverridesKey(quizStorageKey),
+      JSON.stringify({ ...stored, ...overrides })
+    );
+  } catch {
+  }
+}
+
 // frontend/src/ui/alert.js
 function showPrompt(message, onYes = null, onNo = null, yesText = "yes", noText = "no") {
   const prompt = document.getElementById("global-prompt");
@@ -3364,6 +3398,7 @@ function setMode(mode2) {
 function switchMode() {
   state.mode = state.mode === "mcq" ? "flashcard" : "mcq";
   setMode(state.mode);
+  saveAppDataOverrides(state.quizStorageKey, { mode: state.mode });
   if (state.mode === "mcq") {
     renderMCQ();
   } else {
@@ -3384,6 +3419,7 @@ async function toggleSRS() {
     }
   }
   state.srs = !state.srs;
+  saveAppDataOverrides(state.quizStorageKey, { srsOnLoad: state.srs });
   document.body.classList.toggle("srs-mode", state.srs);
   if (state.srs) {
     updateSRSCounts();
@@ -4028,7 +4064,7 @@ function initHeightReporting() {
 }
 
 // frontend/src/main.js
-var appData = JSON.parse(document.getElementById("app-data").textContent);
+var appData = loadAppData();
 var ENABLE_MATHJAX = appData.enableMathJax;
 var quiz = appData.quiz;
 var mode = appData.mode;

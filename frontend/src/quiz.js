@@ -3,6 +3,7 @@ import { saveStats } from "./persistence/stats.js";
 import { renderResults } from "./rendering/results.js";
 import { UNANSWERED, WRONG, CORRECT, SKIPPED, state } from "./state.js";
 import { setStoredQuestionIndex } from "./persistence/progress.js";
+import { saveAppDataOverrides } from "./persistence/app_data.js";
 import { renderMarkdown } from "./shared/markdown.js";
 import { renderFlashcard } from "./rendering/flashcards.js";
 import {
@@ -335,6 +336,7 @@ export function switchMode() {
   state.mode = state.mode === "mcq" ? "flashcard" : "mcq";
 
   setMode(state.mode);
+  saveAppDataOverrides(state.quizStorageKey, { mode: state.mode });
 
   if (state.mode === "mcq") {
     renderMCQ();
@@ -367,6 +369,9 @@ export async function toggleSRS() {
 
   // Toggle srs
   state.srs = !state.srs;
+
+  // Persist the startup preference so the mode survives a refresh
+  saveAppDataOverrides(state.quizStorageKey, { srsOnLoad: state.srs });
 
   // Change CSS class for state relative layout
   document.body.classList.toggle("srs-mode", state.srs);
