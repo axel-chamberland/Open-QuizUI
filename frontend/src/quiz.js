@@ -373,6 +373,15 @@ export async function toggleSRS() {
   // Persist the startup preference so the mode survives a refresh
   saveAppDataOverrides(state.quizStorageKey, { srsOnLoad: state.srs });
 
+  /*
+   * Regular navigation only persists the position while SRS is off.
+   * When disabling SRS, persist the position the quiz stays on so a
+   * refresh returns to the same question.
+   */
+  if (!state.srs) {
+    setStoredQuestionIndex(state.quizStorageKey, state.currentQuestionIndex);
+  }
+
   // Change CSS class for state relative layout
   document.body.classList.toggle("srs-mode", state.srs);
 

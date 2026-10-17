@@ -26,6 +26,7 @@ vi.mock("../frontend/src/rendering/results.js", () => ({
 }));
 
 import { goTo } from "../frontend/src/quiz.js";
+import { toggleSRS } from "../frontend/src/quiz.js";
 import { state } from "../frontend/src/state.js";
 import { renderMCQ } from "../frontend/src/rendering/mcq.js";
 import { setStoredQuestionIndex } from "../frontend/src/persistence/progress.js";
@@ -123,6 +124,39 @@ describe("goTo", () => {
     expect(renderFlashcard).toHaveBeenCalled();
     expect(renderMCQ).not.toHaveBeenCalled();
     expect(state.mode).toBe("flashcard");
+  });
+});
+
+describe("toggleSRS", () => {
+  beforeEach(() => {
+    document.body.innerHTML = "";
+    localStorage.clear();
+
+    state.quiz = {
+      questions: [
+        { options: ["A", "B", "C"], correct_index: 0 },
+        { options: ["A", "B", "C"], correct_index: 0 },
+        { options: ["A", "B", "C"], correct_index: 0 },
+      ],
+    };
+    state.questionOrder = [0, 1, 2];
+    state.quizStorageKey = "test-quiz";
+    state.currentQuestionIndex = 2;
+    state.srs = true;
+
+    vi.clearAllMocks();
+  });
+
+  it("persists the current position when turning SRS off", async () => {
+    // Questions on a specific position that must survive a refresh
+    await toggleSRS();
+
+    expect(state.srs).toBe(false);
+    expect(setStoredQuestionIndex).toHaveBeenCalledWith("test-quiz", 2);
+    expect(JSON.parse(localStorage.getItem("appDataOverrides_test-quiz"))).toEqual(
+      { srsOnLoad: false },
+    );
+    expect(document.body.classList.contains("srs-mode")).toBe(false);
   });
 });
 

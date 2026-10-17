@@ -3946,6 +3946,9 @@ async function toggleSRS() {
   }
   state.srs = !state.srs;
   saveAppDataOverrides(state.quizStorageKey, { srsOnLoad: state.srs });
+  if (!state.srs) {
+    setStoredQuestionIndex(state.quizStorageKey, state.currentQuestionIndex);
+  }
   document.body.classList.toggle("srs-mode", state.srs);
   if (state.srs) {
     updateSRSCounts();
