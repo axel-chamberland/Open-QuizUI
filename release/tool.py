@@ -18,6 +18,24 @@ import regex
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, Field
 
+# =========================
+# THEME -- Feel free to add your own theme or modify presets
+# =========================
+"""
+OpenWebUI default color scheme:
+    --color-gray-50: oklch(98% 0 0);
+    --color-gray-100: oklch(94% 0 0);
+    --color-gray-200: oklch(92% 0 0);
+    --color-gray-300: oklch(85% 0 0);
+    --color-gray-400: oklch(77% 0 0);
+    --color-gray-500: oklch(69% 0 0);
+    --color-gray-600: oklch(51% 0 0);
+    --color-gray-700: oklch(42% 0 0);
+    --color-gray-800: oklch(32% 0 0);
+    --color-gray-900: oklch(20% 0 0);
+    --color-gray-950: oklch(16% 0 0);
+"""
+
 THEMES = {
     "default_light": """
 --bg: oklch(100% 0 0);
