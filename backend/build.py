@@ -205,6 +205,7 @@ def build(python_file, output_file):
     default_mode="mcq",
     request_retention=20,
     spaced_repetition_queue_size=0.9,
+    enable_spaced_repetition: bool = False,
 ):
 
     import json
@@ -214,6 +215,7 @@ def build(python_file, output_file):
         "mode": default_mode,
         "srsQueueSize": spaced_repetition_queue_size,
         "requestRetention": request_retention,
+        "srsOnLoad": bool(enable_spaced_repetition),
         "quiz": quiz,
     }}
 

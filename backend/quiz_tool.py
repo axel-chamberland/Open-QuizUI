@@ -106,6 +106,10 @@ class Tools:
                 "the queue needs to be replenished."
             ),
         )
+        enable_spaced_repetition: bool = Field(
+            default=False,
+            description="Enable spaced repetition mode when the quiz loads.",
+        )
 
     def __init__(self):
         self.valves = self.Valves()
@@ -273,6 +277,7 @@ class Tools:
                 else "flashcard",
                 self.valves.request_retention,
                 self.valves.spaced_repetition_queue_size,
+                self.valves.enable_spaced_repetition,
             )
             return HTMLResponse(
                 content=content,
@@ -596,5 +601,6 @@ def wrap_html(
     default_mode="mcq",
     request_retention=20,
     spaced_repetition_queue_size=0.9,
+    enable_spaced_repetition: bool = False,
 ):
     return "__HTML_PLACEHOLDER__"

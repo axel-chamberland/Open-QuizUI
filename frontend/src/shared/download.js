@@ -7,6 +7,10 @@ export function downloadQuizHTML() {
     mode: state.mode,
     enableMathJax: state.mathReady,
     quiz: state.quiz,
+    // srs appdata
+    srsOnLoad: state.srs,
+    srsQueueSize: state.srsQueueSize,
+    requestRetention: state.request_retention,
   };
 
   const filename = state.quiz.title;

@@ -195,6 +195,10 @@ class Tools:
                 "the queue needs to be replenished."
             ),
         )
+        enable_spaced_repetition: bool = Field(
+            default=False,
+            description="Enable spaced repetition mode when the quiz loads.",
+        )
 
     def __init__(self):
         self.valves = self.Valves()
@@ -362,6 +366,7 @@ class Tools:
                 else "flashcard",
                 self.valves.request_retention,
                 self.valves.spaced_repetition_queue_size,
+                self.valves.enable_spaced_repetition,
             )
             return HTMLResponse(
                 content=content,
@@ -685,6 +690,7 @@ def wrap_html(
     default_mode="mcq",
     request_retention=20,
     spaced_repetition_queue_size=0.9,
+    enable_spaced_repetition: bool = False,
 ):
 
     import json
@@ -694,6 +700,7 @@ def wrap_html(
         "mode": default_mode,
         "srsQueueSize": spaced_repetition_queue_size,
         "requestRetention": request_retention,
+        "srsOnLoad": bool(enable_spaced_repetition),
         "quiz": quiz,
     }
 
@@ -3392,7 +3399,11 @@ function downloadQuizHTML() {
   const appData2 = {
     mode: state.mode,
     enableMathJax: state.mathReady,
-    quiz: state.quiz
+    quiz: state.quiz,
+    // srs appdata
+    srsOnLoad: state.srs,
+    srsQueueSize: state.srsQueueSize,
+    requestRetention: state.request_retention
   };
   const filename = state.quiz.title;
   const documentClone = document.documentElement.cloneNode(true);
@@ -4044,6 +4055,9 @@ async function initializeApp() {
   updateQuestionNumbers();
   setMode(appData.mode);
   goTo(state.currentQuestionIndex);
+  if (appData.srsOnLoad) {
+    await toggleSRS();
+  }
 }
 if (document.readyState === "loading") {
   window.addEventListener("load", initializeApp, { once: true });

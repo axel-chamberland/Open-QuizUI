@@ -11,6 +11,7 @@ import {
   setQuizTitle,
   updateQuestionCounts,
   updateQuestionNumbers,
+  toggleSRS,
 } from "./quiz.js";
 
 const appData = JSON.parse(document.getElementById("app-data").textContent);
@@ -55,6 +56,11 @@ async function initializeApp() {
 
   setMode(appData.mode);
   goTo(state.currentQuestionIndex);
+
+  // Enable spaced repetition on startup if requested (via the app data)
+  if (appData.srsOnLoad) {
+    await toggleSRS();
+  }
 }
 
 if (document.readyState === "loading") {
