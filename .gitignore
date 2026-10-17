@@ -3,9 +3,9 @@ __pycache__/
 *.py[codz]
 *$py.class
 
-open_webui/
-temp.*
-open-webui/
+open-webui-official/
+AGENTS.local.md
+opencode.json
 # C extensions
 *.so
 
