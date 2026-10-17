@@ -6,6 +6,7 @@ __pycache__/
 open-webui-official/
 AGENTS.local.md
 opencode.json
+vitest.config.js
 # C extensions
 *.so
 
