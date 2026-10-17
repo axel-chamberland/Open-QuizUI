@@ -669,6 +669,55 @@ textarea:focus {
   text-align: center;
 }
 
+#editor-additional-settings {
+  margin: 0.5rem 0;
+}
+
+#editor-additional-settings summary {
+  cursor: pointer;
+  user-select: none;
+}
+
+#editor-additional-settings summary::marker {
+  color: var(--text);
+}
+
+#editor-additional-settings .editor-settings {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: 0 1.5rem;
+  margin-top: 0.75rem;
+}
+
+#editor-additional-settings label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+
+  padding: 0.4rem 0;
+}
+
+#editor-additional-settings label > span {
+  flex: 1;
+  text-align: right;
+}
+
+#editor-additional-settings input[type="number"] {
+  width: 6ch;
+  field-sizing: content;
+
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  font-size: 1rem;
+  text-align: center;
+}
+
+#editor-additional-settings input[type="checkbox"] {
+  accent-color: var(--success);
+}
+
 .dropdown-menu {
   position: fixed;
 

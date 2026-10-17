@@ -1936,6 +1936,55 @@ textarea:focus {
   text-align: center;
 }
 
+#editor-additional-settings {
+  margin: 0.5rem 0;
+}
+
+#editor-additional-settings summary {
+  cursor: pointer;
+  user-select: none;
+}
+
+#editor-additional-settings summary::marker {
+  color: var(--text);
+}
+
+#editor-additional-settings .editor-settings {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: 0 1.5rem;
+  margin-top: 0.75rem;
+}
+
+#editor-additional-settings label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+
+  padding: 0.4rem 0;
+}
+
+#editor-additional-settings label > span {
+  flex: 1;
+  text-align: right;
+}
+
+#editor-additional-settings input[type="number"] {
+  width: 6ch;
+  field-sizing: content;
+
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  font-size: 1rem;
+  text-align: center;
+}
+
+#editor-additional-settings input[type="checkbox"] {
+  accent-color: var(--success);
+}
+
 .dropdown-menu {
   position: fixed;
 
@@ -2579,6 +2628,42 @@ th {
       <div id="editor-scroll">
         <p><strong>Title:</strong></p>
         <div id="editor-title"></div>
+        <details id="editor-additional-settings">
+          <summary>Additional Settings</summary>
+          <div class="editor-settings">
+            <label>
+              <span>Spaced repetition queue size:</span>
+              <input type="number" id="editor-srs-queue-size" min="1" step="1" />
+            </label>
+            <label>
+              <span>Request retention:</span>
+              <input
+                type="number"
+                id="editor-fsrs-request-retention"
+                min="0.01"
+                max="0.99"
+                step="0.01"
+              />
+            </label>
+            <label>
+              <span>Maximum interval (days):</span>
+              <input
+                type="number"
+                id="editor-fsrs-maximum-interval"
+                min="1"
+                step="1"
+              />
+            </label>
+            <label class="editor-settings-toggle">
+              <span>Enable fuzz:</span>
+              <input type="checkbox" id="editor-fsrs-enable-fuzz" />
+            </label>
+            <label class="editor-settings-toggle">
+              <span>Enable short-term scheduling:</span>
+              <input type="checkbox" id="editor-fsrs-enable-short-term" />
+            </label>
+          </div>
+        </details>
         <p><strong>Question:</strong></p>
         <div id="editor-question"></div>
         <div class="answer-position">
@@ -2688,7 +2773,16 @@ var state = {
   questionSRSQueue: null,
   srs: false,
   srsQueueSize: 20,
-  request_retention: 0.9,
+  /*
+   * FSRS scheduler parameters; see srs.js. Values may be changed
+   * per-quiz in the editor's additional settings.
+   */
+  srsConfig: {
+    request_retention: 0.9,
+    maximum_interval: 365,
+    enable_fuzz: true,
+    enable_short_term: true
+  },
   // Maximum level before removing from queue
   srsLevel: 5,
   questionResults: [],
@@ -3137,12 +3231,14 @@ function formatQuizAsText(quiz2) {
 }
 
 // frontend/src/srs.js
-var SRS_CONFIG = {
-  request_retention: state.request_retention,
-  maximum_interval: 365,
-  enable_fuzz: true,
-  enable_short_term: true
-};
+function getSRSConfig() {
+  return {
+    request_retention: state.srsConfig.request_retention,
+    maximum_interval: state.srsConfig.maximum_interval,
+    enable_fuzz: state.srsConfig.enable_fuzz,
+    enable_short_term: state.srsConfig.enable_short_term
+  };
+}
 var VALID_RATINGS = /* @__PURE__ */ new Set(["Again", "Hard", "Good", "Easy"]);
 var fsrsPromise = null;
 var fsrsModule = null;
@@ -3156,7 +3252,7 @@ async function loadFSRS() {
   }
   try {
     fsrsModule = await fsrsPromise;
-    scheduler = fsrsModule.fsrs(SRS_CONFIG);
+    scheduler = fsrsModule.fsrs(getSRSConfig());
     return true;
   } catch (error) {
     console.error("Failed to import FSRS:", error);
@@ -3216,6 +3312,12 @@ function addNewSRSQuestion() {
 }
 function addNextSRSQuestion() {
   return addNewSRSQuestion();
+}
+function setSRSConfig(config) {
+  Object.assign(state.srsConfig, config);
+  if (fsrsModule) {
+    scheduler = fsrsModule.fsrs(getSRSConfig());
+  }
 }
 async function initSRS(quizStorageKey, currentQuestionIndex) {
   if (!await loadFSRS()) {
@@ -3968,7 +4070,8 @@ function downloadQuizHTML() {
     // srs appdata
     srsOnLoad: state.srs,
     srsQueueSize: state.srsQueueSize,
-    requestRetention: state.request_retention
+    requestRetention: state.srsConfig.request_retention,
+    srsConfig: state.srsConfig
   };
   const filename = state.quiz.title;
   const documentClone = document.documentElement.cloneNode(true);
@@ -4172,6 +4275,58 @@ function openEditor() {
   question.options.forEach((option) => {
     optionsContainer.appendChild(addEditorOption(option));
   });
+  loadAdditionalSettings();
+}
+var additionalSettingsSnapshot = null;
+function getEditorSettingsValues() {
+  const edit = (id) => document.getElementById(id);
+  return {
+    srsQueueSize: parseInt(edit("editor-srs-queue-size").value, 10),
+    srsConfig: {
+      request_retention: parseFloat(edit("editor-fsrs-request-retention").value),
+      maximum_interval: parseInt(edit("editor-fsrs-maximum-interval").value, 10),
+      enable_fuzz: edit("editor-fsrs-enable-fuzz").checked,
+      enable_short_term: edit("editor-fsrs-enable-short-term").checked
+    }
+  };
+}
+function loadAdditionalSettings() {
+  const config = state.srsConfig;
+  document.getElementById("editor-srs-queue-size").value = state.srsQueueSize;
+  document.getElementById("editor-fsrs-request-retention").value = config.request_retention;
+  document.getElementById("editor-fsrs-maximum-interval").value = config.maximum_interval;
+  document.getElementById("editor-fsrs-enable-fuzz").checked = config.enable_fuzz;
+  document.getElementById("editor-fsrs-enable-short-term").checked = config.enable_short_term;
+  additionalSettingsSnapshot = JSON.stringify(getEditorSettingsValues());
+}
+function validateAdditionalSettings() {
+  const retentionInput = document.getElementById(
+    "editor-fsrs-request-retention"
+  );
+  const intervalInput = document.getElementById(
+    "editor-fsrs-maximum-interval"
+  );
+  const queueInput = document.getElementById("editor-srs-queue-size");
+  const retention = parseFloat(retentionInput.value);
+  const maximumInterval = parseInt(intervalInput.value, 10);
+  const queueSize = parseInt(queueInput.value, 10);
+  let valid = true;
+  const check = (input, condition) => {
+    input.classList.remove("input-error");
+    if (!condition) {
+      input.classList.add("input-error");
+      valid = false;
+    }
+  };
+  check(retentionInput, !Number.isNaN(retention) && retention > 0 && retention < 1);
+  check(intervalInput, Number.isInteger(maximumInterval) && maximumInterval >= 1);
+  check(queueInput, Number.isInteger(queueSize) && queueSize >= 1);
+  if (!valid) {
+    showAlert(
+      "Invalid Additional Settings: request retention must be between 0 and 1, and the other values must be positive integers."
+    );
+  }
+  return valid;
 }
 function addEditorOption(value) {
   const article = document.createElement("article");
@@ -4227,7 +4382,7 @@ function closeEditorConfirm() {
   );
 }
 function saveEdit() {
-  if (!validateAnswerIndex()) {
+  if (!validateAnswerIndex() || !validateAdditionalSettings()) {
     return;
   }
   const newTitleText = document.querySelector("#editor-title textarea").value;
@@ -4249,8 +4404,20 @@ function saveEdit() {
   state.quiz.questions[state.currentQuestionIndex].correct_index = newIndex;
   state.quiz.questions[state.currentQuestionIndex].options = updatedOptions;
   state.quiz.questions[state.currentQuestionIndex].explanation = newExplanationText;
+  applyAdditionalSettings();
   if (saveLocalEdit(state.currentQuestionIndex, titleChanged)) {
     showAlert("Changes saved.");
+  }
+}
+function applyAdditionalSettings() {
+  const values = getEditorSettingsValues();
+  setSRSConfig(values.srsConfig);
+  state.srsQueueSize = values.srsQueueSize;
+  if (JSON.stringify(values) !== additionalSettingsSnapshot) {
+    saveAppDataOverrides(state.quizStorageKey, {
+      srsConfig: { ...state.srsConfig },
+      srsQueueSize: state.srsQueueSize
+    });
   }
 }
 function closeEditor() {
@@ -4605,7 +4772,10 @@ try {
 }
 initializeState(quiz);
 state.srsQueueSize = appData.srsQueueSize;
-state.request_retention = appData.request_retention;
+Object.assign(state.srsConfig, appData.srsConfig ?? {});
+if (appData.srsConfig === void 0) {
+  state.srsConfig.request_retention = appData.requestRetention;
+}
 loadStats();
 loadQuizEdits(state);
 async function initializeApp() {

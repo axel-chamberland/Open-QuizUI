@@ -25,7 +25,17 @@ export const state = {
   questionSRSQueue: null,
   srs: false,
   srsQueueSize: 20,
-  request_retention: 0.9,
+
+  /*
+   * FSRS scheduler parameters; see srs.js. Values may be changed
+   * per-quiz in the editor's additional settings.
+   */
+  srsConfig: {
+    request_retention: 0.9,
+    maximum_interval: 365,
+    enable_fuzz: true,
+    enable_short_term: true,
+  },
 
   // Maximum level before removing from queue
   srsLevel: 5,

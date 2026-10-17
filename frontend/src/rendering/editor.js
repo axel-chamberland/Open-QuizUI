@@ -1,10 +1,12 @@
 import { state } from "../state.js";
 import { renderMCQ } from "./mcq.js";
+import { setSRSConfig } from "../srs.js";
 import {
   removeAllLocalEdits,
   removeLocalEdit,
   saveLocalEdit,
 } from "../persistence/quiz_edits.js";
+import { saveAppDataOverrides } from "../persistence/app_data.js";
 import { renderCurrentQuestionView, setQuizTitle } from "../quiz.js";
 import { showAlert, showPrompt } from "../ui/alert.js";
 
@@ -49,6 +51,99 @@ export function openEditor() {
   question.options.forEach((option) => {
     optionsContainer.appendChild(addEditorOption(option));
   });
+
+  loadAdditionalSettings();
+}
+
+/**
+ * Controller for the additional settings fields.
+ *
+ * Keeps a snapshot of the values the editor was opened with, so
+ * unchanged settings are not persisted as app data overrides.
+ */
+let additionalSettingsSnapshot = null;
+
+/**
+ * Reads the additional settings fields as state values.
+ *
+ * @returns {object} The FSRS config and SRS queue size from the fields.
+ */
+function getEditorSettingsValues() {
+  const edit = (id) => document.getElementById(id);
+
+  return {
+    srsQueueSize: parseInt(edit("editor-srs-queue-size").value, 10),
+    srsConfig: {
+      request_retention: parseFloat(edit("editor-fsrs-request-retention").value),
+      maximum_interval: parseInt(edit("editor-fsrs-maximum-interval").value, 10),
+      enable_fuzz: edit("editor-fsrs-enable-fuzz").checked,
+      enable_short_term: edit("editor-fsrs-enable-short-term").checked,
+    },
+  };
+}
+
+/**
+ * Fills the additional settings fields with the current FSRS values.
+ *
+ * @returns {void}
+ */
+function loadAdditionalSettings() {
+  const config = state.srsConfig;
+
+  document.getElementById("editor-srs-queue-size").value =
+    state.srsQueueSize;
+  document.getElementById("editor-fsrs-request-retention").value =
+    config.request_retention;
+  document.getElementById("editor-fsrs-maximum-interval").value =
+    config.maximum_interval;
+  document.getElementById("editor-fsrs-enable-fuzz").checked =
+    config.enable_fuzz;
+  document.getElementById("editor-fsrs-enable-short-term").checked =
+    config.enable_short_term;
+
+  additionalSettingsSnapshot = JSON.stringify(getEditorSettingsValues());
+}
+
+/**
+ * Validates the additional settings fields.
+ *
+ * @returns {boolean} Whether all additional settings are valid.
+ */
+function validateAdditionalSettings() {
+  const retentionInput = document.getElementById(
+    "editor-fsrs-request-retention",
+  );
+  const intervalInput = document.getElementById(
+    "editor-fsrs-maximum-interval",
+  );
+  const queueInput = document.getElementById("editor-srs-queue-size");
+
+  const retention = parseFloat(retentionInput.value);
+  const maximumInterval = parseInt(intervalInput.value, 10);
+  const queueSize = parseInt(queueInput.value, 10);
+
+  let valid = true;
+
+  const check = (input, condition) => {
+    input.classList.remove("input-error");
+
+    if (!condition) {
+      input.classList.add("input-error");
+      valid = false;
+    }
+  };
+
+  check(retentionInput, !Number.isNaN(retention) && retention > 0 && retention < 1);
+  check(intervalInput, Number.isInteger(maximumInterval) && maximumInterval >= 1);
+  check(queueInput, Number.isInteger(queueSize) && queueSize >= 1);
+
+  if (!valid) {
+    showAlert(
+      "Invalid Additional Settings: request retention must be between 0 and 1, and the other values must be positive integers.",
+    );
+  }
+
+  return valid;
 }
 
 function addEditorOption(value) {
@@ -123,7 +218,7 @@ export function closeEditorConfirm() {
 }
 
 export function saveEdit() {
-  if (!validateAnswerIndex()) {
+  if (!validateAnswerIndex() || !validateAdditionalSettings()) {
     return;
   }
 
@@ -156,9 +251,36 @@ export function saveEdit() {
   state.quiz.questions[state.currentQuestionIndex].explanation =
     newExplanationText;
 
+  // Apply additional (FSRS) settings
+  applyAdditionalSettings();
+
   // Persist the actual changes (locally)
   if (saveLocalEdit(state.currentQuestionIndex, titleChanged)) {
     showAlert("Changes saved.");
+  }
+}
+
+/**
+ * Applies the additional settings fields to the runtime state and
+ * persists them as app data overrides so they survive a refresh.
+ *
+ * Unchanged fields (matching what the editor was opened with) are not
+ * persisted.
+ *
+ * @returns {void}
+ */
+function applyAdditionalSettings() {
+  const values = getEditorSettingsValues();
+
+  setSRSConfig(values.srsConfig);
+
+  state.srsQueueSize = values.srsQueueSize;
+
+  if (JSON.stringify(values) !== additionalSettingsSnapshot) {
+    saveAppDataOverrides(state.quizStorageKey, {
+      srsConfig: { ...state.srsConfig },
+      srsQueueSize: state.srsQueueSize,
+    });
   }
 }
 

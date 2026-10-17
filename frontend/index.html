@@ -558,6 +558,42 @@
       <div id="editor-scroll">
         <p><strong>Title:</strong></p>
         <div id="editor-title"></div>
+        <details id="editor-additional-settings">
+          <summary>Additional Settings</summary>
+          <div class="editor-settings">
+            <label>
+              <span>Spaced repetition queue size:</span>
+              <input type="number" id="editor-srs-queue-size" min="1" step="1" />
+            </label>
+            <label>
+              <span>Request retention:</span>
+              <input
+                type="number"
+                id="editor-fsrs-request-retention"
+                min="0.01"
+                max="0.99"
+                step="0.01"
+              />
+            </label>
+            <label>
+              <span>Maximum interval (days):</span>
+              <input
+                type="number"
+                id="editor-fsrs-maximum-interval"
+                min="1"
+                step="1"
+              />
+            </label>
+            <label class="editor-settings-toggle">
+              <span>Enable fuzz:</span>
+              <input type="checkbox" id="editor-fsrs-enable-fuzz" />
+            </label>
+            <label class="editor-settings-toggle">
+              <span>Enable short-term scheduling:</span>
+              <input type="checkbox" id="editor-fsrs-enable-short-term" />
+            </label>
+          </div>
+        </details>
         <p><strong>Question:</strong></p>
         <div id="editor-question"></div>
         <div class="answer-position">

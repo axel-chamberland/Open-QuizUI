@@ -5,17 +5,21 @@ import {
 } from "./persistence/question_order.js";
 
 /**
- * FSRS scheduler configuration.
+ * Builds the FSRS scheduler configuration from the current state.
  *
- * These values configure FSRS itself. No additional
- * application-specific scheduling rules are applied.
+ * Read at scheduler creation time so edits made in the editor
+ * take effect on subsequent scheduling operations.
+ *
+ * No additional application-specific scheduling rules are applied.
  */
-const SRS_CONFIG = {
-  request_retention: state.request_retention,
-  maximum_interval: 365,
-  enable_fuzz: true,
-  enable_short_term: true,
-};
+function getSRSConfig() {
+  return {
+    request_retention: state.srsConfig.request_retention,
+    maximum_interval: state.srsConfig.maximum_interval,
+    enable_fuzz: state.srsConfig.enable_fuzz,
+    enable_short_term: state.srsConfig.enable_short_term,
+  };
+}
 
 /**
  * Rating values accepted from quiz.js.
@@ -59,7 +63,7 @@ async function loadFSRS() {
 
   try {
     fsrsModule = await fsrsPromise;
-    scheduler = fsrsModule.fsrs(SRS_CONFIG);
+    scheduler = fsrsModule.fsrs(getSRSConfig());
     return true;
   } catch (error) {
     console.error("Failed to import FSRS:", error);
@@ -185,6 +189,27 @@ function addNewSRSQuestion() {
  */
 function addNextSRSQuestion() {
   return addNewSRSQuestion();
+}
+
+/**
+ * Applies FSRS parameter changes.
+ *
+ * When the FSRS library is already loaded, the scheduler is recreated
+ * synchronously so the next scheduling operation uses the new values.
+ * Otherwise the scheduler is created on first use with the new config.
+ *
+ * Existing cards keep their FSRS state; new parameters only affect
+ * subsequent scheduling.
+ *
+ * @param {object} config Partial FSRS configuration to apply.
+ * @returns {void}
+ */
+export function setSRSConfig(config) {
+  Object.assign(state.srsConfig, config);
+
+  if (fsrsModule) {
+    scheduler = fsrsModule.fsrs(getSRSConfig());
+  }
 }
 
 /**

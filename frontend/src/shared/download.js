@@ -10,7 +10,8 @@ export function downloadQuizHTML() {
     // srs appdata
     srsOnLoad: state.srs,
     srsQueueSize: state.srsQueueSize,
-    requestRetention: state.request_retention,
+    requestRetention: state.srsConfig.request_retention,
+    srsConfig: state.srsConfig,
   };
 
   const filename = state.quiz.title;

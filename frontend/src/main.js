@@ -37,7 +37,18 @@ try {
 initializeState(quiz);
 
 state.srsQueueSize = appData.srsQueueSize;
-state.request_retention = appData.request_retention;
+
+/*
+ * FSRS scheduler parameters.
+ *
+ * Per-quiz overrides (already merged into appData) carry the config
+ * set in the editor; requestRetention in the embedded payload remains
+ * the fallback when no editor config exists.
+ */
+Object.assign(state.srsConfig, appData.srsConfig ?? {});
+if (appData.srsConfig === undefined) {
+  state.srsConfig.request_retention = appData.requestRetention;
+}
 
 loadStats();
 loadQuizEdits(state);
