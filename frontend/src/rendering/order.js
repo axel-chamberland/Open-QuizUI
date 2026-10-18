@@ -188,9 +188,12 @@ function selectQuestion(questionIndex) {
 /**
  * Closes the order editor overlay.
  *
+ * The editor calls this as it is closed, since the list is not modal
+ * and would otherwise be left up over the quiz page.
+ *
  * @returns {void}
  */
-function closeOrderEditor() {
+export function closeOrderEditor() {
   // Never leave a half-finished drag behind: it would keep its
   // listeners attached and break the next time the editor is used.
   dragCancel?.();

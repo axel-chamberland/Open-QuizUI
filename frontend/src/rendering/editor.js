@@ -10,7 +10,7 @@ import { saveAppDataOverrides } from "../persistence/app_data.js";
 import { loadQuestionOrder, clearQuestionOrder } from "../persistence/question_order.js";
 import { clearQuestionRemovals } from "../persistence/question_removals.js";
 import { goTo, removeAddedQuestion, setQuizTitle } from "../quiz.js";
-import { openOrderEditor } from "./order.js";
+import { closeOrderEditor, openOrderEditor } from "./order.js";
 import { showAlert, showPrompt } from "../ui/alert.js";
 
 document
@@ -385,6 +385,13 @@ function closeEditor() {
   // Reset UI state
   const options = document.getElementById("editor-distractors");
   options.innerHTML = "";
+
+  /*
+   * Anything the editor opened goes with it: the question list is not
+   * modal (it has no backdrop), so the editor can be closed from
+   * behind it.
+   */
+  closeOrderEditor();
 
   /*
    * Leave the quiz on the question the editor was showing - it can

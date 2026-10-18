@@ -4841,6 +4841,7 @@ function closeEditor() {
   editor.style.display = "none";
   const options = document.getElementById("editor-distractors");
   options.innerHTML = "";
+  closeOrderEditor();
   goTo(state.currentQuestionIndex);
 }
 function restoreQuizToDefault() {

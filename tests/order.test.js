@@ -19,7 +19,10 @@ document.documentElement.innerHTML =
 
 const { openOrderEditor } = await import("../frontend/src/rendering/order.js");
 
-const { openEditor } = await import("../frontend/src/rendering/editor.js");
+const {
+  closeEditorConfirm,
+  openEditor,
+} = await import("../frontend/src/rendering/editor.js");
 
 const { state } = await import("../frontend/src/state.js");
 
@@ -192,6 +195,24 @@ describe("question list overlay", () => {
     expect(document.querySelector("#editor-question textarea").value).toBe(
       "Q3",
     );
+  });
+
+  it("closes the question list when the editor is closed", () => {
+    closeEditorConfirm();
+    document.getElementById("global-prompt-no").click();
+
+    // Staying in the editor keeps the list up.
+    expect(
+      document.getElementById("order-editor").classList.contains("visible"),
+    ).toBe(true);
+
+    closeEditorConfirm();
+    document.getElementById("global-prompt-yes").click();
+
+    expect(
+      document.getElementById("order-editor").classList.contains("visible"),
+    ).toBe(false);
+    expect(document.getElementById("editor").style.display).toBe("none");
   });
 
   it("does not move the editor's question number while the order is dragged", () => {
