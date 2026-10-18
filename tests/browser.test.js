@@ -5,8 +5,9 @@
  * gets it - in a real headless Chromium, and fails on any uncaught page
  * error or console error, which the jsdom unit tests cannot see.
  *
- * Needs a Chromium: run `npx playwright install chromium` (CI does it
- * as a workflow step).
+ * Assumes Playwright's Chromium is on disk: the npm postinstall hook
+ * installs it whenever dependencies go in, and CI's workflow step
+ * additionally provides the system libraries around it.
  */
 import { execFileSync } from "node:child_process";
 import { writeFileSync, mkdtempSync } from "node:fs";
