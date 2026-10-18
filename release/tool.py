@@ -2717,8 +2717,8 @@ var state = {
 };
 function createQuestionTemplate() {
   const questions = state.quiz.questions;
-  const lastQuestion = questions[questions.length - 1];
-  const optionCount = lastQuestion?.options?.length >= 2 ? lastQuestion.options.length : 2;
+  const reference = questions[state.currentQuestionIndex] ?? questions[questions.length - 1];
+  const optionCount = reference?.options?.length || 2;
   return {
     question: "",
     options: new Array(optionCount).fill(""),

@@ -214,13 +214,29 @@ describe("createQuestionTemplate", () => {
     initializeState(structuredClone(QUIZ));
   });
 
-  it("matches the option count of the last question", () => {
+  it("matches the option count of the question being viewed", () => {
     const template = createQuestionTemplate();
 
-    expect(template.options).toHaveLength(4);
+    expect(template.options).toHaveLength(2);
     expect(template.question).toBe("");
     expect(template.correct_index).toBe(0);
     expect(template.explanation).toBe("");
+  });
+
+  it("follows the viewed question, not the last one", () => {
+    state.currentQuestionIndex = 1;
+
+    expect(createQuestionTemplate().options).toHaveLength(4);
+  });
+
+  it("gives a question added from a flashcard a single choice", () => {
+    localStorage.clear();
+    initializeState({
+      title: "Test Cards",
+      questions: [{ question: "C1", options: ["answer"], correct_index: 0 }],
+    });
+
+    expect(createQuestionTemplate().options).toHaveLength(1);
   });
 });
 

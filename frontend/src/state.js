@@ -73,17 +73,17 @@ export const state = {
 /**
  * Builds a blank question for a question the user adds in the editor.
  *
- * The option count follows the quiz's last question, so a new question
- * starts out shaped like the rest of the quiz.
+ * The option count follows the question being viewed, so a new question
+ * starts out shaped like the one it is added from - a question added
+ * while on a flashcard is a flashcard too, with a single choice.
  *
  * @returns {object} Blank question, ready to be edited.
  */
 export function createQuestionTemplate() {
   const questions = state.quiz.questions;
-  const lastQuestion = questions[questions.length - 1];
-  const optionCount = lastQuestion?.options?.length >= 2
-    ? lastQuestion.options.length
-    : 2;
+  const reference =
+    questions[state.currentQuestionIndex] ?? questions[questions.length - 1];
+  const optionCount = reference?.options?.length || 2;
 
   return {
     question: "",
