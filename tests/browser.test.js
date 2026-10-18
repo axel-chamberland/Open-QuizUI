@@ -109,6 +109,36 @@ const appData = {
 
 const html = generateHTML(appData);
 
+/*
+ * The page renders a question with a single option as a flashcard, which
+ * is what the action function produces for a flashcard message.
+ */
+const flashcardData = {
+  enableMathJax: false,
+  mode: "flashcard",
+  srsQueueSize: 20,
+  requestRetention: 0.9,
+  srsOnLoad: false,
+  quiz: {
+    title: "Browser smoke flashcards",
+    questions: [
+      {
+        question: "First card?",
+        options: ["first answer"],
+        correct_index: 0,
+        explanation: "one",
+      },
+      {
+        question: "Second card?",
+        options: ["second answer"],
+        correct_index: 0,
+      },
+    ],
+  },
+};
+
+const flashcardHtml = generateHTML(flashcardData);
+
 const browser = await chromium.launch();
 const errors = [];
 
@@ -277,6 +307,52 @@ describe("browser smoke", () => {
       await page
         .locator("#order-editor")
         .waitFor({ state: "hidden", timeout: 5_000 });
+
+      expect(errors).toEqual([]);
+    },
+    60_000,
+  );
+
+  it(
+    "reveals and rates flashcards without page errors",
+    async () => {
+      const directory = mkdtempSync(join(tmpdir(), "openquizui-flashcards-"));
+
+      writeFileSync(join(directory, "flashcards.html"), flashcardHtml);
+
+      await page.goto(`file://${join(directory, "flashcards.html")}`);
+      await visible("#flashcard-box", "flashcard box");
+
+      expect(await page.textContent(".flashcard-question")).toContain(
+        "First card?",
+      );
+
+      /* The answer stays hidden until the card is revealed. */
+      expect(await page.locator(".flashcard-answer").isVisible()).toBe(false);
+
+      await page.keyboard.press("Enter");
+      await visible(".flashcard-answer", "revealed answer");
+      await visible(".flashcard-explanation", "revealed explanation");
+      expect(await page.textContent(".flashcard-answer")).toContain(
+        "first answer",
+      );
+
+      /* Rating the card moves to the next one, with its answer hidden. */
+      await page.click("#flashcard-rating .known-button");
+      await page.waitForFunction(
+        () =>
+          document
+            .querySelector(".flashcard-question")
+            .textContent.includes("Second"),
+        { timeout: 5_000 },
+      );
+      expect(await page.locator(".flashcard-answer").isVisible()).toBe(false);
+
+      /* Rating the last card leads to the results page. */
+      await page.keyboard.press("Enter");
+      await visible(".flashcard-answer", "revealed answer of the last card");
+      await page.click("#flashcard-rating .known-button");
+      await visible("#results", "results page");
 
       expect(errors).toEqual([]);
     },
