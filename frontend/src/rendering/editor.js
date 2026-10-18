@@ -394,8 +394,7 @@ export async function saveEdit() {
 function applyAdditionalSettings() {
   const values = getEditorSettingsValues();
 
-  const settingsChanged =
-    JSON.stringify(values) !== additionalSettingsSnapshot;
+  const settingsChanged = JSON.stringify(values) !== additionalSettingsSnapshot;
 
   setSRSConfig(values.srsConfig);
 
