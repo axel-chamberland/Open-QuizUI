@@ -313,6 +313,13 @@ describe("hasUnsavedEditorChanges", () => {
 
 describe("restartQuiz", () => {
   beforeEach(() => {
+    /*
+     * Off by default: an earlier SRS test in this file leaves the
+     * flag on, and restarting with it on would drive the suite into
+     * loading the FSRS library just to reset itself.
+     */
+    state.srs = false;
+
     state.quiz = {
       questions: [{}, {}, {}],
     };
