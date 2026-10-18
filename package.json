@@ -2,6 +2,7 @@
   "devDependencies": {
     "esbuild": "^0.28.2",
     "jsdom": "^30.0.1",
+    "playwright": "^1.62.0",
     "vitest": "^5.0.0"
   },
   "allowScripts": {

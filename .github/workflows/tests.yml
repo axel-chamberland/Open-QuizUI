@@ -48,5 +48,8 @@ jobs:
       - name: Install JavaScript dependencies
         run: npm ci
 
+      - name: Install Playwright's Chromium
+        run: npx playwright install --with-deps chromium
+
       - name: Run tests
         run: npm run test:all
