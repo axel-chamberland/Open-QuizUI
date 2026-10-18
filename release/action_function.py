@@ -1949,6 +1949,21 @@ textarea:focus {
   color: var(--text);
 }
 
+.editor-section {
+  padding-top: 0.75rem;
+}
+
+.editor-section + .editor-section {
+  margin-top: 0.75rem;
+  border-top: 1px solid var(--border);
+}
+
+.editor-section-title {
+  margin: 0 0 0.5rem 0;
+
+  font-weight: bold;
+}
+
 #editor-additional-settings .editor-settings {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
@@ -1983,6 +1998,144 @@ textarea:focus {
 
 #editor-additional-settings input[type="checkbox"] {
   accent-color: var(--success);
+}
+
+.editor-section-hint {
+  margin: 0 0 0.5rem 0;
+
+  color: var(--unanswered);
+}
+
+/* Question order overlay */
+.order-editor {
+  width: min(28rem, calc(100vw - 2rem));
+  max-width: calc(100vw - 2rem);
+  box-sizing: border-box;
+}
+
+.order-editor .order-hint {
+  margin: 0;
+  font-size: 0.8em;
+  color: var(--border);
+}
+
+.order-editor #order-editor-list {
+  display: grid;
+  gap: 0.25rem;
+
+  overflow: auto;
+  overscroll-behavior: contain;
+
+  max-height: 60vh;
+  margin: 0.75rem 0;
+}
+
+.order-editor .order-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  min-width: max-content;
+  padding: 0.35rem 0.5rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 0.35rem;
+  cursor: grab;
+
+  /*
+   * The browser owns pan and pinch zoom here: touch scrolling is
+   * native (smooth, both axes) and pinch zoom works. Reordering is
+   * started from the row's grip handle, which claims its own gesture
+   * (touch-action: none), so scrolling and dragging never conflict.
+   */
+  touch-action: pan-x pan-y pinch-zoom;
+
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Touch drag in progress: suppress text selection and callouts */
+#order-editor.dragging {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.order-editor .order-row:active {
+  cursor: grabbing;
+}
+
+/*
+ * Visual feedback for reordered slots. The danger color marks the rows
+ * the user actually dragged; the softer tint below only marks rows
+ * that shifted because a neighbour was dragged past them.
+ */
+.order-editor .order-row.order-dragged {
+  border-color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 18%, var(--bg));
+}
+
+.order-editor .order-row.order-changed {
+  border-color: var(--skipped);
+  background: color-mix(in srgb, var(--skipped) 18%, var(--bg));
+}
+
+.order-editor .order-row.order-dragging {
+  opacity: 0.5;
+}
+
+.order-editor .order-row.order-drop-target {
+  border-color: var(--success);
+}
+
+.order-editor .order-number {
+  min-width: 2.5ch;
+  text-align: right;
+}
+
+/*
+ * Touch drag grip, at the left of every row. touch-action: none hands
+ * it the whole gesture, so a drag started here can never lose to
+ * scrolling or a native long press (the browser cannot pan a
+ * touch-action: none element at all). The row body keeps native
+ * scrolling and pinch zoom. It sticks to the left edge so it stays
+ * reachable when a long question makes the row scroll horizontally.
+ */
+.order-editor .order-handle {
+  flex: none;
+  position: sticky;
+  left: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  min-width: 2.25rem;
+  padding: 0.2rem 0.3rem;
+  margin-left: -0.25rem;
+  border-radius: 0.25rem;
+  background: color-mix(in srgb, var(--border) 30%, var(--bg));
+  color: var(--text);
+  cursor: grab;
+  font-size: 1.1em;
+  line-height: 1;
+
+  touch-action: none;
+
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.order-editor .order-handle:active {
+  cursor: grabbing;
+}
+
+.order-editor .order-caption {
+  white-space: nowrap;
 }
 
 .dropdown-menu {
@@ -2222,6 +2375,16 @@ th {
       <div class="button-row">
         <button id="global-prompt-yes">yes</button>
         <button id="global-prompt-no">no</button>
+      </div>
+    </div>
+    <div id="order-editor" class="global-prompt order-editor">
+      <p><strong>Question Order</strong></p>
+      <p class="order-hint">Drag the ⠿ grip to reorder; scroll and zoom work as usual.</p>
+      <div id="order-editor-list"></div>
+      <div class="button-row">
+        <button id="order-editor-reset">Reset</button>
+        <button id="order-editor-cancel">Cancel</button>
+        <button id="order-editor-save">Save</button>
       </div>
     </div>
     <div id="question-box" class="page" style="display: none">
@@ -2626,42 +2789,53 @@ th {
         permanently.
       </p>
       <div id="editor-scroll">
+        <p id="editor-question-number"></p>
         <p><strong>Title:</strong></p>
         <div id="editor-title"></div>
         <details id="editor-additional-settings">
           <summary>Additional Settings</summary>
-          <div class="editor-settings">
-            <label>
-              <span>Spaced repetition queue size:</span>
-              <input type="number" id="editor-srs-queue-size" min="1" step="1" />
-            </label>
-            <label>
-              <span>Request retention:</span>
-              <input
-                type="number"
-                id="editor-fsrs-request-retention"
-                min="0.01"
-                max="0.99"
-                step="0.01"
-              />
-            </label>
-            <label>
-              <span>Maximum interval (days):</span>
-              <input
-                type="number"
-                id="editor-fsrs-maximum-interval"
-                min="1"
-                step="1"
-              />
-            </label>
-            <label class="editor-settings-toggle">
-              <span>Enable fuzz:</span>
-              <input type="checkbox" id="editor-fsrs-enable-fuzz" />
-            </label>
-            <label class="editor-settings-toggle">
-              <span>Enable short-term scheduling:</span>
-              <input type="checkbox" id="editor-fsrs-enable-short-term" />
-            </label>
+          <div class="editor-section">
+            <p class="editor-section-title">Review Scheduling (FSRS)</p>
+            <div class="editor-settings">
+              <label>
+                <span>Spaced repetition queue size:</span>
+                <input type="number" id="editor-srs-queue-size" min="1" step="1" />
+              </label>
+              <label>
+                <span>Request retention:</span>
+                <input
+                  type="number"
+                  id="editor-fsrs-request-retention"
+                  min="0.01"
+                  max="0.99"
+                  step="0.01"
+                />
+              </label>
+              <label>
+                <span>Maximum interval (days):</span>
+                <input
+                  type="number"
+                  id="editor-fsrs-maximum-interval"
+                  min="1"
+                  step="1"
+                />
+              </label>
+              <label class="editor-settings-toggle">
+                <span>Enable fuzz:</span>
+                <input type="checkbox" id="editor-fsrs-enable-fuzz" />
+              </label>
+              <label class="editor-settings-toggle">
+                <span>Enable short-term scheduling:</span>
+                <input type="checkbox" id="editor-fsrs-enable-short-term" />
+              </label>
+            </div>
+          </div>
+          <div class="editor-section">
+            <p class="editor-section-title">Question Order</p>
+            <p class="editor-section-hint">
+              Reorder questions for normal navigation.
+            </p>
+            <button id="order-editor-open-button">Edit Question Order</button>
           </div>
         </details>
         <p><strong>Question:</strong></p>
@@ -2723,6 +2897,21 @@ function loadQuestionOrder(quizStorageKey, questionCount) {
   } catch {
   }
   return Array.from({ length: questionCount }, (_, index) => index);
+}
+function saveQuestionOrder(quizStorageKey, questionOrder) {
+  try {
+    localStorage.setItem(
+      `questionOrder_${quizStorageKey}`,
+      JSON.stringify(questionOrder)
+    );
+  } catch {
+  }
+}
+function clearQuestionOrder(quizStorageKey) {
+  try {
+    localStorage.removeItem(`questionOrder_${quizStorageKey}`);
+  } catch {
+  }
 }
 function loadQuestionSRSState(quizStorageKey) {
   try {
@@ -3780,12 +3969,12 @@ function showPrompt(message, onYes = null, onNo = null, yesText = "yes", noText 
   noButton.style.display = "";
   const close = (callback) => {
     prompt.classList.remove("visible");
-    document.removeEventListener("keydown", keyHandler, true);
+    document.removeEventListener("keydown", keyHandler2, true);
     if (callback) callback();
   };
   yesButton.onclick = () => close(onYes);
   noButton.onclick = () => close(onNo);
-  function keyHandler(e) {
+  function keyHandler2(e) {
     if (e.key === "Enter" || e.key.toLowerCase() === "y") {
       e.preventDefault();
       e.stopPropagation();
@@ -3796,7 +3985,7 @@ function showPrompt(message, onYes = null, onNo = null, yesText = "yes", noText 
       close(onNo);
     }
   }
-  document.addEventListener("keydown", keyHandler, true);
+  document.addEventListener("keydown", keyHandler2, true);
   prompt.classList.add("visible");
 }
 function showAlert(message) {
@@ -3810,17 +3999,17 @@ function showAlert(message) {
   noButton.style.display = "none";
   const close = () => {
     prompt.classList.remove("visible");
-    document.removeEventListener("keydown", keyHandler, true);
+    document.removeEventListener("keydown", keyHandler2, true);
   };
   yesButton.onclick = close;
-  function keyHandler(e) {
+  function keyHandler2(e) {
     if (e.key === "Enter" || e.key === "Escape") {
       e.preventDefault();
       e.stopPropagation();
       close();
     }
   }
-  document.addEventListener("keydown", keyHandler, true);
+  document.addEventListener("keydown", keyHandler2, true);
   prompt.classList.add("visible");
 }
 
@@ -4249,6 +4438,287 @@ function removeAllLocalEdits() {
   localStorage.removeItem(key);
 }
 
+// frontend/src/rendering/order.js
+var workingOrder = null;
+var originalOrder = null;
+var dragIndex = null;
+var keyHandler = null;
+var draggedItems = /* @__PURE__ */ new Set();
+var dragCancel = null;
+var lastPointerType = "mouse";
+document.addEventListener("pointerdown", (event) => {
+  lastPointerType = event.pointerType;
+}, true);
+function getQuestionSnippet(questionIndex) {
+  const question = state.quiz.questions[questionIndex];
+  const scratch = document.createElement("div");
+  scratch.innerHTML = question.question || "";
+  const text = scratch.textContent.trim();
+  return text.length > 60 ? `${text.slice(0, 60)}\u2026` : text;
+}
+function openOrderEditor() {
+  dragCancel?.();
+  originalOrder = state.questionOrder.slice();
+  workingOrder = state.questionOrder.slice();
+  dragIndex = null;
+  draggedItems.clear();
+  document.getElementById("order-editor").classList.remove("dragging");
+  buildOrderList();
+  keyHandler = (e) => {
+    if (e.key === "Escape") {
+      e.preventDefault();
+      e.stopPropagation();
+      closeOrderEditor();
+    }
+  };
+  document.addEventListener("keydown", keyHandler, true);
+  document.getElementById("order-editor").classList.add("visible");
+}
+function closeOrderEditor() {
+  dragCancel?.();
+  document.getElementById("order-editor").classList.remove("visible");
+  document.removeEventListener("keydown", keyHandler, true);
+  keyHandler = null;
+}
+function saveOrder() {
+  if (JSON.stringify(workingOrder) !== JSON.stringify(originalOrder)) {
+    state.questionOrder = workingOrder.slice();
+    saveQuestionOrder(state.quizStorageKey, state.questionOrder);
+    updateQuestionNumbers();
+    updateQuestionCounts();
+  }
+  closeOrderEditor();
+}
+function resetOrder() {
+  workingOrder = Array.from(
+    { length: state.quiz.questions.length },
+    (_, index) => index
+  );
+  draggedItems.clear();
+  buildOrderList();
+}
+function startGripDrag(event, position) {
+  dragCancel?.();
+  const list = document.getElementById("order-editor-list");
+  const overlay = document.getElementById("order-editor");
+  const pointerId = event.pointerId;
+  const row = list.querySelectorAll(".order-row")[position];
+  let done = false;
+  let lastY = null;
+  let frame = null;
+  const stopScroll = () => {
+    if (frame !== null) {
+      cancelAnimationFrame(frame);
+      frame = null;
+    }
+  };
+  const scrollFrame = () => {
+    frame = null;
+    if (done || lastY === null) {
+      return;
+    }
+    if (scrollListOutsidePointer(lastY) === 0) {
+      return;
+    }
+    handlePointerDragOver(lastY);
+    frame = requestAnimationFrame(scrollFrame);
+  };
+  const cleanup = () => {
+    if (done) {
+      return;
+    }
+    done = true;
+    stopScroll();
+    overlay.classList.remove("dragging");
+    document.removeEventListener("pointermove", onMove);
+    document.removeEventListener("pointerup", onUp);
+    document.removeEventListener("pointercancel", onUp);
+    document.removeEventListener("pointerdown", onOtherPointer, true);
+    if (row) {
+      row.classList.remove("order-dragging");
+    }
+    dragIndex = null;
+    if (dragCancel === cleanup) {
+      dragCancel = null;
+    }
+  };
+  const onMove = (moveEvent) => {
+    if (moveEvent.pointerId !== pointerId) {
+      return;
+    }
+    moveEvent.preventDefault();
+    lastY = moveEvent.clientY;
+    handlePointerDragOver(lastY);
+    if (frame === null) {
+      frame = requestAnimationFrame(scrollFrame);
+    }
+  };
+  const onUp = (upEvent) => {
+    if (upEvent.pointerId === pointerId) {
+      cleanup();
+    }
+  };
+  const onOtherPointer = (downEvent) => {
+    if (!downEvent.isPrimary) {
+      cleanup();
+    }
+  };
+  dragIndex = position;
+  dragCancel = cleanup;
+  overlay.classList.add("dragging");
+  if (row) {
+    row.classList.add("order-dragging");
+  }
+  document.addEventListener("pointermove", onMove);
+  document.addEventListener("pointerup", onUp);
+  document.addEventListener("pointercancel", onUp);
+  document.addEventListener("pointerdown", onOtherPointer, true);
+}
+function handlePointerDragOver(pointerY) {
+  const list = document.getElementById("order-editor-list");
+  const dragged = list.querySelector(".order-row.order-dragging");
+  if (!dragged) {
+    return;
+  }
+  const rows = Array.from(list.querySelectorAll(".order-row"));
+  const from = rows.indexOf(dragged);
+  let target = rows.length - 1;
+  for (let index = 0; index < rows.length; index++) {
+    const rect = rows[index].getBoundingClientRect();
+    if (pointerY < rect.top + rect.height / 2) {
+      target = index;
+      break;
+    }
+  }
+  if (target !== from) {
+    const reference = target > from ? rows[target].nextSibling : rows[target];
+    list.insertBefore(dragged, reference);
+    const [item] = workingOrder.splice(from, 1);
+    workingOrder.splice(target, 0, item);
+    draggedItems.add(Number(dragged.dataset.questionIndex));
+    updateRowLabels();
+  }
+}
+function scrollListOutsidePointer(pointerY) {
+  const list = document.getElementById("order-editor-list");
+  const rect = list.getBoundingClientRect();
+  let distance = 0;
+  let direction = 0;
+  if (pointerY < rect.top) {
+    distance = rect.top - pointerY;
+    direction = -1;
+  } else if (pointerY > rect.bottom) {
+    distance = pointerY - rect.bottom;
+    direction = 1;
+  } else {
+    return 0;
+  }
+  const cap = Math.max(40, list.scrollHeight / 40);
+  const speed = Math.min(
+    cap,
+    2 + distance / 4 + distance * distance / 700
+  );
+  const step = Math.round(speed) * direction;
+  const before = list.scrollTop;
+  list.scrollTop = before + step;
+  return list.scrollTop === before ? 0 : step;
+}
+function applyRowState(row, position, questionIndex) {
+  const changed = originalOrder[position] !== questionIndex;
+  const dragged = changed && draggedItems.has(questionIndex);
+  row.classList.toggle("order-dragged", dragged);
+  row.classList.toggle("order-changed", changed && !dragged);
+}
+function updateRowLabels() {
+  const list = document.getElementById("order-editor-list");
+  list.querySelectorAll(".order-row").forEach((row, position) => {
+    const number = row.querySelector(".order-number");
+    if (number) {
+      number.textContent = `${position + 1}.`;
+    }
+    applyRowState(row, position, Number(row.dataset.questionIndex));
+  });
+}
+function buildOrderList() {
+  const list = document.getElementById("order-editor-list");
+  list.replaceChildren();
+  workingOrder.forEach((questionIndex, position) => {
+    const row = document.createElement("div");
+    row.className = "order-row";
+    row.draggable = true;
+    applyRowState(row, position, questionIndex);
+    const number = document.createElement("span");
+    number.className = "order-number";
+    number.textContent = `${position + 1}.`;
+    const caption = document.createElement("span");
+    caption.className = "order-caption";
+    caption.textContent = getQuestionSnippet(questionIndex);
+    row.dataset.questionIndex = String(questionIndex);
+    const currentPosition = () => workingOrder.indexOf(Number(row.dataset.questionIndex));
+    const handle = document.createElement("span");
+    handle.className = "order-handle";
+    handle.textContent = "\u283F";
+    handle.addEventListener("pointerdown", (event) => {
+      if (event.pointerType === "mouse") {
+        return;
+      }
+      if (!event.isPrimary) {
+        return;
+      }
+      startGripDrag(event, currentPosition());
+    });
+    handle.addEventListener("touchstart", (event) => {
+      if (event.touches.length === 1) {
+        event.preventDefault();
+      }
+    }, { passive: false });
+    row.appendChild(handle);
+    row.appendChild(number);
+    row.appendChild(caption);
+    row.addEventListener("dragstart", (event) => {
+      if (lastPointerType !== "mouse") {
+        event.preventDefault();
+        return;
+      }
+      dragIndex = currentPosition();
+      row.classList.add("order-dragging");
+    });
+    row.addEventListener("dragend", () => {
+      dragIndex = null;
+      row.classList.remove("order-dragging");
+    });
+    row.addEventListener("dragover", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      if (dragIndex === null || dragIndex === currentPosition()) {
+        return;
+      }
+      row.classList.add("order-drop-target");
+    });
+    row.addEventListener("dragleave", () => {
+      row.classList.remove("order-drop-target");
+    });
+    row.addEventListener("drop", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      row.classList.remove("order-drop-target");
+      const position2 = currentPosition();
+      if (dragIndex === null || dragIndex === position2) {
+        return;
+      }
+      const [item] = workingOrder.splice(dragIndex, 1);
+      workingOrder.splice(position2, 0, item);
+      dragIndex = null;
+      draggedItems.add(item);
+      buildOrderList();
+    });
+    list.appendChild(row);
+  });
+}
+document.getElementById("order-editor-save").addEventListener("click", saveOrder);
+document.getElementById("order-editor-cancel").addEventListener("click", closeOrderEditor);
+document.getElementById("order-editor-reset").addEventListener("click", resetOrder);
+
 // frontend/src/rendering/editor.js
 document.getElementById("editor-answer-number").addEventListener("input", (e) => {
   e.target.value = e.target.value.replace(/\D/g, "");
@@ -4264,6 +4734,9 @@ function openEditor() {
   const editorAnswer = document.getElementById("editor-answer-number");
   const optionsContainer = document.getElementById("editor-distractors");
   const question = state.quiz.questions[state.currentQuestionIndex];
+  const orderIndex = state.questionOrder.indexOf(state.currentQuestionIndex);
+  const questionPosition = orderIndex === -1 ? state.currentQuestionIndex + 1 : orderIndex + 1;
+  document.getElementById("editor-question-number").textContent = `Question ${questionPosition} of ${state.quiz.questions.length}`;
   titleField.innerHTML = `<textarea></textarea>`;
   titleField.querySelector("textarea").value = state.quiz.title;
   questionField.innerHTML = `<textarea></textarea>`;
@@ -4299,6 +4772,7 @@ function loadAdditionalSettings() {
   document.getElementById("editor-fsrs-enable-short-term").checked = config.enable_short_term;
   additionalSettingsSnapshot = JSON.stringify(getEditorSettingsValues());
 }
+document.getElementById("order-editor-open-button").addEventListener("click", openOrderEditor);
 function validateAdditionalSettings() {
   const retentionInput = document.getElementById(
     "editor-fsrs-request-retention"
@@ -4436,6 +4910,11 @@ function restoreQuizToDefault() {
       );
       state.quiz = structuredClone(appData2.quiz);
       setQuizTitle(state.quiz.title);
+      clearQuestionOrder(state.quizStorageKey);
+      state.questionOrder = loadQuestionOrder(
+        state.quizStorageKey,
+        state.quiz.questions.length
+      );
       removeAllLocalEdits();
       openEditor();
       showAlert("Quiz restored to default.");

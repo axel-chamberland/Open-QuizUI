@@ -21,6 +21,12 @@ export function saveQuestionOrder(quizStorageKey, questionOrder) {
   } catch {}
 }
 
+export function clearQuestionOrder(quizStorageKey) {
+  try {
+    localStorage.removeItem(`questionOrder_${quizStorageKey}`);
+  } catch {}
+}
+
 export function loadQuestionSRSState(quizStorageKey) {
   try {
     const data = JSON.parse(

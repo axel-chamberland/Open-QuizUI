@@ -154,6 +154,16 @@
         <button id="global-prompt-no">no</button>
       </div>
     </div>
+    <div id="order-editor" class="global-prompt order-editor">
+      <p><strong>Question Order</strong></p>
+      <p class="order-hint">Drag the ⠿ grip to reorder; scroll and zoom work as usual.</p>
+      <div id="order-editor-list"></div>
+      <div class="button-row">
+        <button id="order-editor-reset">Reset</button>
+        <button id="order-editor-cancel">Cancel</button>
+        <button id="order-editor-save">Save</button>
+      </div>
+    </div>
     <div id="question-box" class="page" style="display: none">
       <div class="title-bar">
         <h1 class="title">Quiz</h1>
@@ -556,42 +566,53 @@
         permanently.
       </p>
       <div id="editor-scroll">
+        <p id="editor-question-number"></p>
         <p><strong>Title:</strong></p>
         <div id="editor-title"></div>
         <details id="editor-additional-settings">
           <summary>Additional Settings</summary>
-          <div class="editor-settings">
-            <label>
-              <span>Spaced repetition queue size:</span>
-              <input type="number" id="editor-srs-queue-size" min="1" step="1" />
-            </label>
-            <label>
-              <span>Request retention:</span>
-              <input
-                type="number"
-                id="editor-fsrs-request-retention"
-                min="0.01"
-                max="0.99"
-                step="0.01"
-              />
-            </label>
-            <label>
-              <span>Maximum interval (days):</span>
-              <input
-                type="number"
-                id="editor-fsrs-maximum-interval"
-                min="1"
-                step="1"
-              />
-            </label>
-            <label class="editor-settings-toggle">
-              <span>Enable fuzz:</span>
-              <input type="checkbox" id="editor-fsrs-enable-fuzz" />
-            </label>
-            <label class="editor-settings-toggle">
-              <span>Enable short-term scheduling:</span>
-              <input type="checkbox" id="editor-fsrs-enable-short-term" />
-            </label>
+          <div class="editor-section">
+            <p class="editor-section-title">Review Scheduling (FSRS)</p>
+            <div class="editor-settings">
+              <label>
+                <span>Spaced repetition queue size:</span>
+                <input type="number" id="editor-srs-queue-size" min="1" step="1" />
+              </label>
+              <label>
+                <span>Request retention:</span>
+                <input
+                  type="number"
+                  id="editor-fsrs-request-retention"
+                  min="0.01"
+                  max="0.99"
+                  step="0.01"
+                />
+              </label>
+              <label>
+                <span>Maximum interval (days):</span>
+                <input
+                  type="number"
+                  id="editor-fsrs-maximum-interval"
+                  min="1"
+                  step="1"
+                />
+              </label>
+              <label class="editor-settings-toggle">
+                <span>Enable fuzz:</span>
+                <input type="checkbox" id="editor-fsrs-enable-fuzz" />
+              </label>
+              <label class="editor-settings-toggle">
+                <span>Enable short-term scheduling:</span>
+                <input type="checkbox" id="editor-fsrs-enable-short-term" />
+              </label>
+            </div>
+          </div>
+          <div class="editor-section">
+            <p class="editor-section-title">Question Order</p>
+            <p class="editor-section-hint">
+              Reorder questions for normal navigation.
+            </p>
+            <button id="order-editor-open-button">Edit Question Order</button>
           </div>
         </details>
         <p><strong>Question:</strong></p>

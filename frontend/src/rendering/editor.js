@@ -7,7 +7,9 @@ import {
   saveLocalEdit,
 } from "../persistence/quiz_edits.js";
 import { saveAppDataOverrides } from "../persistence/app_data.js";
+import { loadQuestionOrder, clearQuestionOrder } from "../persistence/question_order.js";
 import { renderCurrentQuestionView, setQuizTitle } from "../quiz.js";
+import { openOrderEditor } from "./order.js";
 import { showAlert, showPrompt } from "../ui/alert.js";
 
 document
@@ -33,6 +35,14 @@ export function openEditor() {
   const optionsContainer = document.getElementById("editor-distractors");
 
   const question = state.quiz.questions[state.currentQuestionIndex];
+
+  // Show which question is being edited, in navigation order
+  const orderIndex = state.questionOrder.indexOf(state.currentQuestionIndex);
+  const questionPosition =
+    orderIndex === -1 ? state.currentQuestionIndex + 1 : orderIndex + 1;
+
+  document.getElementById("editor-question-number").textContent =
+    `Question ${questionPosition} of ${state.quiz.questions.length}`;
 
   // Set initial values
   titleField.innerHTML = `<textarea></textarea>`;
@@ -103,6 +113,10 @@ function loadAdditionalSettings() {
 
   additionalSettingsSnapshot = JSON.stringify(getEditorSettingsValues());
 }
+
+document
+  .getElementById("order-editor-open-button")
+  .addEventListener("click", openOrderEditor);
 
 /**
  * Validates the additional settings fields.
@@ -307,6 +321,13 @@ export function restoreQuizToDefault() {
 
       state.quiz = structuredClone(appData.quiz);
       setQuizTitle(state.quiz.title);
+
+      // Reset the question order to the natural sequence
+      clearQuestionOrder(state.quizStorageKey);
+      state.questionOrder = loadQuestionOrder(
+        state.quizStorageKey,
+        state.quiz.questions.length,
+      );
 
       // Remove local storage edits
       removeAllLocalEdits();

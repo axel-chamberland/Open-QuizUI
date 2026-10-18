@@ -682,6 +682,21 @@ textarea:focus {
   color: var(--text);
 }
 
+.editor-section {
+  padding-top: 0.75rem;
+}
+
+.editor-section + .editor-section {
+  margin-top: 0.75rem;
+  border-top: 1px solid var(--border);
+}
+
+.editor-section-title {
+  margin: 0 0 0.5rem 0;
+
+  font-weight: bold;
+}
+
 #editor-additional-settings .editor-settings {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
@@ -716,6 +731,144 @@ textarea:focus {
 
 #editor-additional-settings input[type="checkbox"] {
   accent-color: var(--success);
+}
+
+.editor-section-hint {
+  margin: 0 0 0.5rem 0;
+
+  color: var(--unanswered);
+}
+
+/* Question order overlay */
+.order-editor {
+  width: min(28rem, calc(100vw - 2rem));
+  max-width: calc(100vw - 2rem);
+  box-sizing: border-box;
+}
+
+.order-editor .order-hint {
+  margin: 0;
+  font-size: 0.8em;
+  color: var(--border);
+}
+
+.order-editor #order-editor-list {
+  display: grid;
+  gap: 0.25rem;
+
+  overflow: auto;
+  overscroll-behavior: contain;
+
+  max-height: 60vh;
+  margin: 0.75rem 0;
+}
+
+.order-editor .order-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  min-width: max-content;
+  padding: 0.35rem 0.5rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 0.35rem;
+  cursor: grab;
+
+  /*
+   * The browser owns pan and pinch zoom here: touch scrolling is
+   * native (smooth, both axes) and pinch zoom works. Reordering is
+   * started from the row's grip handle, which claims its own gesture
+   * (touch-action: none), so scrolling and dragging never conflict.
+   */
+  touch-action: pan-x pan-y pinch-zoom;
+
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Touch drag in progress: suppress text selection and callouts */
+#order-editor.dragging {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.order-editor .order-row:active {
+  cursor: grabbing;
+}
+
+/*
+ * Visual feedback for reordered slots. The danger color marks the rows
+ * the user actually dragged; the softer tint below only marks rows
+ * that shifted because a neighbour was dragged past them.
+ */
+.order-editor .order-row.order-dragged {
+  border-color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 18%, var(--bg));
+}
+
+.order-editor .order-row.order-changed {
+  border-color: var(--skipped);
+  background: color-mix(in srgb, var(--skipped) 18%, var(--bg));
+}
+
+.order-editor .order-row.order-dragging {
+  opacity: 0.5;
+}
+
+.order-editor .order-row.order-drop-target {
+  border-color: var(--success);
+}
+
+.order-editor .order-number {
+  min-width: 2.5ch;
+  text-align: right;
+}
+
+/*
+ * Touch drag grip, at the left of every row. touch-action: none hands
+ * it the whole gesture, so a drag started here can never lose to
+ * scrolling or a native long press (the browser cannot pan a
+ * touch-action: none element at all). The row body keeps native
+ * scrolling and pinch zoom. It sticks to the left edge so it stays
+ * reachable when a long question makes the row scroll horizontally.
+ */
+.order-editor .order-handle {
+  flex: none;
+  position: sticky;
+  left: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  min-width: 2.25rem;
+  padding: 0.2rem 0.3rem;
+  margin-left: -0.25rem;
+  border-radius: 0.25rem;
+  background: color-mix(in srgb, var(--border) 30%, var(--bg));
+  color: var(--text);
+  cursor: grab;
+  font-size: 1.1em;
+  line-height: 1;
+
+  touch-action: none;
+
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.order-editor .order-handle:active {
+  cursor: grabbing;
+}
+
+.order-editor .order-caption {
+  white-space: nowrap;
 }
 
 .dropdown-menu {
