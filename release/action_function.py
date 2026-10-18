@@ -6013,8 +6013,8 @@ function initializeEvents() {
   document.querySelectorAll(".mode-button").forEach((button) => {
     button.addEventListener("click", switchMode);
   });
-  document.querySelector(".known-button").addEventListener("click", () => rateFlashcard(3));
-  document.querySelector(".unknown-button").addEventListener("click", () => rateFlashcard(1));
+  document.querySelector(".known-button").addEventListener("click", () => rateFlashcard(true));
+  document.querySelector(".unknown-button").addEventListener("click", () => rateFlashcard(false));
   document.querySelectorAll(".fsrs-rating-button").forEach((button) => {
     button.addEventListener("click", async () => {
       await rateFSRS(Number(button.dataset.rating));
@@ -6089,11 +6089,11 @@ function initializeEvents() {
     }
     if (state.mode === "flashcard") {
       if (key === "1") {
-        rateFlashcard(1);
+        rateFlashcard(false);
         return;
       }
       if (key === "2") {
-        rateFlashcard(1);
+        rateFlashcard(true);
         return;
       }
     }
@@ -6116,7 +6116,7 @@ function initializeEvents() {
         await rateFSRS(3);
         nextQuestion();
       } else if (state.mode === "flashcard") {
-        rateFlashcard(3);
+        rateFlashcard(true);
       } else {
         nextQuestion();
       }

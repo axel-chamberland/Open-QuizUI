@@ -70,11 +70,11 @@ export function initializeEvents() {
 
   document
     .querySelector(".known-button")
-    .addEventListener("click", () => rateFlashcard(3));
+    .addEventListener("click", () => rateFlashcard(true));
 
   document
     .querySelector(".unknown-button")
-    .addEventListener("click", () => rateFlashcard(1));
+    .addEventListener("click", () => rateFlashcard(false));
 
   document.querySelectorAll(".fsrs-rating-button").forEach((button) => {
     button.addEventListener("click", async () => {
@@ -212,12 +212,12 @@ export function initializeEvents() {
     // Flashcard rating
     if (state.mode === "flashcard") {
       if (key === "1") {
-        rateFlashcard(1);
+        rateFlashcard(false); // ✗ unknown
         return;
       }
 
       if (key === "2") {
-        rateFlashcard(1);
+        rateFlashcard(true); // ✓ known
         return;
       }
     }
@@ -251,7 +251,7 @@ export function initializeEvents() {
         await rateFSRS(3);
         nextQuestion();
       } else if (state.mode === "flashcard") {
-        rateFlashcard(3);
+        rateFlashcard(true);
       } else {
         nextQuestion();
       }

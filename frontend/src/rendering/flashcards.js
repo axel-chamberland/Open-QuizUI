@@ -47,6 +47,12 @@ export async function renderFlashcard() {
   await typesetMath();
 }
 
+/**
+ * Records whether a flashcard was known and moves to the next one.
+ *
+ * @param {boolean} correct Whether the card was rated known.
+ * @returns {Promise<void>}
+ */
 export async function rateFlashcard(correct) {
   if (!state.answerRevealed) {
     return;

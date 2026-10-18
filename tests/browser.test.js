@@ -337,8 +337,9 @@ describe("browser smoke", () => {
         "first answer",
       );
 
-      /* Rating the card moves to the next one, with its answer hidden. */
-      await page.click("#flashcard-rating .known-button");
+      /* Pressing 1 rates the card unknown and moves to the next one,
+         with its answer still hidden. */
+      await page.keyboard.press("1");
       await page.waitForFunction(
         () =>
           document
@@ -348,11 +349,17 @@ describe("browser smoke", () => {
       );
       expect(await page.locator(".flashcard-answer").isVisible()).toBe(false);
 
-      /* Rating the last card leads to the results page. */
+      /* Rating the last card leads to the results page, where both
+         ratings are counted: one unknown, one known. */
       await page.keyboard.press("Enter");
       await visible(".flashcard-answer", "revealed answer of the last card");
       await page.click("#flashcard-rating .known-button");
       await visible("#results", "results page");
+
+      expect(await page.textContent("#score")).toBe("Score: 1/2");
+      expect(
+        await page.textContent("#question-corrections article"),
+      ).toContain("✗");
 
       expect(errors).toEqual([]);
     },
