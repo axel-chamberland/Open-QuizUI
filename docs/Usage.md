@@ -81,9 +81,34 @@ Select an answer and move through the questions using the quiz controls. You can
 
 Once the quiz is completed, cycling to the next page displays your statistics and corrections, along with an option to restart the quiz.
 
-Quizzes can be edited anytime using the built-in question editor, although the edits are currently saved only in your browser. To keep them, **Copy Quiz** copies the quiz to your clipboard as text in the format the Action parses (paste it into a new message to reproduce the quiz) and **Download HTML** saves it as a standalone HTML Web App you can open and share outside Open WebUI.
+Quizzes can be edited at any time with the built-in editor; see [Editing a Quiz](#editing-a-quiz).
+
+## Editing a Quiz
+
+**Edit Question**, in the **⋮** menu of a question page, opens the editor on the question currently shown.
+
+- **Title** renames the quiz.
+- **Question** is the question text, with the same Markdown support as the rest of the quiz.
+- **Answer Position** is the number of the correct choice.
+- **Explanation** is shown after answering, when explanations are enabled.
+- **Choices** holds one field per choice. A question's number of choices is set when it is created: one added while viewing a flashcard keeps its single choice, and one added while viewing a multiple-choice question is shaped like that question.
+
+The **Save changes** button (a floppy-disk icon) saves the question, and **✕** closes the editor. **Reset Question** and **Reset Quiz**, in the editor's **⋮** menu, discard the local edits of the current question and of the whole quiz — resetting a question that was added removes it instead.
+
+The edits are saved in your browser only, so they can be kept in two ways: **Copy Quiz** copies the quiz to your clipboard as text in the format the Action parses (paste it into a new message to reproduce the quiz), and **Download HTML** saves it as a standalone HTML Web App you can open and share outside Open WebUI.
 
 > **Note:** iOS/iPadOS does not currently have a native way to view downloaded HTML Web Apps. Consider using something such as [HTML Preview](https://avinashs.com/html-preview), which you can install as a web app for offline use (tested on Safari, iPadOS 26).
+
+### Question List
+
+**Edit Questions**, under **Additional Settings**, opens the list of questions, where they are added, removed and reordered.
+
+- Tapping a row selects it, and the editor then edits that question.
+- Dragging a row moves the question up or down; **Save** applies the new order and **Cancel** leaves it as it was.
+- **+ Add question** adds a blank question at the end, while **Add before** and **Add after** add one next to the current question.
+- **Delete question** removes the current question without waiting for **Save**; a quiz always keeps at least one question.
+
+Added questions are saved as soon as they are added, so **Cancel** offers to remove the questions added in the same session. A deletion is immediate.
 
 ## Results
 
