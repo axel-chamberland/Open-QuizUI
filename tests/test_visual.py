@@ -245,6 +245,31 @@ async def test_forcing_multiple_choice_on_flashcards(built_action):
 
 
 @pytest.mark.asyncio
+async def test_flashcard_format_valve_reaches_the_parser(built_action):
+    """The flashcard format valve picks which part of the message is read."""
+
+    with open(
+        FLASHCARD_DIR / "Flashcards_table_two_columns.json", "r", encoding="utf-8"
+    ) as f:
+        content = json.load(f)["content"]
+
+    notifications, emitter = error_emitter()
+
+    # Auto would have read the table; forcing question labels finds none.
+    result = await flashcards_valves(
+        built_action, flashcard_format="question labels"
+    ).action(
+        minimal_body(content),
+        __event_emitter__=emitter,
+        __event_call__=None,
+        __user__=None,
+    )
+
+    assert "html" not in extract_output(result).lower()
+    assert "No flashcards were parsed either" in notifications[-1]["data"]["content"]
+
+
+@pytest.mark.asyncio
 async def test_unreadable_message_reports_both_parsers(built_action):
     """A message that is neither format says why neither one parsed."""
 

@@ -71,6 +71,8 @@ The answer may carry a label from the **Answer pattern** setting (`A:`, `Answer:
 
 The **Parse mode** setting decides which format is read. It defaults to `auto`: the message is read as a quiz with choices first, and as flashcards only when it holds no choices. Set it to **flashcards** to always show the message as flashcards — a quiz with choices then becomes cards, using the correct choice as the answer. Set it to **multiple-choice questions** to reject anything that is not a quiz with choices.
 
+The **Flashcard format** setting decides which part of a flashcard message holds the cards. It defaults to `auto` (a table first, then question labels). Set it to **table** or **question labels** to read that part alone, without falling back to the other one.
+
 The **Quiz mode** setting only decides which mode the quiz starts in; it can also be switched while taking the quiz.
 
 ## Taking a Quiz

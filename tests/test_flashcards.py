@@ -54,9 +54,16 @@ def test_each_case(file):
     assert_json_equal(expected[1], output[1], file)
 
 
-def test_table_takes_priority_over_question_labels():
-    """A table is the clearer signal, so it wins over question labels."""
-
+@pytest.mark.parametrize(
+    "flashcard_format, expected",
+    [
+        # A table is the clearer signal, so it wins unless told otherwise.
+        ("auto", ["<p>Capital of France?</p>", "<p>Capital of Japan?</p>"]),
+        ("table", ["<p>Capital of France?</p>", "<p>Capital of Japan?</p>"]),
+        ("question labels", ["<p>Which planet has the largest diameter?</p>"]),
+    ],
+)
+def test_flashcard_format_chooses_the_parser(flashcard_format, expected):
     content = """## Question 1: Which planet has the largest diameter?
 
 Jupiter
@@ -67,12 +74,25 @@ Jupiter
 | Capital of Japan? | Tokyo |
 """
 
-    _, questions = parse_flashcards(clean_message(content, True, True), True)
+    _, questions = parse_flashcards(
+        clean_message(content, True, True),
+        True,
+        flashcard_format=flashcard_format,
+    )
 
-    assert [question["question"] for question in questions] == [
-        "<p>Capital of France?</p>",
-        "<p>Capital of Japan?</p>",
-    ]
+    assert [question["question"] for question in questions] == expected
+
+
+def test_forced_flashcard_format_does_not_fall_back():
+    content = """## Question 1: Capital of France?
+
+Paris
+"""
+
+    with pytest.raises(NoQuestionsFound):
+        parse_flashcards(
+            clean_message(content, True, True), True, flashcard_format="table"
+        )
 
 
 def test_explanations_disabled():

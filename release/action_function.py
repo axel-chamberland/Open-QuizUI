@@ -160,6 +160,16 @@ class Action:
             ),
         )
 
+        flashcard_format: Literal["auto", "table", "question labels"] = Field(
+            default="auto",
+            description=(
+                "Which part of a flashcard message holds the cards. 'auto' reads a markdown "
+                "table first, since a table is the clearer signal, and question labels only "
+                "when the message holds no table. The other values read that part alone, "
+                "without falling back to the other one."
+            ),
+        )
+
         theme_mode: Literal["browser", "light", "dark"] = Field(
             default="browser",
         )
@@ -299,6 +309,7 @@ class Action:
                         self.valves.enable_explanations,
                         self.valves.question_pattern,
                         self.valves.answer_pattern,
+                        self.valves.flashcard_format,
                     )
                 except NoQuestionsFound:
                     if parse_mode == "flashcards":
@@ -608,12 +619,15 @@ def parse_flashcards(
     explanations: bool,
     question_pattern=r"question|bonus|q(?!\p{L})",
     answer_pattern="answer|correct answer|réponse|bonne réponse|réponse correcte|r|a",
+    flashcard_format="auto",
 ) -> tuple[str, list[dict]]:
     """
     Parse a flashcard quiz: questions that hold one answer instead of choices.
 
-    The table format is tried first, since a markdown table is the clearer
+    The table format is read first, since a markdown table is the clearer
     signal; a message without one is read from its question labels instead.
+    flashcard_format decides which one is read: "auto" reads both in that
+    order, while "table" and "question labels" read that part alone.
 
     Table - questions, answers and explanations in a markdown table:
         | Question | Answer | Explanation |
@@ -639,9 +653,13 @@ def parse_flashcards(
 
     lines = [line.strip() for line in text.split("\n")]
 
-    questions, question_lines = flashcard_table_parser(lines, explanations)
+    questions = []
+    question_lines = []
 
-    if not questions:
+    if flashcard_format in ("auto", "table"):
+        questions, question_lines = flashcard_table_parser(lines, explanations)
+
+    if not questions and flashcard_format in ("auto", "question labels"):
         questions, question_lines = flashcard_question_parser(
             lines, question_pattern, answer_pattern, explanations
         )
