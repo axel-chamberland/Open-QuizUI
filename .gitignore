@@ -7,6 +7,7 @@ open-webui-official/
 AGENTS.local.md
 opencode.json
 vitest.config.js
+vitest.config.mjs
 # C extensions
 *.so
 
