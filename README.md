@@ -10,6 +10,7 @@ Open QuizUI is a tool / action function for displaying interactive multiple-choi
 - Full-screen / focus mode²
 - Separate light/dark themes
 - Multiple-choice quizzes or flashcards, parsed from one message
+- Optional spaced repetition review (FSRS)
 - Save a quiz as an HTML file, or copy it back out as text to keep and reuse (works outside Open WebUI)
 - Add, remove, reorder and edit questions after generation, from the quiz page
 - Embed anything with HTML (images, videos, iframes, etc.)
