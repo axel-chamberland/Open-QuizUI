@@ -2013,10 +2013,34 @@ textarea:focus {
   box-sizing: border-box;
 }
 
-.order-editor .order-hint {
-  margin: 0;
-  font-size: 0.8em;
-  color: var(--border);
+.order-editor .order-actions {
+  display: grid;
+  gap: 0.35rem;
+
+  margin-top: 0.75rem;
+}
+
+.order-editor .order-add-button {
+  width: 100%;
+  padding: 0.35rem 0.5rem;
+  font-size: 1rem;
+}
+
+/* The row of buttons acting on the question the editor is on */
+.order-editor .order-action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.order-editor .order-action-row button {
+  flex: 1 1 6rem;
+  padding: 0.3rem 0.4rem;
+  font-size: 0.9rem;
+}
+
+.order-editor .order-delete-button {
+  color: var(--danger);
 }
 
 .order-editor #order-editor-list {
@@ -2040,7 +2064,9 @@ textarea:focus {
   background: var(--bg);
   border: 1px solid var(--border);
   border-radius: 0.35rem;
-  cursor: grab;
+
+  /* The row is picked with a tap; dragging starts from its handle. */
+  cursor: pointer;
 
   /*
    * The browser owns pan and pinch zoom here: touch scrolling is
@@ -2065,6 +2091,20 @@ textarea:focus {
 
 .order-editor .order-row:active {
   cursor: grabbing;
+}
+
+/*
+ * The question that is picked: it is the one the editor is on, and the
+ * one the buttons in the list act on. Marked with an inset bar and a
+ * bold number rather than a border or a background, so the drag colors
+ * below can still show.
+ */
+.order-editor .order-row.order-current {
+  box-shadow: inset 3px 0 0 var(--text);
+}
+
+.order-editor .order-row.order-current .order-number {
+  font-weight: 700;
 }
 
 /*
@@ -2198,6 +2238,15 @@ textarea:focus {
 
 .global-prompt.visible {
   display: block;
+}
+
+/*
+ * A prompt can be raised from inside the order editor overlay (adding
+ * or cancelling a question), and both are .global-prompt positioned
+ * elements. The prompt has to stack above the overlay, not with it.
+ */
+#global-prompt {
+  z-index: 10000;
 }
 
 .global-prompt .button-row {
@@ -2378,11 +2427,27 @@ th {
       </div>
     </div>
     <div id="order-editor" class="global-prompt order-editor">
-      <p><strong>Question Order</strong></p>
-      <p class="order-hint">Drag the ⠿ grip to reorder; scroll and zoom work as usual.</p>
+      <p><strong>Questions</strong></p>
+      <div class="order-actions">
+        <button id="order-editor-add" class="order-add-button">+ Add question</button>
+        <div class="order-action-row">
+          <button id="order-editor-add-before" title="Add a new question before the current one">
+            Add before
+          </button>
+          <button id="order-editor-add-after" title="Add a new question after the current one">
+            Add after
+          </button>
+          <button
+            id="order-editor-delete"
+            class="order-delete-button"
+            title="Delete the current question"
+          >
+            Delete question
+          </button>
+        </div>
+      </div>
       <div id="order-editor-list"></div>
       <div class="button-row">
-        <button id="order-editor-reset">Reset</button>
         <button id="order-editor-cancel">Cancel</button>
         <button id="order-editor-save">Save</button>
       </div>
@@ -2831,11 +2896,11 @@ th {
             </div>
           </div>
           <div class="editor-section">
-            <p class="editor-section-title">Question Order</p>
+            <p class="editor-section-title">Questions</p>
             <p class="editor-section-hint">
-              Reorder questions for normal navigation.
+              Select, add, remove or reorder questions.
             </p>
-            <button id="order-editor-open-button">Edit Question Order</button>
+            <button id="order-editor-open-button">Edit Questions</button>
           </div>
         </details>
         <p><strong>Question:</strong></p>
@@ -2886,17 +2951,38 @@ function setStoredQuestionIndex(quizStorageKey, value) {
 }
 
 // frontend/src/persistence/question_order.js
-function loadQuestionOrder(quizStorageKey, questionCount) {
+function loadQuestionOrder(quizStorageKey, questionCount, removedIndexes = null) {
+  const removed = removedIndexes ?? /* @__PURE__ */ new Set();
+  let stored = null;
   try {
     const data = JSON.parse(
       localStorage.getItem(`questionOrder_${quizStorageKey}`)
     );
     if (Array.isArray(data)) {
-      return data;
+      stored = data;
     }
   } catch {
   }
-  return Array.from({ length: questionCount }, (_, index) => index);
+  if (!stored) {
+    return Array.from({ length: questionCount }, (_, index) => index).filter(
+      (index) => !removed.has(index)
+    );
+  }
+  const order = [];
+  const seen = /* @__PURE__ */ new Set();
+  for (const index of stored) {
+    const valid = Number.isInteger(index) && index >= 0 && index < questionCount && !seen.has(index) && !removed.has(index);
+    if (valid) {
+      seen.add(index);
+      order.push(index);
+    }
+  }
+  for (let index = 0; index < questionCount; index++) {
+    if (!seen.has(index) && !removed.has(index)) {
+      order.push(index);
+    }
+  }
+  return order;
 }
 function saveQuestionOrder(quizStorageKey, questionOrder) {
   try {
@@ -2944,6 +3030,165 @@ function resetQuestionSRSState(quizStorageKey) {
   }
 }
 
+// frontend/src/persistence/quiz_edits.js
+function getQuizEditsKey(quizStorageKey) {
+  return `quizEdits_${quizStorageKey}`;
+}
+function saveLocalEdit(index, titleChanged) {
+  const key = getQuizEditsKey(state.quizStorageKey);
+  let edits = {};
+  try {
+    edits = JSON.parse(localStorage.getItem(key)) || {};
+  } catch {
+    edits = {};
+  }
+  const questionChanged = hasQuestionChanged(index);
+  const actualTitleChanged = titleChanged && hasTitleChanged();
+  if (!questionChanged && !actualTitleChanged) {
+    return false;
+  }
+  if (actualTitleChanged) {
+    edits.title = state.quiz.title;
+  }
+  if (questionChanged) {
+    edits[index] = state.quiz.questions[index];
+  }
+  try {
+    localStorage.setItem(key, JSON.stringify(edits));
+    return true;
+  } catch (e) {
+    console.error("Failed to save edit:", e);
+    return false;
+  }
+}
+function hasQuestionChanged(index) {
+  const appData2 = JSON.parse(document.getElementById("app-data").textContent);
+  return JSON.stringify(state.quiz.questions[index]) !== JSON.stringify(appData2.quiz.questions[index]);
+}
+function hasTitleChanged() {
+  const appData2 = JSON.parse(document.getElementById("app-data").textContent);
+  return state.quiz.title !== appData2.quiz.title;
+}
+function loadQuizEdits(state2) {
+  const key = getQuizEditsKey(state2.quizStorageKey);
+  try {
+    const edits = JSON.parse(localStorage.getItem(key));
+    if (!edits) {
+      return;
+    }
+    if (edits.title !== void 0) {
+      state2.quiz.title = edits.title;
+    }
+    for (const [index, question] of Object.entries(edits)) {
+      const i = Number(index);
+      if (Number.isInteger(i) && i >= 0 && i < state2.quiz.questions.length) {
+        state2.quiz.questions[i] = question;
+      }
+    }
+    appendStoredQuestions(edits);
+  } catch (e) {
+    console.error("Failed to load quiz edits:", e);
+  }
+}
+function appendStoredQuestions(edits) {
+  const pending = Object.entries(edits).map(([index, question]) => [Number(index), question]).filter(([index]) => Number.isInteger(index) && index >= 0).sort(([a], [b]) => a - b);
+  for (const [index, question] of pending) {
+    if (index < state.quiz.questions.length) {
+      continue;
+    }
+    while (state.quiz.questions.length < index) {
+      appendQuestion(createQuestionTemplate());
+    }
+    appendQuestion(question);
+  }
+}
+function removeLocalEdit(index) {
+  const key = getQuizEditsKey(state.quizStorageKey);
+  let edits;
+  try {
+    edits = JSON.parse(localStorage.getItem(key)) || {};
+  } catch {
+    return false;
+  }
+  delete edits[index];
+  if (Object.keys(edits).length === 0) {
+    localStorage.removeItem(key);
+  } else {
+    localStorage.setItem(key, JSON.stringify(edits));
+  }
+  return true;
+}
+function removeAllLocalEdits() {
+  const key = getQuizEditsKey(state.quizStorageKey);
+  localStorage.removeItem(key);
+}
+function removeLocalEditAndShift(index) {
+  const key = getQuizEditsKey(state.quizStorageKey);
+  let edits;
+  try {
+    edits = JSON.parse(localStorage.getItem(key)) || {};
+  } catch {
+    return false;
+  }
+  const shifted = {};
+  for (const [storedIndex, value] of Object.entries(edits)) {
+    if (storedIndex === "title") {
+      shifted.title = value;
+      continue;
+    }
+    const i = Number(storedIndex);
+    if (!Number.isInteger(i) || i === index) {
+      continue;
+    }
+    shifted[i > index ? i - 1 : i] = value;
+  }
+  try {
+    if (Object.keys(shifted).length === 0) {
+      localStorage.removeItem(key);
+    } else {
+      localStorage.setItem(key, JSON.stringify(shifted));
+    }
+  } catch (e) {
+    console.error("Failed to update edits:", e);
+    return false;
+  }
+  return true;
+}
+
+// frontend/src/persistence/question_removals.js
+function getQuestionRemovalsKey(quizStorageKey) {
+  return `questionRemovals_${quizStorageKey}`;
+}
+function loadQuestionRemovals(quizStorageKey) {
+  try {
+    const data = JSON.parse(
+      localStorage.getItem(getQuestionRemovalsKey(quizStorageKey))
+    );
+    if (Array.isArray(data)) {
+      return new Set(data.filter(Number.isInteger));
+    }
+  } catch {
+  }
+  return /* @__PURE__ */ new Set();
+}
+function saveQuestionRemovals(quizStorageKey, indexes) {
+  const key = getQuestionRemovalsKey(quizStorageKey);
+  try {
+    if (indexes.size === 0) {
+      localStorage.removeItem(key);
+      return;
+    }
+    localStorage.setItem(key, JSON.stringify(Array.from(indexes)));
+  } catch {
+  }
+}
+function clearQuestionRemovals(quizStorageKey) {
+  try {
+    localStorage.removeItem(getQuestionRemovalsKey(quizStorageKey));
+  } catch {
+  }
+}
+
 // frontend/src/state.js
 var UNANSWERED = 0;
 var CORRECT = 1;
@@ -2962,6 +3207,17 @@ var state = {
   questionSRSQueue: null,
   srs: false,
   srsQueueSize: 20,
+  /*
+   * Number of questions the quiz itself has. Every question from here
+   * on was added in the editor.
+   */
+  builtInQuestionCount: 0,
+  /*
+   * Indexes of the quiz's own questions deleted in the editor. They
+   * stay in state.quiz.questions - see deleteQuestion - but are left
+   * out of the navigation order.
+   */
+  removedQuestions: /* @__PURE__ */ new Set(),
   /*
    * FSRS scheduler parameters; see srs.js. Values may be changed
    * per-quiz in the editor's additional settings.
@@ -2985,21 +3241,53 @@ var state = {
     interval: null
   }
 };
+function createQuestionTemplate() {
+  const questions = state.quiz.questions;
+  const lastQuestion = questions[questions.length - 1];
+  const optionCount = lastQuestion?.options?.length >= 2 ? lastQuestion.options.length : 2;
+  return {
+    question: "",
+    options: new Array(optionCount).fill(""),
+    correct_index: 0,
+    explanation: ""
+  };
+}
+function appendQuestion(question) {
+  const index = state.quiz.questions.length;
+  state.quiz.questions.push(question);
+  state.questionOrder.push(index);
+  state.questionResults[index] = UNANSWERED;
+  state.questionAnswers[index] = null;
+  return index;
+}
+function removeAppendedQuestion(index) {
+  state.quiz.questions.splice(index, 1);
+  state.questionResults.splice(index, 1);
+  state.questionAnswers.splice(index, 1);
+  state.questionOrder = state.questionOrder.filter((item) => item !== index).map((item) => item > index ? item - 1 : item);
+}
 function initializeState(quiz2) {
   state.quiz = quiz2;
   state.quizStorageKey = hashQuiz(quiz2);
-  state.currentQuestionIndex = getStoredQuestionIndex(
-    state.quizStorageKey,
-    state.quiz.questions.length
-  );
+  state.builtInQuestionCount = quiz2.questions.length;
+  state.removedQuestions = loadQuestionRemovals(state.quizStorageKey);
+  loadQuizEdits(state);
   state.currentQuestion = null;
   state.optionButtons = [];
   state.wrongAnswerCount = 0;
   state.answerRevealed = false;
   state.questionOrder = loadQuestionOrder(
     state.quizStorageKey,
+    state.quiz.questions.length,
+    state.removedQuestions
+  );
+  state.currentQuestionIndex = getStoredQuestionIndex(
+    state.quizStorageKey,
     state.quiz.questions.length
   );
+  if (state.removedQuestions.has(state.currentQuestionIndex)) {
+    state.currentQuestionIndex = state.questionOrder[0] ?? 0;
+  }
   state.questionResults = new Array(quiz2.questions.length).fill(UNANSWERED);
   state.questionAnswers = new Array(quiz2.questions.length).fill(null);
   state.defaultStartDate = Date.now();
@@ -3319,16 +3607,23 @@ function renderOptions(optionsContainer, question) {
 function getStatsKey(quizStorageKey) {
   return `quizStats_${quizStorageKey}`;
 }
+function padToQuestionCount(values, fallback) {
+  const padded = values.slice(0, state.quiz.questions.length);
+  while (padded.length < state.quiz.questions.length) {
+    padded.push(fallback);
+  }
+  return padded;
+}
 function loadStats() {
   try {
     const data = JSON.parse(
       localStorage.getItem(getStatsKey(state.quizStorageKey))
     );
     if (Array.isArray(data?.results)) {
-      state.questionResults = data.results;
+      state.questionResults = padToQuestionCount(data.results, UNANSWERED);
     }
     if (Array.isArray(data?.answers)) {
-      state.questionAnswers = data.answers;
+      state.questionAnswers = padToQuestionCount(data.answers, null);
     }
     if (data?.startDate) {
       state.defaultStartDate = data.startDate;
@@ -3623,6 +3918,32 @@ function prevSRSQuestion(quizStorageKey) {
   saveSRS(quizStorageKey);
   return change.questionIndex;
 }
+function removeQuestionFromSRS(index, shiftIndexes = true) {
+  const shift = (i) => shiftIndexes && i > index ? i - 1 : i;
+  const saved = loadQuestionSRSState(state.quizStorageKey);
+  if (saved) {
+    saveQuestionSRSState(state.quizStorageKey, {
+      score: saved.score,
+      queue: saved.queue.filter((item) => item.index !== index).map((item) => ({ ...item, index: shift(item.index) }))
+    });
+  }
+  if (cards.size === 0 && !state.questionSRSQueue?.length) {
+    return;
+  }
+  const shifted = /* @__PURE__ */ new Map();
+  for (const [cardIndex, card] of cards) {
+    if (cardIndex !== index) {
+      shifted.set(shift(cardIndex), card);
+    }
+  }
+  cards.clear();
+  for (const [cardIndex, card] of shifted) {
+    cards.set(cardIndex, card);
+  }
+  state.questionSRSQueue = (state.questionSRSQueue ?? []).filter((item) => item.index !== index).map((item) => ({ ...item, index: shift(item.index) }));
+  history.length = 0;
+  saveSRS(state.quizStorageKey);
+}
 function getSRSCounts() {
   const total = state.questionOrder.length;
   const due = state.questionOrder.filter((index) => {
@@ -3750,18 +4071,19 @@ async function rateFlashcard(correct) {
 
 // frontend/src/rendering/results.js
 async function renderResults() {
-  const results2 = document.getElementById("results");
+  const results = document.getElementById("results");
   const flashcardBox = document.getElementById("flashcard-box");
   flashcardBox.style.display = "none";
   const questionBox = document.getElementById("question-box");
   questionBox.style.display = "none";
-  results2.style.display = "";
-  const correct = state.questionResults.filter((x) => x === CORRECT).length;
-  const wrong = state.questionResults.filter((x) => x === WRONG).length;
-  const unanswered = state.questionResults.filter(
-    (x) => x === UNANSWERED
-  ).length;
-  const skipped = state.questionResults.filter((x) => x === SKIPPED).length;
+  results.style.display = "";
+  const ordered = state.questionOrder.map(
+    (index) => state.questionResults[index]
+  );
+  const correct = ordered.filter((x) => x === CORRECT).length;
+  const wrong = ordered.filter((x) => x === WRONG).length;
+  const unanswered = ordered.filter((x) => x === UNANSWERED).length;
+  const skipped = ordered.filter((x) => x === SKIPPED).length;
   const total = state.questionOrder.length;
   const answered = correct + wrong;
   const accuracy = answered > 0 ? correct / answered * 100 : 0;
@@ -3901,8 +4223,8 @@ async function restartQuiz() {
   if (state.srs) {
     await initSRS(state.quizStorageKey, state.currentQuestionIndex);
   }
-  const results2 = document.getElementById("results");
-  results2.style.display = "none";
+  const results = document.getElementById("results");
+  results.style.display = "none";
   document.getElementById("restart-confirm").style.display = "none";
   if (state.mode === "flashcard") {
     const flashcardBox = document.getElementById("flashcard-box");
@@ -4014,7 +4336,12 @@ function showAlert(message) {
 }
 
 // frontend/src/quiz.js
-var results = document.getElementById("results");
+function hideResults() {
+  document.getElementById("results").style.display = "none";
+}
+function isResultsVisible() {
+  return document.getElementById("results").style.display !== "none";
+}
 function getCurrentQuestionArrayIndex() {
   return state.currentQuestionIndex;
 }
@@ -4043,12 +4370,21 @@ async function nextQuestion() {
 }
 function prevQuestion() {
   if (state.srs) {
-    const questionIndex2 = prevSRSQuestion(state.quizStorageKey);
-    if (questionIndex2 === null) {
+    const questionIndex = prevSRSQuestion(state.quizStorageKey);
+    if (questionIndex === null) {
       return;
     }
-    results.style.display = "none";
-    goTo(questionIndex2);
+    hideResults();
+    goTo(questionIndex);
+    return;
+  }
+  if (isResultsVisible()) {
+    const lastOrderIndex = state.questionOrder.length - 1;
+    if (lastOrderIndex < 0) {
+      return;
+    }
+    hideResults();
+    goTo(state.questionOrder[lastOrderIndex]);
     return;
   }
   const currentOrderIndex = state.questionOrder.indexOf(
@@ -4057,9 +4393,8 @@ function prevQuestion() {
   if (currentOrderIndex <= 0) {
     return;
   }
-  results.style.display = "none";
-  const questionIndex = state.questionOrder[currentOrderIndex - 1];
-  goTo(questionIndex);
+  hideResults();
+  goTo(state.questionOrder[currentOrderIndex - 1]);
 }
 function goTo(questionIndex) {
   if (questionIndex < 0) {
@@ -4077,6 +4412,17 @@ function goTo(questionIndex) {
   }
   updateQuestionNumbers();
   renderCurrentQuestionView();
+}
+function goToPosition(position) {
+  if (!Number.isFinite(position) || position < 1) {
+    position = 1;
+  }
+  const questionIndex = state.srs ? position - 1 : state.questionOrder[position - 1];
+  if (questionIndex === void 0) {
+    goTo(state.quiz.questions.length);
+    return;
+  }
+  goTo(questionIndex);
 }
 function renderCurrentQuestionView() {
   const question = state.currentQuestion;
@@ -4109,6 +4455,49 @@ function updateQuestionCounts() {
   document.querySelectorAll(".question-count").forEach((element) => {
     element.textContent = state.questionOrder.length;
   });
+}
+function addQuestion(orderPosition = null) {
+  const index = appendQuestion(createQuestionTemplate());
+  if (orderPosition !== null) {
+    state.questionOrder.splice(state.questionOrder.indexOf(index), 1);
+    state.questionOrder.splice(orderPosition, 0, index);
+  }
+  saveLocalEdit(index, false);
+  saveQuestionOrder(state.quizStorageKey, state.questionOrder);
+  updateQuestionNumbers();
+  updateQuestionCounts();
+  if (state.srs) {
+    updateSRSCounts();
+  }
+  return index;
+}
+function removeAddedQuestion(index) {
+  removeLocalEditAndShift(index);
+  removeQuestionFromSRS(index);
+  removeAppendedQuestion(index);
+  saveQuestionOrder(state.quizStorageKey, state.questionOrder);
+  updateQuestionNumbers();
+  updateQuestionCounts();
+  if (state.srs) {
+    updateSRSCounts();
+  }
+}
+function deleteQuestion(index) {
+  if (index >= state.builtInQuestionCount) {
+    removeAddedQuestion(index);
+    return;
+  }
+  state.removedQuestions.add(index);
+  removeLocalEdit(index);
+  removeQuestionFromSRS(index, false);
+  state.questionOrder = state.questionOrder.filter((item) => item !== index);
+  saveQuestionRemovals(state.quizStorageKey, state.removedQuestions);
+  saveQuestionOrder(state.quizStorageKey, state.questionOrder);
+  updateQuestionNumbers();
+  updateQuestionCounts();
+  if (state.srs) {
+    updateSRSCounts();
+  }
 }
 async function handleAnswer(index, button) {
   saveStats();
@@ -4241,6 +4630,7 @@ async function toggleSRS() {
     setStoredQuestionIndex(state.quizStorageKey, state.currentQuestionIndex);
   }
   document.body.classList.toggle("srs-mode", state.srs);
+  updateQuestionNumbers();
   if (state.srs) {
     updateSRSCounts();
     const questionIndex = nextSRSQuestion();
@@ -4252,10 +4642,13 @@ async function toggleSRS() {
 
 // frontend/src/shared/download.js
 function downloadQuizHTML() {
+  const questions = state.quiz.questions.filter(
+    (_, index) => !state.removedQuestions?.has(index)
+  );
   const appData2 = {
     mode: state.mode,
     enableMathJax: state.mathReady,
-    quiz: state.quiz,
+    quiz: { ...state.quiz, questions },
     // srs appdata
     srsOnLoad: state.srs,
     srsQueueSize: state.srsQueueSize,
@@ -4358,91 +4751,12 @@ function copyToClipboardFallback(text) {
   return success;
 }
 
-// frontend/src/persistence/quiz_edits.js
-function getQuizEditsKey(quizStorageKey) {
-  return `quizEdits_${quizStorageKey}`;
-}
-function saveLocalEdit(index, titleChanged) {
-  const key = getQuizEditsKey(state.quizStorageKey);
-  let edits = {};
-  try {
-    edits = JSON.parse(localStorage.getItem(key)) || {};
-  } catch {
-    edits = {};
-  }
-  const questionChanged = hasQuestionChanged(index);
-  const actualTitleChanged = titleChanged && hasTitleChanged();
-  if (!questionChanged && !actualTitleChanged) {
-    return false;
-  }
-  if (actualTitleChanged) {
-    edits.title = state.quiz.title;
-  }
-  if (questionChanged) {
-    edits[index] = state.quiz.questions[index];
-  }
-  try {
-    localStorage.setItem(key, JSON.stringify(edits));
-    return true;
-  } catch (e) {
-    console.error("Failed to save edit:", e);
-    return false;
-  }
-}
-function hasQuestionChanged(index) {
-  const appData2 = JSON.parse(document.getElementById("app-data").textContent);
-  return JSON.stringify(state.quiz.questions[index]) !== JSON.stringify(appData2.quiz.questions[index]);
-}
-function hasTitleChanged() {
-  const appData2 = JSON.parse(document.getElementById("app-data").textContent);
-  return state.quiz.title !== appData2.quiz.title;
-}
-function loadQuizEdits(state2) {
-  const key = getQuizEditsKey(state2.quizStorageKey);
-  try {
-    const edits = JSON.parse(localStorage.getItem(key));
-    if (!edits) {
-      return;
-    }
-    if (edits.title !== void 0) {
-      state2.quiz.title = edits.title;
-    }
-    for (const [index, question] of Object.entries(edits)) {
-      const i = Number(index);
-      if (Number.isInteger(i) && i >= 0 && i < state2.quiz.questions.length) {
-        state2.quiz.questions[i] = question;
-      }
-    }
-  } catch (e) {
-    console.error("Failed to load quiz edits:", e);
-  }
-}
-function removeLocalEdit(index) {
-  const key = getQuizEditsKey(state.quizStorageKey);
-  let edits;
-  try {
-    edits = JSON.parse(localStorage.getItem(key)) || {};
-  } catch {
-    return false;
-  }
-  delete edits[index];
-  if (Object.keys(edits).length === 0) {
-    localStorage.removeItem(key);
-  } else {
-    localStorage.setItem(key, JSON.stringify(edits));
-  }
-  return true;
-}
-function removeAllLocalEdits() {
-  const key = getQuizEditsKey(state.quizStorageKey);
-  localStorage.removeItem(key);
-}
-
 // frontend/src/rendering/order.js
 var workingOrder = null;
 var originalOrder = null;
 var dragIndex = null;
 var keyHandler = null;
+var sessionAddedIndexes = [];
 var draggedItems = /* @__PURE__ */ new Set();
 var dragCancel = null;
 var lastPointerType = "mouse";
@@ -4451,34 +4765,156 @@ document.addEventListener("pointerdown", (event) => {
 }, true);
 function getQuestionSnippet(questionIndex) {
   const question = state.quiz.questions[questionIndex];
+  if (!question) {
+    return "(empty question)";
+  }
   const scratch = document.createElement("div");
   scratch.innerHTML = question.question || "";
   const text = scratch.textContent.trim();
+  if (text === "") {
+    return "(empty question)";
+  }
   return text.length > 60 ? `${text.slice(0, 60)}\u2026` : text;
 }
 function openOrderEditor() {
   dragCancel?.();
   originalOrder = state.questionOrder.slice();
   workingOrder = state.questionOrder.slice();
+  sessionAddedIndexes = [];
   dragIndex = null;
   draggedItems.clear();
   document.getElementById("order-editor").classList.remove("dragging");
   buildOrderList();
   keyHandler = (e) => {
-    if (e.key === "Escape") {
-      e.preventDefault();
-      e.stopPropagation();
-      closeOrderEditor();
+    if (e.key !== "Escape") {
+      return;
     }
+    if (document.getElementById("global-prompt").classList.contains("visible")) {
+      return;
+    }
+    e.preventDefault();
+    e.stopPropagation();
+    cancelOrderEditor();
   };
   document.addEventListener("keydown", keyHandler, true);
   document.getElementById("order-editor").classList.add("visible");
+  queryRow(state.currentQuestionIndex)?.scrollIntoView({ block: "nearest" });
+}
+function queryRow(questionIndex) {
+  return document.getElementById("order-editor-list").querySelector(`.order-row[data-question-index="${questionIndex}"]`);
+}
+function selectQuestion(questionIndex) {
+  if (questionIndex === state.currentQuestionIndex) {
+    return;
+  }
+  const switchQuestion = () => {
+    state.currentQuestionIndex = questionIndex;
+    goTo(questionIndex);
+    openEditor();
+    buildOrderList();
+  };
+  if (!hasUnsavedEditorChanges()) {
+    switchQuestion();
+    return;
+  }
+  showPrompt(
+    `Switch to question ${state.questionOrder.indexOf(questionIndex) + 1}?
+Unsaved changes to the current question will be lost.`,
+    switchQuestion,
+    null,
+    "yes",
+    "no"
+  );
 }
 function closeOrderEditor() {
   dragCancel?.();
+  sessionAddedIndexes = [];
   document.getElementById("order-editor").classList.remove("visible");
   document.removeEventListener("keydown", keyHandler, true);
   keyHandler = null;
+}
+function cancelOrderEditor() {
+  if (sessionAddedIndexes.length === 0) {
+    closeOrderEditor();
+    return;
+  }
+  const added = sessionAddedIndexes.length;
+  showPrompt(
+    added === 1 ? "Cancel? The question you added will be removed again." : `Cancel? The ${added} questions you added will be removed again.`,
+    () => {
+      rollBackAddedQuestions();
+      closeOrderEditor();
+    },
+    null,
+    "yes",
+    "no"
+  );
+}
+function rollBackAddedQuestions() {
+  const editedWasAdded = sessionAddedIndexes.includes(
+    state.currentQuestionIndex
+  );
+  for (const index of [...sessionAddedIndexes].sort((a, b) => b - a)) {
+    removeAddedQuestion(index);
+  }
+  sessionAddedIndexes = [];
+  originalOrder = state.questionOrder.slice();
+  workingOrder = state.questionOrder.slice();
+  if (editedWasAdded) {
+    state.currentQuestionIndex = state.quiz.questions.length - 1;
+    goTo(state.currentQuestionIndex);
+    openEditor();
+    return;
+  }
+  updateEditorQuestionNumber();
+}
+function addOrderQuestion(where = "end") {
+  const savedPosition = state.questionOrder.indexOf(state.currentQuestionIndex);
+  const listPosition = workingOrder.indexOf(state.currentQuestionIndex);
+  let orderPosition = null;
+  if (where !== "end" && savedPosition !== -1) {
+    orderPosition = where === "before" ? savedPosition : savedPosition + 1;
+  }
+  const index = addQuestion(orderPosition);
+  sessionAddedIndexes.push(index);
+  let stagedPosition = workingOrder.length;
+  if (where !== "end" && listPosition !== -1) {
+    stagedPosition = where === "before" ? listPosition : listPosition + 1;
+  }
+  workingOrder.splice(stagedPosition, 0, index);
+  originalOrder.splice(stagedPosition, 0, index);
+  buildOrderList();
+  queryRow(index)?.scrollIntoView({ block: "nearest" });
+  updateEditorQuestionNumber();
+}
+function deleteCurrentQuestion() {
+  const index = state.currentQuestionIndex;
+  const position = Math.max(0, workingOrder.indexOf(index));
+  if (state.questionOrder.length <= 1) {
+    showAlert("A quiz needs at least one question.");
+    return;
+  }
+  showPrompt(
+    "Delete the current question?\nIt will be removed from the quiz.",
+    () => {
+      const shifted = index >= state.builtInQuestionCount;
+      deleteQuestion(index);
+      dropFromStagedOrders(index, shifted);
+      const nextIndex = workingOrder[Math.min(position, workingOrder.length - 1)];
+      state.currentQuestionIndex = nextIndex;
+      goTo(nextIndex);
+      openEditor();
+      buildOrderList();
+    },
+    null,
+    "yes",
+    "no"
+  );
+}
+function dropFromStagedOrders(index, shifted) {
+  const drop = (order) => order.filter((item) => item !== index).map((item) => shifted && item > index ? item - 1 : item);
+  workingOrder = drop(workingOrder);
+  originalOrder = drop(originalOrder);
 }
 function saveOrder() {
   if (JSON.stringify(workingOrder) !== JSON.stringify(originalOrder)) {
@@ -4486,16 +4922,9 @@ function saveOrder() {
     saveQuestionOrder(state.quizStorageKey, state.questionOrder);
     updateQuestionNumbers();
     updateQuestionCounts();
+    updateEditorQuestionNumber();
   }
   closeOrderEditor();
-}
-function resetOrder() {
-  workingOrder = Array.from(
-    { length: state.quiz.questions.length },
-    (_, index) => index
-  );
-  draggedItems.clear();
-  buildOrderList();
 }
 function startGripDrag(event, position) {
   dragCancel?.();
@@ -4647,6 +5076,10 @@ function buildOrderList() {
     row.className = "order-row";
     row.draggable = true;
     applyRowState(row, position, questionIndex);
+    if (questionIndex === state.currentQuestionIndex) {
+      row.classList.add("order-current");
+      row.setAttribute("aria-current", "true");
+    }
     const number = document.createElement("span");
     number.className = "order-number";
     number.textContent = `${position + 1}.`;
@@ -4712,17 +5145,26 @@ function buildOrderList() {
       draggedItems.add(item);
       buildOrderList();
     });
+    row.addEventListener("click", () => selectQuestion(questionIndex));
     list.appendChild(row);
   });
 }
 document.getElementById("order-editor-save").addEventListener("click", saveOrder);
-document.getElementById("order-editor-cancel").addEventListener("click", closeOrderEditor);
-document.getElementById("order-editor-reset").addEventListener("click", resetOrder);
+document.getElementById("order-editor-cancel").addEventListener("click", cancelOrderEditor);
+document.getElementById("order-editor-add").addEventListener("click", () => addOrderQuestion("end"));
+document.getElementById("order-editor-add-before").addEventListener("click", () => addOrderQuestion("before"));
+document.getElementById("order-editor-add-after").addEventListener("click", () => addOrderQuestion("after"));
+document.getElementById("order-editor-delete").addEventListener("click", deleteCurrentQuestion);
 
 // frontend/src/rendering/editor.js
 document.getElementById("editor-answer-number").addEventListener("input", (e) => {
   e.target.value = e.target.value.replace(/\D/g, "");
 });
+function updateEditorQuestionNumber() {
+  const orderIndex = state.questionOrder.indexOf(state.currentQuestionIndex);
+  const questionPosition = orderIndex === -1 ? state.currentQuestionIndex + 1 : orderIndex + 1;
+  document.getElementById("editor-question-number").textContent = `Question ${questionPosition} of ${state.questionOrder.length}`;
+}
 function openEditor() {
   const editor = document.getElementById("editor");
   document.getElementById("flashcard-box").style.display = "none";
@@ -4734,9 +5176,7 @@ function openEditor() {
   const editorAnswer = document.getElementById("editor-answer-number");
   const optionsContainer = document.getElementById("editor-distractors");
   const question = state.quiz.questions[state.currentQuestionIndex];
-  const orderIndex = state.questionOrder.indexOf(state.currentQuestionIndex);
-  const questionPosition = orderIndex === -1 ? state.currentQuestionIndex + 1 : orderIndex + 1;
-  document.getElementById("editor-question-number").textContent = `Question ${questionPosition} of ${state.quiz.questions.length}`;
+  updateEditorQuestionNumber();
   titleField.innerHTML = `<textarea></textarea>`;
   titleField.querySelector("textarea").value = state.quiz.title;
   questionField.innerHTML = `<textarea></textarea>`;
@@ -4749,6 +5189,7 @@ function openEditor() {
     optionsContainer.appendChild(addEditorOption(option));
   });
   loadAdditionalSettings();
+  rememberEditorValues();
 }
 var additionalSettingsSnapshot = null;
 function getEditorSettingsValues() {
@@ -4771,6 +5212,32 @@ function loadAdditionalSettings() {
   document.getElementById("editor-fsrs-enable-fuzz").checked = config.enable_fuzz;
   document.getElementById("editor-fsrs-enable-short-term").checked = config.enable_short_term;
   additionalSettingsSnapshot = JSON.stringify(getEditorSettingsValues());
+}
+var editorSnapshot = null;
+function getEditorQuestionValues() {
+  const field = (id) => document.querySelector(`#${id} textarea`)?.value ?? "";
+  const optionsContainer = document.getElementById("editor-distractors");
+  return {
+    title: field("editor-title"),
+    question: field("editor-question"),
+    explanation: field("editor-explanation"),
+    answer: document.getElementById("editor-answer-number").value,
+    options: Array.from(
+      optionsContainer.querySelectorAll("textarea")
+    ).map((textarea) => textarea.value)
+  };
+}
+function rememberEditorValues() {
+  editorSnapshot = JSON.stringify([
+    getEditorQuestionValues(),
+    getEditorSettingsValues()
+  ]);
+}
+function hasUnsavedEditorChanges() {
+  if (editorSnapshot === null) {
+    return false;
+  }
+  return JSON.stringify([getEditorQuestionValues(), getEditorSettingsValues()]) !== editorSnapshot;
 }
 document.getElementById("order-editor-open-button").addEventListener("click", openOrderEditor);
 function validateAdditionalSettings() {
@@ -4882,6 +5349,7 @@ function saveEdit() {
   if (saveLocalEdit(state.currentQuestionIndex, titleChanged)) {
     showAlert("Changes saved.");
   }
+  rememberEditorValues();
 }
 function applyAdditionalSettings() {
   const values = getEditorSettingsValues();
@@ -4899,7 +5367,7 @@ function closeEditor() {
   editor.style.display = "none";
   const options = document.getElementById("editor-distractors");
   options.innerHTML = "";
-  renderCurrentQuestionView();
+  goTo(state.currentQuestionIndex);
 }
 function restoreQuizToDefault() {
   showPrompt(
@@ -4911,6 +5379,8 @@ function restoreQuizToDefault() {
       state.quiz = structuredClone(appData2.quiz);
       setQuizTitle(state.quiz.title);
       clearQuestionOrder(state.quizStorageKey);
+      clearQuestionRemovals(state.quizStorageKey);
+      state.removedQuestions = /* @__PURE__ */ new Set();
       state.questionOrder = loadQuestionOrder(
         state.quizStorageKey,
         state.quiz.questions.length
@@ -4925,13 +5395,29 @@ function restoreQuizToDefault() {
   );
 }
 function restoreQuestionToDefault() {
+  const appData2 = JSON.parse(document.getElementById("app-data").textContent);
+  const index = state.currentQuestionIndex;
+  if (index >= appData2.quiz.questions.length) {
+    showPrompt(
+      "Remove this added question?\nIt will be deleted from the quiz.",
+      () => {
+        removeAddedQuestion(index);
+        state.currentQuestionIndex = Math.min(
+          index,
+          state.quiz.questions.length - 1
+        );
+        openEditor();
+        showAlert("Added question removed.");
+      },
+      null,
+      "Yes",
+      "No"
+    );
+    return;
+  }
   showPrompt(
     "Restore the current question to its original state?\nAll local edits will be discarded.",
     () => {
-      const appData2 = JSON.parse(
-        document.getElementById("app-data").textContent
-      );
-      const index = state.currentQuestionIndex;
       state.quiz.questions[index] = structuredClone(
         appData2.quiz.questions[index]
       );
@@ -5217,7 +5703,7 @@ function initializeEvents() {
     });
     questionNumber.addEventListener("change", () => {
       if (!questionNumber.value) return;
-      goTo(Number(questionNumber.value) - 1);
+      goToPosition(Number(questionNumber.value));
     });
   });
 }
@@ -5256,7 +5742,6 @@ if (appData.srsConfig === void 0) {
   state.srsConfig.request_retention = appData.requestRetention;
 }
 loadStats();
-loadQuizEdits(state);
 async function initializeApp() {
   await loadMathJax(ENABLE_MATHJAX);
   if (state.mathReady && window.MathJax?.startup?.promise) {

@@ -1,9 +1,25 @@
 import { renderMCQ } from "./rendering/mcq.js";
 import { saveStats } from "./persistence/stats.js";
 import { renderResults } from "./rendering/results.js";
-import { UNANSWERED, WRONG, CORRECT, SKIPPED, state } from "./state.js";
+import {
+  appendQuestion,
+  createQuestionTemplate,
+  removeAppendedQuestion,
+  UNANSWERED,
+  WRONG,
+  CORRECT,
+  SKIPPED,
+  state,
+} from "./state.js";
 import { setStoredQuestionIndex } from "./persistence/progress.js";
 import { saveAppDataOverrides } from "./persistence/app_data.js";
+import {
+  removeLocalEdit,
+  removeLocalEditAndShift,
+  saveLocalEdit,
+} from "./persistence/quiz_edits.js";
+import { saveQuestionOrder } from "./persistence/question_order.js";
+import { saveQuestionRemovals } from "./persistence/question_removals.js";
 import { renderMarkdown } from "./shared/markdown.js";
 import { renderFlashcard } from "./rendering/flashcards.js";
 import {
@@ -12,11 +28,31 @@ import {
   initSRS,
   nextSRSQuestion,
   prevSRSQuestion,
+  removeQuestionFromSRS,
   updateSRS,
 } from "./srs.js";
 import { showAlert } from "./ui/alert.js";
 
-const results = document.getElementById("results");
+/**
+ * Hides the results page, for navigation that leaves it.
+ *
+ * Looked up on demand so the module stays usable without the quiz's
+ * markup in place.
+ *
+ * @returns {void}
+ */
+function hideResults() {
+  document.getElementById("results").style.display = "none";
+}
+
+/**
+ * Whether the results page is the page in view.
+ *
+ * @returns {boolean}
+ */
+function isResultsVisible() {
+  return document.getElementById("results").style.display !== "none";
+}
 
 /**
  * Returns the actual index of the current question in quiz.questions.
@@ -82,8 +118,27 @@ export function prevQuestion() {
       return;
     }
 
-    results.style.display = "none";
+    hideResults();
     goTo(questionIndex);
+    return;
+  }
+
+  /*
+   * The results page sits after the last question - the current index
+   * is either the last question or, when the navigation field jumped
+   * past the end, an index the quiz does not have. Either way,
+   * stepping back from it shows that last question rather than the one
+   * before it.
+   */
+  if (isResultsVisible()) {
+    const lastOrderIndex = state.questionOrder.length - 1;
+
+    if (lastOrderIndex < 0) {
+      return;
+    }
+
+    hideResults();
+    goTo(state.questionOrder[lastOrderIndex]);
     return;
   }
 
@@ -95,11 +150,9 @@ export function prevQuestion() {
     return;
   }
 
-  results.style.display = "none";
+  hideResults();
 
-  const questionIndex = state.questionOrder[currentOrderIndex - 1];
-
-  goTo(questionIndex);
+  goTo(state.questionOrder[currentOrderIndex - 1]);
 }
 
 /**
@@ -128,6 +181,39 @@ export function goTo(questionIndex) {
 
   updateQuestionNumbers();
   renderCurrentQuestionView();
+}
+
+/**
+ * Displays a question by the number shown in the navigation field.
+ *
+ * The field counts positions in the navigation order, except in SRS
+ * mode where it shows the question's own index (see
+ * updateQuestionNumbers). Handing that number to goTo directly lands
+ * on the wrong question as soon as the order differs from the quiz's
+ * own order.
+ *
+ * A number past the last question goes to the results page, like
+ * stepping forward off the end does.
+ *
+ * @param {number} position 1-based number from the navigation field.
+ * @returns {void}
+ */
+export function goToPosition(position) {
+  // A number below the first question means the first one.
+  if (!Number.isFinite(position) || position < 1) {
+    position = 1;
+  }
+
+  const questionIndex = state.srs
+    ? position - 1
+    : state.questionOrder[position - 1];
+
+  if (questionIndex === undefined) {
+    goTo(state.quiz.questions.length);
+    return;
+  }
+
+  goTo(questionIndex);
 }
 
 /**
@@ -176,6 +262,106 @@ export function updateQuestionCounts() {
   document.querySelectorAll(".question-count").forEach((element) => {
     element.textContent = state.questionOrder.length;
   });
+}
+
+/**
+ * Appends a blank question to the quiz and saves it.
+ *
+ * The question is persisted exactly like an edit made in the editor -
+ * the whole question, under the next free index - so it survives a
+ * refresh. Its slot in the navigation order is persisted with it, and
+ * can be placed right before or after an existing question; a question
+ * is only ever appended to the quiz itself, whatever its slot in the
+ * order, so every stored index keeps pointing at the same question.
+ *
+ * @param {number|null} [orderPosition] Position in the navigation
+ *   order to put the question at, or null to append it last.
+ * @returns {number} Index of the added question.
+ */
+export function addQuestion(orderPosition = null) {
+  const index = appendQuestion(createQuestionTemplate());
+
+  if (orderPosition !== null) {
+    // appendQuestion put it last; move it next to the current question.
+    state.questionOrder.splice(state.questionOrder.indexOf(index), 1);
+    state.questionOrder.splice(orderPosition, 0, index);
+  }
+
+  saveLocalEdit(index, false);
+  saveQuestionOrder(state.quizStorageKey, state.questionOrder);
+
+  updateQuestionNumbers();
+  updateQuestionCounts();
+
+  if (state.srs) {
+    updateSRSCounts();
+  }
+
+  return index;
+}
+
+/**
+ * Removes a question that was added in the editor.
+ *
+ * Everything indexed alongside the question follows it out: its stored
+ * edit (with the edits behind it shifted down), the navigation order,
+ * its result, its recorded answer, and the SRS scheduler state.
+ *
+ * @param {number} index Index of the added question.
+ * @returns {void}
+ */
+export function removeAddedQuestion(index) {
+  removeLocalEditAndShift(index);
+  removeQuestionFromSRS(index);
+  removeAppendedQuestion(index);
+
+  saveQuestionOrder(state.quizStorageKey, state.questionOrder);
+
+  updateQuestionNumbers();
+  updateQuestionCounts();
+
+  if (state.srs) {
+    updateSRSCounts();
+  }
+}
+
+/**
+ * Deletes a question from the quiz.
+ *
+ * A question added in the editor is taken out of the quiz array, and
+ * the indexes behind it move down (removeAddedQuestion). One of the
+ * quiz's own questions cannot be: the quiz is the baseline that the
+ * stored edits, results, order and SRS cards are keyed against, so the
+ * index has to keep its meaning and the question is marked as deleted
+ * instead. Either way it leaves the navigation order, which is what
+ * makes it gone as far as the quiz is concerned.
+ *
+ * @param {number} index Question index to delete.
+ * @returns {void}
+ */
+export function deleteQuestion(index) {
+  if (index >= state.builtInQuestionCount) {
+    removeAddedQuestion(index);
+    return;
+  }
+
+  state.removedQuestions.add(index);
+
+  // A stored edit for it has nothing left to apply to.
+  removeLocalEdit(index);
+  removeQuestionFromSRS(index, false);
+
+  state.questionOrder = state.questionOrder.filter((item) => item !== index);
+
+  saveQuestionRemovals(state.quizStorageKey, state.removedQuestions);
+  saveQuestionOrder(state.quizStorageKey, state.questionOrder);
+
+  updateQuestionNumbers();
+  updateQuestionCounts();
+
+  if (state.srs) {
+    updateSRSCounts();
+  }
 }
 
 /**
@@ -384,6 +570,13 @@ export async function toggleSRS() {
 
   // Change CSS class for state relative layout
   document.body.classList.toggle("srs-mode", state.srs);
+
+  /*
+   * The field counts positions in the navigation order outside SRS
+   * mode and the question's own index inside it, so it has to be
+   * rewritten when the mode changes.
+   */
+  updateQuestionNumbers();
 
   if (state.srs) {
     updateSRSCounts();

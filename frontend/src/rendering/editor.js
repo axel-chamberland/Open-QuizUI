@@ -8,7 +8,8 @@ import {
 } from "../persistence/quiz_edits.js";
 import { saveAppDataOverrides } from "../persistence/app_data.js";
 import { loadQuestionOrder, clearQuestionOrder } from "../persistence/question_order.js";
-import { renderCurrentQuestionView, setQuizTitle } from "../quiz.js";
+import { clearQuestionRemovals } from "../persistence/question_removals.js";
+import { goTo, removeAddedQuestion, setQuizTitle } from "../quiz.js";
 import { openOrderEditor } from "./order.js";
 import { showAlert, showPrompt } from "../ui/alert.js";
 
@@ -17,6 +18,25 @@ document
   .addEventListener("input", (e) => {
     e.target.value = e.target.value.replace(/\D/g, "");
   });
+
+/**
+ * Updates the "Question X of Y" line above the title field.
+ *
+ * The position is the question's place in the saved navigation order,
+ * and the total is the number of questions that are left, so the line
+ * is only rewritten when an order is actually saved - a drag that has
+ * not been saved yet does not move it.
+ *
+ * @returns {void}
+ */
+export function updateEditorQuestionNumber() {
+  const orderIndex = state.questionOrder.indexOf(state.currentQuestionIndex);
+  const questionPosition =
+    orderIndex === -1 ? state.currentQuestionIndex + 1 : orderIndex + 1;
+
+  document.getElementById("editor-question-number").textContent =
+    `Question ${questionPosition} of ${state.questionOrder.length}`;
+}
 
 export function openEditor() {
   const editor = document.getElementById("editor");
@@ -36,13 +56,7 @@ export function openEditor() {
 
   const question = state.quiz.questions[state.currentQuestionIndex];
 
-  // Show which question is being edited, in navigation order
-  const orderIndex = state.questionOrder.indexOf(state.currentQuestionIndex);
-  const questionPosition =
-    orderIndex === -1 ? state.currentQuestionIndex + 1 : orderIndex + 1;
-
-  document.getElementById("editor-question-number").textContent =
-    `Question ${questionPosition} of ${state.quiz.questions.length}`;
+  updateEditorQuestionNumber();
 
   // Set initial values
   titleField.innerHTML = `<textarea></textarea>`;
@@ -63,6 +77,8 @@ export function openEditor() {
   });
 
   loadAdditionalSettings();
+
+  rememberEditorValues();
 }
 
 /**
@@ -112,6 +128,66 @@ function loadAdditionalSettings() {
     config.enable_short_term;
 
   additionalSettingsSnapshot = JSON.stringify(getEditorSettingsValues());
+}
+
+/**
+ * Snapshot of the editor's fields, taken when the editor is opened or
+ * saved, to tell later whether anything in it was changed.
+ */
+let editorSnapshot = null;
+
+/**
+ * Reads the question fields of the editor as values.
+ *
+ * @returns {object} Title, question, answer position, options and
+ *   explanation, as they currently read.
+ */
+function getEditorQuestionValues() {
+  const field = (id) =>
+    document.querySelector(`#${id} textarea`)?.value ?? "";
+
+  const optionsContainer = document.getElementById("editor-distractors");
+
+  return {
+    title: field("editor-title"),
+    question: field("editor-question"),
+    explanation: field("editor-explanation"),
+    answer: document.getElementById("editor-answer-number").value,
+    options: Array.from(
+      optionsContainer.querySelectorAll("textarea"),
+    ).map((textarea) => textarea.value),
+  };
+}
+
+/**
+ * Remembers the editor's fields as the saved state.
+ *
+ * @returns {void}
+ */
+function rememberEditorValues() {
+  editorSnapshot = JSON.stringify([
+    getEditorQuestionValues(),
+    getEditorSettingsValues(),
+  ]);
+}
+
+/**
+ * Whether the editor holds changes that have not been saved.
+ *
+ * The question list asks before switching the editor to another
+ * question, which would drop whatever is in these fields.
+ *
+ * @returns {boolean} Whether there is anything unsaved.
+ */
+export function hasUnsavedEditorChanges() {
+  if (editorSnapshot === null) {
+    return false;
+  }
+
+  return (
+    JSON.stringify([getEditorQuestionValues(), getEditorSettingsValues()]) !==
+    editorSnapshot
+  );
 }
 
 document
@@ -272,6 +348,9 @@ export function saveEdit() {
   if (saveLocalEdit(state.currentQuestionIndex, titleChanged)) {
     showAlert("Changes saved.");
   }
+
+  // What is in the fields is the saved state now.
+  rememberEditorValues();
 }
 
 /**
@@ -307,7 +386,13 @@ function closeEditor() {
   const options = document.getElementById("editor-distractors");
   options.innerHTML = "";
 
-  renderCurrentQuestionView();
+  /*
+   * Leave the quiz on the question the editor was showing - it can
+   * have moved there, e.g. to a question added in the order editor -
+   * so the question, the navigation field and the stored position all
+   * agree again, in both navigation modes.
+   */
+  goTo(state.currentQuestionIndex);
 }
 
 export function restoreQuizToDefault() {
@@ -322,8 +407,11 @@ export function restoreQuizToDefault() {
       state.quiz = structuredClone(appData.quiz);
       setQuizTitle(state.quiz.title);
 
-      // Reset the question order to the natural sequence
+      // Reset the question order to the natural sequence, and bring
+      // back the questions deleted locally.
       clearQuestionOrder(state.quizStorageKey);
+      clearQuestionRemovals(state.quizStorageKey);
+      state.removedQuestions = new Set();
       state.questionOrder = loadQuestionOrder(
         state.quizStorageKey,
         state.quiz.questions.length,
@@ -342,15 +430,39 @@ export function restoreQuizToDefault() {
 }
 
 export function restoreQuestionToDefault() {
+  const appData = JSON.parse(document.getElementById("app-data").textContent);
+
+  const index = state.currentQuestionIndex;
+
+  /*
+   * A question added in the editor has no original to restore: it only
+   * exists locally, so resetting it means removing it again.
+   */
+  if (index >= appData.quiz.questions.length) {
+    showPrompt(
+      "Remove this added question?\nIt will be deleted from the quiz.",
+      () => {
+        removeAddedQuestion(index);
+
+        state.currentQuestionIndex = Math.min(
+          index,
+          state.quiz.questions.length - 1,
+        );
+
+        openEditor();
+        showAlert("Added question removed.");
+      },
+      null,
+      "Yes",
+      "No",
+    );
+
+    return;
+  }
+
   showPrompt(
     "Restore the current question to its original state?\nAll local edits will be discarded.",
     () => {
-      const appData = JSON.parse(
-        document.getElementById("app-data").textContent,
-      );
-
-      const index = state.currentQuestionIndex;
-
       state.quiz.questions[index] = structuredClone(
         appData.quiz.questions[index],
       );

@@ -21,12 +21,18 @@ export async function renderResults() {
 
   results.style.display = "";
 
-  const correct = state.questionResults.filter((x) => x === CORRECT).length;
-  const wrong = state.questionResults.filter((x) => x === WRONG).length;
-  const unanswered = state.questionResults.filter(
-    (x) => x === UNANSWERED,
-  ).length;
-  const skipped = state.questionResults.filter((x) => x === SKIPPED).length;
+  /*
+   * Count only the questions that are still in the quiz: the results
+   * of a question deleted in the editor are left behind with it.
+   */
+  const ordered = state.questionOrder.map(
+    (index) => state.questionResults[index],
+  );
+
+  const correct = ordered.filter((x) => x === CORRECT).length;
+  const wrong = ordered.filter((x) => x === WRONG).length;
+  const unanswered = ordered.filter((x) => x === UNANSWERED).length;
+  const skipped = ordered.filter((x) => x === SKIPPED).length;
 
   const total = state.questionOrder.length;
   const answered = correct + wrong;

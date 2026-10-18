@@ -155,11 +155,27 @@
       </div>
     </div>
     <div id="order-editor" class="global-prompt order-editor">
-      <p><strong>Question Order</strong></p>
-      <p class="order-hint">Drag the ⠿ grip to reorder; scroll and zoom work as usual.</p>
+      <p><strong>Questions</strong></p>
+      <div class="order-actions">
+        <button id="order-editor-add" class="order-add-button">+ Add question</button>
+        <div class="order-action-row">
+          <button id="order-editor-add-before" title="Add a new question before the current one">
+            Add before
+          </button>
+          <button id="order-editor-add-after" title="Add a new question after the current one">
+            Add after
+          </button>
+          <button
+            id="order-editor-delete"
+            class="order-delete-button"
+            title="Delete the current question"
+          >
+            Delete question
+          </button>
+        </div>
+      </div>
       <div id="order-editor-list"></div>
       <div class="button-row">
-        <button id="order-editor-reset">Reset</button>
         <button id="order-editor-cancel">Cancel</button>
         <button id="order-editor-save">Save</button>
       </div>
@@ -608,11 +624,11 @@
             </div>
           </div>
           <div class="editor-section">
-            <p class="editor-section-title">Question Order</p>
+            <p class="editor-section-title">Questions</p>
             <p class="editor-section-hint">
-              Reorder questions for normal navigation.
+              Select, add, remove or reorder questions.
             </p>
-            <button id="order-editor-open-button">Edit Question Order</button>
+            <button id="order-editor-open-button">Edit Questions</button>
           </div>
         </details>
         <p><strong>Question:</strong></p>

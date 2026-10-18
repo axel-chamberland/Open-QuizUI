@@ -1,7 +1,6 @@
 import { initializeState } from "./state.js";
 import { initializeEvents } from "./ui/events.js";
 import { loadAppData } from "./persistence/app_data.js";
-import { loadQuizEdits } from "./persistence/quiz_edits.js";
 import { loadStats } from "./persistence/stats.js";
 import { loadMathJax } from "./shared/mathjax.js";
 import { state } from "./state.js";
@@ -51,7 +50,6 @@ if (appData.srsConfig === undefined) {
 }
 
 loadStats();
-loadQuizEdits(state);
 
 async function initializeApp() {
   await loadMathJax(ENABLE_MATHJAX);

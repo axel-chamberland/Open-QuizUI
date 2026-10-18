@@ -2,11 +2,20 @@ import { state } from "../state.js";
 
 // Download the original HTML with the current app data.
 export function downloadQuizHTML() {
+  /*
+   * The quiz's own questions are the baseline local edits are stored
+   * against, so deleted ones are still in the array; they are left out
+   * of the downloaded quiz, which has no use for them.
+   */
+  const questions = state.quiz.questions.filter(
+    (_, index) => !state.removedQuestions?.has(index),
+  );
+
   // quiz is the current runtime-modified quiz
   const appData = {
     mode: state.mode,
     enableMathJax: state.mathReady,
-    quiz: state.quiz,
+    quiz: { ...state.quiz, questions },
     // srs appdata
     srsOnLoad: state.srs,
     srsQueueSize: state.srsQueueSize,

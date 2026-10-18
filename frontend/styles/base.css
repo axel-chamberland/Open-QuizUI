@@ -746,10 +746,34 @@ textarea:focus {
   box-sizing: border-box;
 }
 
-.order-editor .order-hint {
-  margin: 0;
-  font-size: 0.8em;
-  color: var(--border);
+.order-editor .order-actions {
+  display: grid;
+  gap: 0.35rem;
+
+  margin-top: 0.75rem;
+}
+
+.order-editor .order-add-button {
+  width: 100%;
+  padding: 0.35rem 0.5rem;
+  font-size: 1rem;
+}
+
+/* The row of buttons acting on the question the editor is on */
+.order-editor .order-action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.order-editor .order-action-row button {
+  flex: 1 1 6rem;
+  padding: 0.3rem 0.4rem;
+  font-size: 0.9rem;
+}
+
+.order-editor .order-delete-button {
+  color: var(--danger);
 }
 
 .order-editor #order-editor-list {
@@ -773,7 +797,9 @@ textarea:focus {
   background: var(--bg);
   border: 1px solid var(--border);
   border-radius: 0.35rem;
-  cursor: grab;
+
+  /* The row is picked with a tap; dragging starts from its handle. */
+  cursor: pointer;
 
   /*
    * The browser owns pan and pinch zoom here: touch scrolling is
@@ -798,6 +824,20 @@ textarea:focus {
 
 .order-editor .order-row:active {
   cursor: grabbing;
+}
+
+/*
+ * The question that is picked: it is the one the editor is on, and the
+ * one the buttons in the list act on. Marked with an inset bar and a
+ * bold number rather than a border or a background, so the drag colors
+ * below can still show.
+ */
+.order-editor .order-row.order-current {
+  box-shadow: inset 3px 0 0 var(--text);
+}
+
+.order-editor .order-row.order-current .order-number {
+  font-weight: 700;
 }
 
 /*
@@ -931,6 +971,15 @@ textarea:focus {
 
 .global-prompt.visible {
   display: block;
+}
+
+/*
+ * A prompt can be raised from inside the order editor overlay (adding
+ * or cancelling a question), and both are .global-prompt positioned
+ * elements. The prompt has to stack above the overlay, not with it.
+ */
+#global-prompt {
+  z-index: 10000;
 }
 
 .global-prompt .button-row {

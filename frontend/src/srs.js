@@ -454,6 +454,67 @@ export function clearSRSHistory() {
   history.length = 0;
 }
 
+/**
+ * Drops a removed question from the scheduler state.
+ *
+ * Question indexes are what the scheduler keys its cards on, so a
+ * removed question has to be taken out of both the runtime state and
+ * the stored state. When the questions behind it moved down an index
+ * (a question added in the editor was taken out of the quiz), their
+ * cards follow; a deleted question of the quiz's own keeps its index,
+ * so the cards behind it stay where they are.
+ *
+ * The persisted state is always updated; the runtime state only exists
+ * once SRS has been initialized this session.
+ *
+ * @param {number} index Removed question index.
+ * @param {boolean} [shiftIndexes] Whether the questions behind it moved
+ *   down an index.
+ * @returns {void}
+ */
+export function removeQuestionFromSRS(index, shiftIndexes = true) {
+  const shift = (i) => (shiftIndexes && i > index ? i - 1 : i);
+
+  const saved = loadQuestionSRSState(state.quizStorageKey);
+
+  if (saved) {
+    saveQuestionSRSState(state.quizStorageKey, {
+      score: saved.score,
+      queue: saved.queue
+        .filter((item) => item.index !== index)
+        .map((item) => ({ ...item, index: shift(item.index) })),
+    });
+  }
+
+  if (cards.size === 0 && !state.questionSRSQueue?.length) {
+    return;
+  }
+
+  const shifted = new Map();
+
+  for (const [cardIndex, card] of cards) {
+    if (cardIndex !== index) {
+      shifted.set(shift(cardIndex), card);
+    }
+  }
+
+  cards.clear();
+
+  for (const [cardIndex, card] of shifted) {
+    cards.set(cardIndex, card);
+  }
+
+  state.questionSRSQueue = (state.questionSRSQueue ?? [])
+    .filter((item) => item.index !== index)
+    .map((item) => ({ ...item, index: shift(item.index) }));
+
+  // Undo entries point at indexes that are gone or have changed
+  // meaning.
+  history.length = 0;
+
+  saveSRS(state.quizStorageKey);
+}
+
 export function getSRSCounts() {
   const total = state.questionOrder.length;
 

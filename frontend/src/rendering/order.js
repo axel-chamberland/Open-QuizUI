@@ -1,11 +1,33 @@
 import { state } from "../state.js";
 import { saveQuestionOrder } from "../persistence/question_order.js";
-import { updateQuestionCounts, updateQuestionNumbers } from "../quiz.js";
+import {
+  addQuestion,
+  deleteQuestion,
+  goTo,
+  removeAddedQuestion,
+  updateQuestionCounts,
+  updateQuestionNumbers,
+} from "../quiz.js";
+import {
+  hasUnsavedEditorChanges,
+  openEditor,
+  updateEditorQuestionNumber,
+} from "./editor.js";
+import { showAlert, showPrompt } from "../ui/alert.js";
 
 let workingOrder = null;
 let originalOrder = null;
 let dragIndex = null;
 let keyHandler = null;
+
+/**
+ * Question indexes added while the editor is open.
+ *
+ * Added questions are saved to the browser the moment they are
+ * created, so canceling the editor has to remove them explicitly to
+ * leave the quiz as the user found it.
+ */
+let sessionAddedIndexes = [];
 
 /**
  * Question indexes the user actually dragged during this editor
@@ -40,11 +62,20 @@ document.addEventListener("pointerdown", (event) => {
  */
 function getQuestionSnippet(questionIndex) {
   const question = state.quiz.questions[questionIndex];
+
+  if (!question) {
+    return "(empty question)";
+  }
+
   const scratch = document.createElement("div");
 
   scratch.innerHTML = question.question || "";
 
   const text = scratch.textContent.trim();
+
+  if (text === "") {
+    return "(empty question)";
+  }
 
   return text.length > 60 ? `${text.slice(0, 60)}…` : text;
 }
@@ -65,6 +96,9 @@ export function openOrderEditor() {
   originalOrder = state.questionOrder.slice();
   workingOrder = state.questionOrder.slice();
 
+  // Questions added from a previous session belong to the quiz now.
+  sessionAddedIndexes = [];
+
   dragIndex = null;
   draggedItems.clear();
   document.getElementById("order-editor").classList.remove("dragging");
@@ -72,16 +106,83 @@ export function openOrderEditor() {
   buildOrderList();
 
   keyHandler = (e) => {
-    if (e.key === "Escape") {
-      e.preventDefault();
-      e.stopPropagation();
-      closeOrderEditor();
+    if (e.key !== "Escape") {
+      return;
     }
+
+    /*
+     * A prompt opened from the overlay (adding or cancelling a
+     * question) owns the keyboard while it is up.
+     */
+    if (
+      document.getElementById("global-prompt").classList.contains("visible")
+    ) {
+      return;
+    }
+
+    e.preventDefault();
+    e.stopPropagation();
+    cancelOrderEditor();
   };
 
   document.addEventListener("keydown", keyHandler, true);
 
   document.getElementById("order-editor").classList.add("visible");
+
+  // Start the user off on the row the buttons act on.
+  queryRow(state.currentQuestionIndex)?.scrollIntoView({ block: "nearest" });
+}
+
+/**
+ * Looks up a question's row in the staged list.
+ *
+ * @param {number} questionIndex Question index.
+ * @returns {HTMLElement|null} The row, or null when it is not listed.
+ */
+function queryRow(questionIndex) {
+  return document
+    .getElementById("order-editor-list")
+    .querySelector(`.order-row[data-question-index="${questionIndex}"]`);
+}
+
+/**
+ * Makes a question the one the editor is on.
+ *
+ * The buttons in the list and the editor's own question number both
+ * act on this question, so picking a row moves the editor - and the
+ * quiz page behind it - to that question. Unsaved changes in the
+ * editor are asked about first, since they are left in its fields.
+ *
+ * @param {number} questionIndex Question index to switch to.
+ * @returns {void}
+ */
+function selectQuestion(questionIndex) {
+  if (questionIndex === state.currentQuestionIndex) {
+    return;
+  }
+
+  const switchQuestion = () => {
+    state.currentQuestionIndex = questionIndex;
+
+    goTo(questionIndex);
+    openEditor();
+
+    // Move the marker with the editor.
+    buildOrderList();
+  };
+
+  if (!hasUnsavedEditorChanges()) {
+    switchQuestion();
+    return;
+  }
+
+  showPrompt(
+    `Switch to question ${state.questionOrder.indexOf(questionIndex) + 1}?\nUnsaved changes to the current question will be lost.`,
+    switchQuestion,
+    null,
+    "yes",
+    "no",
+  );
 }
 
 /**
@@ -94,9 +195,208 @@ function closeOrderEditor() {
   // listeners attached and break the next time the editor is used.
   dragCancel?.();
 
+  sessionAddedIndexes = [];
+
   document.getElementById("order-editor").classList.remove("visible");
   document.removeEventListener("keydown", keyHandler, true);
   keyHandler = null;
+}
+
+/**
+ * Cancels the order editor, asking first when questions were added.
+ *
+ * Added questions are saved the moment they are created (they are real
+ * edits), so cancelling has to remove them again to leave the quiz as
+ * it was found.
+ *
+ * @returns {void}
+ */
+function cancelOrderEditor() {
+  if (sessionAddedIndexes.length === 0) {
+    closeOrderEditor();
+    return;
+  }
+
+  const added = sessionAddedIndexes.length;
+
+  showPrompt(
+    added === 1
+      ? "Cancel? The question you added will be removed again."
+      : `Cancel? The ${added} questions you added will be removed again.`,
+    () => {
+      rollBackAddedQuestions();
+      closeOrderEditor();
+    },
+    null,
+    "yes",
+    "no",
+  );
+}
+
+/**
+ * Removes the questions added since the editor was opened.
+ *
+ * They are removed from the highest index down, because removing a
+ * question shifts the indexes after it.
+ *
+ * @returns {void}
+ */
+function rollBackAddedQuestions() {
+  const editedWasAdded = sessionAddedIndexes.includes(
+    state.currentQuestionIndex,
+  );
+
+  for (const index of [...sessionAddedIndexes].sort((a, b) => b - a)) {
+    removeAddedQuestion(index);
+  }
+
+  sessionAddedIndexes = [];
+
+  originalOrder = state.questionOrder.slice();
+  workingOrder = state.questionOrder.slice();
+
+  if (editedWasAdded) {
+    /*
+     * The question the editor was showing is gone, and so is whatever
+     * was typed into its fields: send the editor back to the last
+     * question that is left.
+     */
+    state.currentQuestionIndex = state.quiz.questions.length - 1;
+
+    goTo(state.currentQuestionIndex);
+    openEditor();
+
+    return;
+  }
+
+  // The count went down, and the edited question is one of the quiz's
+  // own, so its index did not move.
+  updateEditorQuestionNumber();
+}
+
+/**
+ * Adds a blank question to the quiz from the question list.
+ *
+ * The question is saved immediately and placed in the list next to the
+ * question that is picked - or at the end of it. It does not become
+ * the picked one: tapping its row is what moves the editor to it.
+ *
+ * @param {"before"|"after"|"end"} where Where the question goes
+ *   relative to the current one.
+ * @returns {void}
+ */
+function addOrderQuestion(where = "end") {
+  const savedPosition = state.questionOrder.indexOf(state.currentQuestionIndex);
+  const listPosition = workingOrder.indexOf(state.currentQuestionIndex);
+
+  /*
+   * The question is appended to the quiz either way, so it can only be
+   * placed next to the current one through the navigation order.
+   */
+  let orderPosition = null;
+
+  if (where !== "end" && savedPosition !== -1) {
+    orderPosition = where === "before" ? savedPosition : savedPosition + 1;
+  }
+
+  const index = addQuestion(orderPosition);
+
+  sessionAddedIndexes.push(index);
+
+  // Stage the new row where the user asked for it.
+  let stagedPosition = workingOrder.length;
+
+  if (where !== "end" && listPosition !== -1) {
+    stagedPosition = where === "before" ? listPosition : listPosition + 1;
+  }
+
+  workingOrder.splice(stagedPosition, 0, index);
+  originalOrder.splice(stagedPosition, 0, index);
+
+  buildOrderList();
+
+  queryRow(index)?.scrollIntoView({ block: "nearest" });
+
+  /*
+   * The added question is saved right away, so the count - and, for a
+   * question placed in front of the current one, the position - has
+   * changed for good.
+   */
+  updateEditorQuestionNumber();
+}
+
+/**
+ * Deletes the question that is picked in the list.
+ *
+ * The row that is picked is marked, so the button always has an
+ * unambiguous target. Unlike a reorder, a deletion is saved right away.
+ *
+ * @returns {void}
+ */
+function deleteCurrentQuestion() {
+  const index = state.currentQuestionIndex;
+  const position = Math.max(0, workingOrder.indexOf(index));
+
+  // Whatever is deleted, the quiz keeps at least one question.
+  if (state.questionOrder.length <= 1) {
+    showAlert("A quiz needs at least one question.");
+    return;
+  }
+
+  showPrompt(
+    "Delete the current question?\nIt will be removed from the quiz.",
+    () => {
+      /*
+       * A question added in the editor is taken out of the quiz array,
+       * which moves the indexes behind it down; one of the quiz's own
+       * questions keeps its index and is marked as deleted.
+       */
+      const shifted = index >= state.builtInQuestionCount;
+
+      deleteQuestion(index);
+
+      dropFromStagedOrders(index, shifted);
+
+      /*
+       * Leave the editor on the question that took its place: the next
+       * one in the list, or the last question when the deleted one was
+       * at the end.
+       */
+      const nextIndex =
+        workingOrder[Math.min(position, workingOrder.length - 1)];
+
+      state.currentQuestionIndex = nextIndex;
+
+      goTo(nextIndex);
+      openEditor();
+
+      buildOrderList();
+    },
+    null,
+    "yes",
+    "no",
+  );
+}
+
+/**
+ * Drops a question from the order staged by the overlay.
+ *
+ * The staged order has to follow what deleting the question did to the
+ * quiz: a question added in the editor moves the indexes behind it
+ * down, while one of the quiz's own questions leaves them alone.
+ *
+ * @param {number} index Deleted question index.
+ * @param {boolean} shifted Whether the indexes behind it moved down.
+ * @returns {void}
+ */
+function dropFromStagedOrders(index, shifted) {
+  const drop = (order) =>
+    order
+      .filter((item) => item !== index)
+      .map((item) => (shifted && item > index ? item - 1 : item));
+
+  workingOrder = drop(workingOrder);
+  originalOrder = drop(originalOrder);
 }
 
 /**
@@ -112,28 +412,12 @@ function saveOrder() {
 
     updateQuestionNumbers();
     updateQuestionCounts();
+
+    // The saved order is what the editor's question number reads.
+    updateEditorQuestionNumber();
   }
 
   closeOrderEditor();
-}
-
-/**
- * Restores the staged order to the quiz's natural sequence.
- *
- * Marks every row as changed when the saved order differs.
- *
- * @returns {void}
- */
-function resetOrder() {
-  workingOrder = Array.from(
-    { length: state.quiz.questions.length },
-    (_, index) => index,
-  );
-
-  // Back to the natural sequence: nothing has been dragged anywhere.
-  draggedItems.clear();
-
-  buildOrderList();
 }
 
 /**
@@ -409,7 +693,9 @@ function updateRowLabels() {
  * Builds the draggable question order list.
  *
  * Rows support both mouse dragging (native drag events) and touch
- * dragging (started immediately from the row's grip handle).
+ * dragging (started immediately from the row's grip handle). The row of
+ * the question the editor is on is marked, since adding next to it or
+ * deleting it acts on that one.
  *
  * @returns {void}
  */
@@ -425,6 +711,11 @@ function buildOrderList() {
 
     // Color code rows moved away from the order the editor opened with
     applyRowState(row, position, questionIndex);
+
+    if (questionIndex === state.currentQuestionIndex) {
+      row.classList.add("order-current");
+      row.setAttribute("aria-current", "true");
+    }
 
     const number = document.createElement("span");
     number.className = "order-number";
@@ -545,6 +836,13 @@ function buildOrderList() {
       buildOrderList();
     });
 
+    /*
+     * Picking a row makes it the question the buttons in the list act
+     * on, and the one the editor shows. A drag does not produce a click
+     * (the gesture is claimed by the drag), so this is a tap only.
+     */
+    row.addEventListener("click", () => selectQuestion(questionIndex));
+
     list.appendChild(row);
   });
 }
@@ -552,7 +850,16 @@ function buildOrderList() {
 document.getElementById("order-editor-save").addEventListener("click", saveOrder);
 document
   .getElementById("order-editor-cancel")
-  .addEventListener("click", closeOrderEditor);
+  .addEventListener("click", cancelOrderEditor);
 document
-  .getElementById("order-editor-reset")
-  .addEventListener("click", resetOrder);
+  .getElementById("order-editor-add")
+  .addEventListener("click", () => addOrderQuestion("end"));
+document
+  .getElementById("order-editor-add-before")
+  .addEventListener("click", () => addOrderQuestion("before"));
+document
+  .getElementById("order-editor-add-after")
+  .addEventListener("click", () => addOrderQuestion("after"));
+document
+  .getElementById("order-editor-delete")
+  .addEventListener("click", deleteCurrentQuestion);

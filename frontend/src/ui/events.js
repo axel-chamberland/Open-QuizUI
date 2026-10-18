@@ -1,5 +1,5 @@
 import {
-  goTo,
+  goToPosition,
   nextQuestion,
   prevQuestion,
   handleAnswer,
@@ -332,7 +332,7 @@ export function initializeEvents() {
       questionNumber.addEventListener("change", () => {
         if (!questionNumber.value) return;
 
-        goTo(Number(questionNumber.value) - 1);
+        goToPosition(Number(questionNumber.value));
       });
     });
 }

@@ -33,8 +33,15 @@ vi.mock("../frontend/src/quiz.js", async () => {
 document.documentElement.innerHTML =
   indexHtml.match(/<html[^>]*>([\s\S]*)<\/html>/i)?.[1] ?? indexHtml;
 
-const { restoreQuestionToDefault, restoreQuizToDefault } =
-  await import("../frontend/src/rendering/editor.js");
+const {
+  closeEditorConfirm,
+  hasUnsavedEditorChanges,
+  openEditor,
+  restoreQuestionToDefault,
+  restoreQuizToDefault,
+  saveEdit,
+  updateEditorQuestionNumber,
+} = await import("../frontend/src/rendering/editor.js");
 
 const { restartQuiz } = await import("../frontend/src/rendering/results.js");
 
@@ -136,6 +143,8 @@ describe("restoreQuizToDefault", () => {
       ],
     };
 
+    state.quizStorageKey = "test-quiz";
+
     vi.clearAllMocks();
   });
 
@@ -151,6 +160,154 @@ describe("restoreQuizToDefault", () => {
     expect(state.quiz).toEqual(originalQuiz);
     expect(setQuizTitle).toHaveBeenCalledWith(originalQuiz.title);
     expect(removeAllLocalEdits).toHaveBeenCalled();
+  });
+
+  it("brings back the questions deleted locally", () => {
+    localStorage.setItem("questionRemovals_test-quiz", JSON.stringify([0]));
+    state.removedQuestions = new Set([0]);
+
+    restoreQuizToDefault();
+
+    document.getElementById("global-prompt-yes").click();
+
+    expect(state.removedQuestions).toEqual(new Set());
+    expect(localStorage.getItem("questionRemovals_test-quiz")).toBeNull();
+    expect(state.questionOrder).toEqual([0]);
+  });
+});
+
+describe("closeEditorConfirm", () => {
+  beforeEach(() => {
+    localStorage.clear();
+
+    document.getElementById("editor").style.display = "";
+
+    state.quiz = {
+      title: "Test quiz",
+      questions: [
+        { question: "A", options: ["A", "B"], correct_index: 0 },
+        { question: "B", options: ["A", "B"], correct_index: 0 },
+        { question: "C", options: ["A", "B"], correct_index: 0 },
+      ],
+    };
+    // The quiz's own order, with the third question moved to the front.
+    state.questionOrder = [2, 0, 1];
+    state.quizStorageKey = "test-quiz";
+    state.mode = "mcq";
+    state.srs = false;
+    state.currentQuestionIndex = 2;
+    // Stale: the editor moved on to the added question.
+    state.currentQuestion = state.quiz.questions[0];
+
+    vi.clearAllMocks();
+  });
+
+  function leaveEditor() {
+    closeEditorConfirm();
+    document.getElementById("global-prompt-yes").click();
+  }
+
+  it("leaves the quiz on the question the editor was showing", () => {
+    leaveEditor();
+
+    expect(state.currentQuestion).toBe(state.quiz.questions[2]);
+    expect(document.querySelector(".question-number").value).toBe("1");
+    expect(document.getElementById("editor").style.display).toBe("none");
+  });
+
+  it("persists the question it leaves on", () => {
+    leaveEditor();
+
+    expect(localStorage.getItem("currentQuestionIndex_test-quiz")).toBe("2");
+  });
+
+  it("does not move the stored position in SRS mode", () => {
+    state.srs = true;
+
+    leaveEditor();
+
+    expect(state.currentQuestion).toBe(state.quiz.questions[2]);
+    expect(localStorage.getItem("currentQuestionIndex_test-quiz")).toBe(null);
+  });
+});
+
+describe("updateEditorQuestionNumber", () => {
+  beforeEach(() => {
+    state.quiz = {
+      title: "Test quiz",
+      questions: [
+        { question: "A", options: ["A", "B"], correct_index: 0 },
+        { question: "B", options: ["A", "B"], correct_index: 0 },
+        { question: "C", options: ["A", "B"], correct_index: 0 },
+      ],
+    };
+    // The quiz's own order, with the third question moved to the front.
+    state.questionOrder = [2, 0, 1];
+    state.currentQuestionIndex = 0;
+  });
+
+  function editorNumber() {
+    return document.getElementById("editor-question-number").textContent;
+  }
+
+  it("shows the question's position in the saved order", () => {
+    updateEditorQuestionNumber();
+
+    expect(editorNumber()).toBe("Question 2 of 3");
+  });
+
+  it("counts the questions that are left", () => {
+    // A question was deleted, so it is out of the order.
+    state.questionOrder = [2, 0];
+
+    updateEditorQuestionNumber();
+
+    expect(editorNumber()).toBe("Question 2 of 2");
+  });
+});
+
+describe("hasUnsavedEditorChanges", () => {
+  beforeEach(() => {
+    state.quiz = {
+      title: "Test quiz",
+      questions: [
+        {
+          question: "A",
+          options: ["A", "B"],
+          correct_index: 0,
+          explanation: "",
+        },
+      ],
+    };
+    state.questionOrder = [0];
+    state.currentQuestionIndex = 0;
+    state.srsQueueSize = 20;
+    state.srsConfig = {
+      request_retention: 0.9,
+      maximum_interval: 365,
+      enable_fuzz: true,
+      enable_short_term: true,
+    };
+
+    openEditor();
+  });
+
+  it("is false right after the editor opens", () => {
+    expect(hasUnsavedEditorChanges()).toBe(false);
+  });
+
+  it("is true after a field was changed", () => {
+    document.querySelector("#editor-question textarea").value = "changed";
+
+    expect(hasUnsavedEditorChanges()).toBe(true);
+  });
+
+  it("is false again after saving", () => {
+    document.querySelector("#editor-question textarea").value = "changed";
+
+    saveEdit();
+
+    expect(hasUnsavedEditorChanges()).toBe(false);
   });
 });
 
