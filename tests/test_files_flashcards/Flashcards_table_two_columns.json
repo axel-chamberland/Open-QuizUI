@@ -1,0 +1,22 @@
+{
+  "content": "## Flashcards : Capitales\n\n| Question | Réponse |\n| --- | --- |\n| Quelle est la capitale de la France ? | Paris |\n| Quelle est la capitale du Japon ? | Tokyo |\n",
+  "expected": [
+    "Flashcards : Capitales",
+    [
+      {
+        "question": "<p>Quelle est la capitale de la France ?</p>",
+        "options": [
+          "<p>Paris</p>"
+        ],
+        "correct_index": 0
+      },
+      {
+        "question": "<p>Quelle est la capitale du Japon ?</p>",
+        "options": [
+          "<p>Tokyo</p>"
+        ],
+        "correct_index": 0
+      }
+    ]
+  ]
+}

@@ -2,7 +2,7 @@
 title: QuizUI
 author: Axel Chamberland
 git_url: https://github.com/axel-chamberland/OpenQuizUI
-description: Converts a multiple-choice quiz message into an interactive HTML quiz.
+description: Converts a multiple-choice quiz or flashcard message into an interactive HTML quiz.
 version: 2.2.1
 """
 
@@ -56,7 +56,18 @@ class Action:
         quiz_mode: Literal["multiple-choice questions", "flashcards"] = Field(
             default="multiple-choice questions",
             description=(
-                "Default mode to start quiz in. Does not affect the parsing (still requires multiple-choice questions)"
+                "Default mode to start the quiz in. This does not affect the parsing; "
+                "use parse_mode for that."
+            ),
+        )
+
+        parse_mode: Literal["auto", "multiple-choice questions", "flashcards"] = Field(
+            default="auto",
+            description=(
+                "How to parse the message. 'auto' tries multiple-choice questions first "
+                "and falls back to flashcards when the message holds no choices; the other "
+                "values force one format. Forcing flashcards on a quiz with choices shows "
+                "it as cards, using the correct choice as the answer."
             ),
         )
 
@@ -175,13 +186,42 @@ class Action:
             if not text:
                 raise ValueError("No content received")
 
-            title, questions = parse_quiz(
-                text,
-                self.valves.enable_explanations,
-                self.valves.question_pattern,
-                self.valves.answer_pattern,
-                self.valves.choice_pattern,
-            )
+            parse_mode = self.valves.parse_mode
+
+            try:
+                title, questions = parse_quiz(
+                    text,
+                    self.valves.enable_explanations,
+                    self.valves.question_pattern,
+                    self.valves.answer_pattern,
+                    self.valves.choice_pattern,
+                )
+            except NoQuestionsFound as error:
+                if parse_mode == "multiple-choice questions":
+                    raise
+
+                # No choices: it may be flashcards as they are. A parse
+                # with choices comes first because it carries more of
+                # the message, so only a message that holds none of them
+                # gets read as flashcards.
+                try:
+                    title, questions = parse_flashcards(
+                        text,
+                        self.valves.enable_explanations,
+                        self.valves.question_pattern,
+                        self.valves.answer_pattern,
+                    )
+                except NoQuestionsFound:
+                    if parse_mode == "flashcards":
+                        raise
+
+                    raise NoQuestionsFound(
+                        f"{error}\nNo flashcards were parsed either."
+                    ) from None
+            else:
+                if parse_mode == "flashcards":
+                    # Forced: show the quiz with choices as cards.
+                    questions = flashcards_from_questions(questions)
 
             choice_reference_patterns = [
                 pattern.strip()
@@ -243,6 +283,16 @@ class Action:
     # =========================
     # PARSER
     # =========================
+
+
+class NoQuestionsFound(ValueError):
+    """
+    Raised when a message holds no questions in the parsed format.
+
+    Kept apart from the other parse failures so 'auto' can tell an
+    unusable format (try the other parser) from a formatting mistake
+    inside a recognized one (report the mistake).
+    """
 
 
 # Use various degrees of detection for the answer keys (harder to detect than question keys).
@@ -317,6 +367,30 @@ def parse_quiz(
     return title, questions
 
 
+def question_regex(question_pattern=r"question|bonus|q(?!\p{L})"):
+    """
+    Build the regex that detects a question and captures its text.
+
+    Both parsers consider a line a new question when this matches, so
+    the same question labels apply to either format.
+
+    @returns {regex.Pattern} The compiled pattern; group 3 holds the text
+    following the question label.
+    """
+    return regex.compile(
+        (
+            r"(?:#{1,6}\s*)?"  # Optional Markdown Header (#)
+            r"(?:\*\*)?"  # Optional bold question (**)
+            # The Label/Number
+            r"(?:(?:{QUESTION_LABELS})\s*([0-9]+)?|([0-9]+)(?=\*{0,2}(?:[\s.:\)\-]|$)))"
+            r"\s*[:.\-]?\s*"  # Separator (: . -)
+            r"(?:\*\*)?"  # Skip bold end of question, if it exists
+            r"(.*?)(?:\*\*)?$"  # actual question text, excluding ** if it exists
+        ).replace("{QUESTION_LABELS}", question_pattern),
+        regex.IGNORECASE,
+    )
+
+
 def question_parser(
     lines, question_pattern=r"question|bonus|q(?!\p{L})", choice_pattern=r"\p{L}"
 ) -> tuple[list[dict], list[int]]:
@@ -333,18 +407,7 @@ def question_parser(
     Supports if description is on following lines
     """
 
-    question_re = regex.compile(
-        (
-            r"(?:#{1,6}\s*)?"  # Optional Markdown Header (#)
-            r"(?:\*\*)?"  # Optional bold question (**)
-            # The Label/Number
-            r"(?:(?:{QUESTION_LABELS})\s*([0-9]+)?|([0-9]+)(?=\*{0,2}(?:[\s.:\)\-]|$)))"
-            r"\s*[:.\-]?\s*"  # Separator (: . -)
-            r"(?:\*\*)?"  # Skip bold end of question, if it exists
-            r"(.*?)(?:\*\*)?$"  # actual question text, excluding ** if it exists
-        ).replace("{QUESTION_LABELS}", question_pattern),
-        regex.IGNORECASE,
-    )
+    question_re = question_regex(question_pattern)
 
     choice_re = regex.compile(
         (r"^\s*[-*•]?\s*({CHOICE_PATTERN})[\)\.\-]\s*(.+)$").replace(
@@ -422,7 +485,7 @@ def _verify_questions(questions):
     errors = []
 
     if not questions:
-        raise ValueError(
+        raise NoQuestionsFound(
             "question_parser_standard: no questions were parsed from the input."
         )
 
@@ -449,6 +512,400 @@ def _verify_questions(questions):
             f"{len(errors)} issue(s) while verifying parsed questions:\n"
             + "\n".join(f"  - {e}" for e in errors)
         )
+
+
+def parse_flashcards(
+    text: str,
+    explanations: bool,
+    question_pattern=r"question|bonus|q(?!\p{L})",
+    answer_pattern="answer|correct answer|réponse|bonne réponse|réponse correcte|r|a",
+) -> tuple[str, list[dict]]:
+    """
+    Parse a flashcard quiz: questions that hold one answer instead of choices.
+
+    The table format is tried first, since a markdown table is the clearer
+    signal; a message without one is read from its question labels instead.
+
+    Table - questions, answers and explanations in a markdown table:
+        | Question | Answer | Explanation |
+        | --- | --- | --- |
+        | Which planet is the largest? | Jupiter | About 139,820 km |
+
+    Question labels - the answer below each question:
+        ## Question 1: Which planet is the largest?
+
+        Jupiter
+
+        Its diameter is about 139,820 km.
+
+    With question labels the answer may carry a label from the
+    answer_pattern valve ("A:", "R:", "Réponse:"); without one, the first
+    paragraph below the question is the answer. Everything after the
+    answer, up to the next question, is the explanation when explanations
+    are enabled, as is a table's third column.
+
+    @returns {tuple[str, list[dict]]} The inferred title and the
+    questions, each with a single option holding its answer.
+    """
+
+    lines = [line.strip() for line in text.split("\n")]
+
+    questions, question_lines = flashcard_table_parser(lines, explanations)
+
+    if not questions:
+        questions, question_lines = flashcard_question_parser(
+            lines, question_pattern, answer_pattern, explanations
+        )
+
+    _verify_flashcards(questions)
+
+    title: str = infer_title(lines, question_lines[0])
+
+    for q in questions:
+        q["question"] = _markdown_to_html(q.get("question", ""))
+        q["options"] = [_markdown_to_html(opt) for opt in q.get("options", [])]
+        if "explanation" in q:
+            q["explanation"] = _markdown_to_html(q["explanation"])
+
+    return title, questions
+
+
+def flashcard_question_parser(
+    lines, question_pattern, answer_pattern, explanations
+) -> tuple[list[dict], list[int]]:
+    """
+    Parse the labelled format of a flashcard quiz.
+
+    Each detected question keeps the lines below it until the next
+    question; build_flashcard() turns that block into one card.
+
+    @returns {tuple[list[dict], list[int]]} The questions and the line
+    number each one starts on.
+    """
+
+    question_re = question_regex(question_pattern)
+    label_re = answer_label_regex(answer_pattern)
+
+    blocks = []  # (heading text, body lines, starting line)
+    heading = None
+    body = []
+    start_line = None
+
+    for line_no, line in enumerate(lines):
+        question_match = question_re.match(line) if line else None
+
+        if question_match:
+            if heading is not None:
+                blocks.append((heading, body, start_line))
+
+            heading = question_match.group(3).strip(" :-")
+            body = []
+            start_line = line_no
+            continue
+
+        if heading is None:
+            continue
+
+        body.append(line)
+
+    if heading is not None:
+        blocks.append((heading, body, start_line))
+
+    questions = []
+    question_lines = []
+
+    for heading, body, start_line in blocks:
+        card = build_flashcard(heading, body, label_re, explanations)
+
+        if card is None:
+            continue
+
+        questions.append(card)
+        question_lines.append(start_line)
+
+    return questions, question_lines
+
+
+def answer_label_regex(answer_pattern):
+    """
+    Build the regex for a line that labels an answer and holds it.
+
+    Only a label followed by a separator counts, so an answer that is
+    plain text ("Jupiter") or a choice ("A. Jupiter") is not mistaken
+    for one.
+
+    @returns {regex.Pattern} The compiled pattern; group 1 holds the
+    answer text.
+    """
+    return regex.compile(
+        (
+            r"^\s*\*{0,2}(?:{ANSWER_PATTERN})\b\s*\*{0,2}"  # The label
+            r"\s*[:\-=]\s*"  # Separator (: - =)
+            r"\*{0,2}\s*(.+?)\s*\*{0,2}$"  # The answer text
+        ).replace("{ANSWER_PATTERN}", answer_pattern),
+        regex.IGNORECASE,
+    )
+
+
+def build_flashcard(heading, body, label_re, explanations=True):
+    """
+    Turn one detected question block into a flashcard.
+
+    The question is the label text plus whatever sits above the answer,
+    which is either the labelled line or, without one, the first
+    paragraph below the question.
+
+    @returns {dict|None} The question, or None when the block holds no
+    answer (the verifier reports it when nothing parses at all).
+    """
+
+    for i, line in enumerate(body):
+        label_match = label_re.match(line)
+
+        if not label_match:
+            continue
+
+        answer = clean_text(label_match.group(1), False)
+
+        if not answer:
+            return None
+
+        question = "\n".join([heading, *body[:i]]).strip()
+
+        if not question:
+            return None
+
+        card = {
+            "question": question,
+            "options": [answer],
+            "correct_index": 0,
+        }
+
+        explanation = "\n".join(body[i + 1 :]).strip()
+
+        if explanations and explanation:
+            explanation = clean_text(explanation)
+
+            if explanation:
+                card["explanation"] = explanation
+
+        return card
+
+    # Without a label, the question and answer are paragraphs.
+    paragraphs = [
+        paragraph
+        for paragraph in regex.split(r"\n\s*\n", "\n".join(body))
+        if paragraph.strip()
+    ]
+
+    if heading:
+        question = heading
+        answer = paragraphs[0] if paragraphs else ""
+        rest = paragraphs[1:]
+    else:
+        question = paragraphs[0] if paragraphs else ""
+        answer = paragraphs[1] if len(paragraphs) > 1 else ""
+        rest = paragraphs[2:]
+
+    answer = clean_text(answer, False)
+
+    question = question.strip()
+
+    if not answer or not question:
+        return None
+
+    card = {
+        "question": question,
+        "options": [answer],
+        "correct_index": 0,
+    }
+
+    if explanations and rest:
+        explanation = clean_text("\n\n".join(rest))
+
+        if explanation:
+            card["explanation"] = explanation
+
+    return card
+
+
+def flashcard_table_parser(lines, explanations=True):
+    """
+    Parse a markdown table as flashcards.
+
+    The first column holds the questions, the second the answers and an
+    optional third the explanations. Header and separator rows are
+    dropped; a table that holds no card is skipped, so an unrelated table
+    above the cards does not hide them.
+
+    @returns {tuple[list[dict], list[int]]} The questions and the line
+    the table starts on, which is what infer_title() looks above.
+    """
+
+    tables = []
+    current = None
+
+    for line_no, line in enumerate(lines):
+        if regex.match(r"^\s*\|.*\|\s*$", line):
+            if current is None:
+                current = (line_no, [])
+
+            current[1].append(line)
+            continue
+
+        if current is not None:
+            tables.append(current)
+            current = None
+
+    if current is not None:
+        tables.append(current)
+
+    for start_line, table in tables:
+        rows = [split_table_row(line) for line in table]
+
+        # A real table has a separator row under its header.
+        separator = next(
+            (i for i, row in enumerate(rows) if is_table_separator(row)),
+            None,
+        )
+
+        if separator is None or separator == 0 or len(rows) <= separator + 1:
+            continue
+
+        questions = []
+
+        for row in rows[separator + 1 :]:
+            if len(row) < 2:
+                continue
+
+            question = row[0].strip()
+            answer = clean_text(row[1], False)
+
+            if not question or not answer:
+                continue
+
+            card = {
+                "question": question,
+                "options": [answer],
+                "correct_index": 0,
+            }
+
+            if explanations and len(row) > 2:
+                explanation = clean_text(row[2])
+
+                if explanation:
+                    card["explanation"] = explanation
+
+            questions.append(card)
+
+        if questions:
+            # Nothing inside the table is a title: look above it.
+            return questions, [start_line]
+
+    return [], []
+
+
+def split_table_row(line: str) -> list[str]:
+    """
+    Split one markdown table row into its cells.
+
+    Escaped pipes (\\|) stay inside their cell, as markdown renders them,
+    and an empty cell in the middle of the row stays where it is: only the
+    pipes delimiting the row are dropped.
+
+    @returns {list[str]} The cell texts, trimmed.
+    """
+
+    row = line.strip()
+
+    if row.startswith("|"):
+        row = row[1:]
+
+    if row.endswith("|"):
+        row = row[:-1]
+
+    cells = regex.split(r"(?<!\\)\|", row)
+
+    return [cell.replace(r"\|", "|").strip() for cell in cells]
+
+
+def is_table_separator(cells: list[str]) -> bool:
+    """
+    Whether a table row is the separator under its header ("| --- | :-: |").
+
+    @returns {bool} Whether every cell is a separator cell.
+    """
+
+    if not cells:
+        return False
+
+    return all(regex.fullmatch(r":?-+:?", cell) for cell in cells)
+
+
+def _verify_flashcards(questions):
+    """
+    Sanity-check parsed flashcards and raise ValueError listing every
+    problem found, rather than silently returning bad data.
+    """
+    errors = []
+
+    if not questions:
+        raise NoQuestionsFound(
+            "flashcard_parser: no flashcards were parsed from the input."
+        )
+
+    for i, question in enumerate(questions, start=1):
+        label = f"Flashcard {i}"
+
+        question_text = question.get("question", "")
+        if not question_text or not question_text.strip():
+            errors.append(f"{label}: empty question text.")
+
+        options = question.get("options", [])
+        if len(options) != 1 or not options[0].strip():
+            errors.append(f"{label}: expected exactly one answer.")
+
+    if errors:
+        raise ValueError(
+            "flashcard_parser: found "
+            f"{len(errors)} issue(s) while verifying parsed flashcards:\n"
+            + "\n".join(f"  - {e}" for e in errors)
+        )
+
+
+def flashcards_from_questions(questions: list[dict]) -> list[dict]:
+    """
+    Show a multiple-choice quiz as flashcards.
+
+    Each card keeps its question and explanation, with the correct choice
+    as the single answer.
+
+    @returns {list[dict]} The questions, as flashcards.
+    """
+
+    flashcards = []
+
+    for question in questions:
+        options = question.get("options", [])
+        correct_index = question.get("correct_index")
+
+        if isinstance(correct_index, int) and 0 <= correct_index < len(options):
+            answer = options[correct_index]
+        else:
+            answer = options[0] if options else ""
+
+        card = {
+            "question": question.get("question", ""),
+            "options": [answer],
+            "correct_index": 0,
+        }
+
+        if "explanation" in question:
+            card["explanation"] = question["explanation"]
+
+        flashcards.append(card)
+
+    return flashcards
 
 
 def infer_title(lines, before_line):

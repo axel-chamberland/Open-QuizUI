@@ -24,7 +24,7 @@ npm run release         # test:all, then build (what CI/PR should end with)
 
 ## Architecture
 
-- `backend/quiz_function.py` — action function (post-message button, parses free-form LLM quiz output; version `2.2.1` in module docstring, pyproject version lags).
+- `backend/quiz_function.py` — action function (post-message button, parses free-form LLM output as a multiple-choice quiz or as flashcards, per its `parse_mode` valve; version `2.2.1` in module docstring, pyproject version lags).
 - `backend/quiz_tool.py` — tool variant (structured tool-call input).
 - Both duplicate shared logic (parsing); the `THEMES` dict is a **single shared source in `backend/build.py` (`THEMES_SRC`)** — backend files import it via `from backend.build import THEMES`, and the build strips that import and injects the literal block after the imports, right before the main class. Theme edits go in `build.py`, not the backend `.py` files or CSS.
 - `frontend/src/` — vanilla ES-module JS (no framework, no bundler at dev time; esbuild only runs inside `backend/build.py`). `frontend/index.html` is the dev entry (`python -m http.server` on `frontend/` serves it — module imports require HTTP, not `file://`).

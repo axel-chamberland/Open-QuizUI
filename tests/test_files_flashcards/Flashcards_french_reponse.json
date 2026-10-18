@@ -1,0 +1,23 @@
+{
+  "content": "## Question 1 : Quelle est la capitale de la France ?\n\nRéponse : Paris\n\nC'est aussi la ville la plus peuplée du pays.\n\n## Question 2 : Quel fleuve traverse Paris ?\n\nR : La Seine\n",
+  "expected": [
+    "Quiz",
+    [
+      {
+        "question": "<p>Quelle est la capitale de la France ?</p>",
+        "options": [
+          "<p>Paris</p>"
+        ],
+        "correct_index": 0,
+        "explanation": "<p>C'est aussi la ville la plus peuplée du pays.</p>"
+      },
+      {
+        "question": "<p>Quel fleuve traverse Paris ?</p>",
+        "options": [
+          "<p>La Seine</p>"
+        ],
+        "correct_index": 0
+      }
+    ]
+  ]
+}

@@ -41,6 +41,38 @@ Keep the questions, choices, and answer key in the same message. Most standard f
 
 Any text between an answer key item and the next answer key item (or the next question) is treated as that question's explanation.
 
+### Flashcards
+
+The Action also parses flashcards: questions that hold a single answer instead of choices. An explanation can follow each answer.
+
+A Markdown table of questions, answers and explanations is read first, since a table is the clearest signal:
+
+```text
+| Question | Answer | Explanation |
+| --- | --- | --- |
+| <Question> | <Answer> | <Explanation.> |
+```
+
+The first usable table in the message is used, and a row without an answer is skipped.
+
+A message without such a table is read from its question labels instead, with the answer below each question:
+
+```text
+# <Title>
+
+## Question 1: <Question>
+
+<Answer>
+
+<Explanation.>
+```
+
+The answer may carry a label from the **Answer pattern** setting (`A:`, `Answer:`, `R:`, `Réponse:`). Without a label, the first paragraph below the question is the answer and the paragraphs after it are the explanation; questions without an answer are skipped.
+
+The **Parse mode** setting decides which format is read. It defaults to `auto`: the message is read as a quiz with choices first, and as flashcards only when it holds no choices. Set it to **flashcards** to always show the message as flashcards — a quiz with choices then becomes cards, using the correct choice as the answer. Set it to **multiple-choice questions** to reject anything that is not a quiz with choices.
+
+The **Quiz mode** setting only decides which mode the quiz starts in; it can also be switched while taking the quiz.
+
 ## Taking a Quiz
 
 Select an answer and move through the questions using the quiz controls. You can cycle through questions using the tap zones, **Enter**, **Space**, or the arrow keys. Choices can also be selected using the number keys.
