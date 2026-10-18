@@ -79,9 +79,34 @@ The **Quiz mode** setting only decides which mode the quiz starts in; it can als
 
 Select an answer and move through the questions using the quiz controls. You can cycle through questions using the tap zones, **Enter**, **Space**, or the arrow keys. Choices can also be selected using the number keys.
 
-Once the quiz is completed, cycling to the next page displays your statistics and corrections, along with an option to restart the quiz.
+Flashcards show their question alone. **Reveal answer** (the eye button), **Enter** or **Space** reveals the answer with its explanation, and the card is rated **✗** (unknown) or **✓** (known) once it is revealed, with the buttons or the **1** (unknown) and **2** (known) keys. Rating a card records it and moves on to the next one.
+
+The quiz can be taken in either mode: the mode button, next to the timer, switches between multiple-choice questions and flashcards, whatever the quiz was created as.
+
+Once the quiz is completed, cycling to the next page displays your results; see [Results](#results).
 
 Quizzes can be edited at any time with the built-in editor; see [Editing a Quiz](#editing-a-quiz).
+
+## Spaced Repetition
+
+**Toggle Repetition**, in the **⋮** menu, switches the quiz to spaced repetition review (FSRS) and back, and remembers the choice for the next time the quiz is opened. The FSRS library is loaded from a CDN, so the first toggle needs an internet connection.
+
+In repetition mode, the question number and the next button give way to the review queue:
+
+- The first number counts the **due** cards: the questions that have not been reviewed yet.
+- The second counts the **reviewing** cards: the ones seen before that are back in the queue.
+- The third counts the **completed** cards: the ones whose next review is scheduled in the future, and are done with for now.
+
+The count the question in view belongs to is underlined. The queue is filled with new cards, in the quiz's question order, up to the **Spaced repetition queue size**; from there the quiz moves from card to card in the order the reviews come due, which is why the question number is not shown. The next card appears after each rating, and the **◀** button undoes the last one.
+
+Answers work as they do normally, and the card is then rated on a four-point scale instead — **Again**, **Hard**, **Good** or **Easy**, with the buttons or the **1** to **4** keys. The rating decides when the card comes back; **Again** counts as a wrong answer, and the other three as correct.
+
+The **Spaced repetition queue size** and the FSRS parameters can be set per quiz, in the editor's **Additional Settings**:
+
+- **Request retention**: the target chance of recalling a card when it is due; higher values review more often.
+- **Maximum interval**: how far ahead a card can be scheduled, in days.
+- **Enable fuzz**: spreads review dates randomly, so cards learned together do not all come back together.
+- **Enable short-term scheduling**: lets new cards come back within the same session as well as later.
 
 ## Editing a Quiz
 
@@ -112,7 +137,18 @@ Added questions are saved as soon as they are added, so **Cancel** offers to rem
 
 ## Results
 
-After finishing the quiz, Open-QuizUI shows your score and lets you review the results.
+Moving past the last question shows the results page (in repetition mode, it shows once the review queue is empty). It reports:
+
+- **Score**: how many of the answered questions were correct. Unanswered questions are left out, so they do not count against the score.
+- **Accuracy**: the share of the answered questions that were correct.
+- **Correct**, **Wrong**, **Skipped** (the answer was revealed without answering) and **Unanswered** (never reached or revealed) counts, also drawn as a chart.
+- **Time**, and the average time per question.
+
+Under them, the correction sheet lists each question in order with your answer, the correct answer and the explanation — for a flashcard, your answer is the ✗ or ✓ it was given — colour-coded by how the question went.
+
+**Restart Quiz** starts the quiz over after a confirmation, clearing the results.
+
+The **◀** button goes back to the last question, from where the results page can be reached again.
 
 ## Limitations
 
@@ -120,4 +156,4 @@ After finishing the quiz, Open-QuizUI shows your score and lets you review the r
 - Action-generated quizzes rely on recognizable formatting.
 - Some Markdown structures may not be parsed as expected.
 - Tool-generated quizzes depend on the model correctly following the required JSON format.
-- Modified questions are saved in your browser's local storage.
+- Modified questions, your answers and the review schedule are saved in your browser's local storage, per quiz.
