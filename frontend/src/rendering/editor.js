@@ -1,5 +1,4 @@
 import { state } from "../state.js";
-import { renderMCQ } from "./mcq.js";
 import { setSRSConfig } from "../srs.js";
 import {
   removeAllLocalEdits,
@@ -7,7 +6,10 @@ import {
   saveLocalEdit,
 } from "../persistence/quiz_edits.js";
 import { saveAppDataOverrides } from "../persistence/app_data.js";
-import { loadQuestionOrder, clearQuestionOrder } from "../persistence/question_order.js";
+import {
+  loadQuestionOrder,
+  clearQuestionOrder,
+} from "../persistence/question_order.js";
 import { clearQuestionRemovals } from "../persistence/question_removals.js";
 import { goTo, removeAddedQuestion, setQuizTitle } from "../quiz.js";
 import { closeOrderEditor, openOrderEditor } from "./order.js";
@@ -100,8 +102,13 @@ function getEditorSettingsValues() {
   return {
     srsQueueSize: parseInt(edit("editor-srs-queue-size").value, 10),
     srsConfig: {
-      request_retention: parseFloat(edit("editor-fsrs-request-retention").value),
-      maximum_interval: parseInt(edit("editor-fsrs-maximum-interval").value, 10),
+      request_retention: parseFloat(
+        edit("editor-fsrs-request-retention").value,
+      ),
+      maximum_interval: parseInt(
+        edit("editor-fsrs-maximum-interval").value,
+        10,
+      ),
       enable_fuzz: edit("editor-fsrs-enable-fuzz").checked,
       enable_short_term: edit("editor-fsrs-enable-short-term").checked,
     },
@@ -116,8 +123,7 @@ function getEditorSettingsValues() {
 function loadAdditionalSettings() {
   const config = state.srsConfig;
 
-  document.getElementById("editor-srs-queue-size").value =
-    state.srsQueueSize;
+  document.getElementById("editor-srs-queue-size").value = state.srsQueueSize;
   document.getElementById("editor-fsrs-request-retention").value =
     config.request_retention;
   document.getElementById("editor-fsrs-maximum-interval").value =
@@ -143,8 +149,7 @@ let editorSnapshot = null;
  *   explanation, as they currently read.
  */
 function getEditorQuestionValues() {
-  const field = (id) =>
-    document.querySelector(`#${id} textarea`)?.value ?? "";
+  const field = (id) => document.querySelector(`#${id} textarea`)?.value ?? "";
 
   const optionsContainer = document.getElementById("editor-distractors");
 
@@ -153,9 +158,9 @@ function getEditorQuestionValues() {
     question: field("editor-question"),
     explanation: field("editor-explanation"),
     answer: document.getElementById("editor-answer-number").value,
-    options: Array.from(
-      optionsContainer.querySelectorAll("textarea"),
-    ).map((textarea) => textarea.value),
+    options: Array.from(optionsContainer.querySelectorAll("textarea")).map(
+      (textarea) => textarea.value,
+    ),
   };
 }
 
@@ -203,9 +208,7 @@ function validateAdditionalSettings() {
   const retentionInput = document.getElementById(
     "editor-fsrs-request-retention",
   );
-  const intervalInput = document.getElementById(
-    "editor-fsrs-maximum-interval",
-  );
+  const intervalInput = document.getElementById("editor-fsrs-maximum-interval");
   const queueInput = document.getElementById("editor-srs-queue-size");
 
   const retention = parseFloat(retentionInput.value);
@@ -223,8 +226,14 @@ function validateAdditionalSettings() {
     }
   };
 
-  check(retentionInput, !Number.isNaN(retention) && retention > 0 && retention < 1);
-  check(intervalInput, Number.isInteger(maximumInterval) && maximumInterval >= 1);
+  check(
+    retentionInput,
+    !Number.isNaN(retention) && retention > 0 && retention < 1,
+  );
+  check(
+    intervalInput,
+    Number.isInteger(maximumInterval) && maximumInterval >= 1,
+  );
   check(queueInput, Number.isInteger(queueSize) && queueSize >= 1);
 
   if (!valid) {
