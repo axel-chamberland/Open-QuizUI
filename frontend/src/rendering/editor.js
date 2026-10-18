@@ -1,5 +1,5 @@
 import { state } from "../state.js";
-import { setSRSConfig } from "../srs.js";
+import { setSRSConfig, initSRS } from "../srs.js";
 import {
   removeAllLocalEdits,
   removeLocalEdit,
@@ -11,7 +11,12 @@ import {
   clearQuestionOrder,
 } from "../persistence/question_order.js";
 import { clearQuestionRemovals } from "../persistence/question_removals.js";
-import { goTo, removeAddedQuestion, setQuizTitle } from "../quiz.js";
+import {
+  goTo,
+  removeAddedQuestion,
+  setQuizTitle,
+  updateSRSCounts,
+} from "../quiz.js";
 import { closeOrderEditor, openOrderEditor } from "./order.js";
 import { showAlert, showPrompt } from "../ui/alert.js";
 
@@ -316,7 +321,7 @@ export function closeEditorConfirm() {
   );
 }
 
-export function saveEdit() {
+export async function saveEdit() {
   if (!validateAnswerIndex() || !validateAdditionalSettings()) {
     return;
   }
@@ -351,15 +356,29 @@ export function saveEdit() {
     newExplanationText;
 
   // Apply additional (FSRS) settings
-  applyAdditionalSettings();
+  const settingsChanged = applyAdditionalSettings();
 
   // Persist the actual changes (locally)
-  if (saveLocalEdit(state.currentQuestionIndex, titleChanged)) {
+  const questionSaved = saveLocalEdit(state.currentQuestionIndex, titleChanged);
+
+  if (questionSaved || settingsChanged) {
     showAlert("Changes saved.");
   }
 
   // What is in the fields is the saved state now.
   rememberEditorValues();
+
+  /*
+   * A changed queue size only reaches the SRS queue when it is filled,
+   * which happens at initialization. Re-run the initialization so the
+   * new size applies right away; with SRS off there is no queue and the
+   * next initialization picks the size up.
+   */
+  if (settingsChanged && state.srs) {
+    await initSRS(state.quizStorageKey, state.currentQuestionIndex);
+
+    updateSRSCounts();
+  }
 }
 
 /**
@@ -369,21 +388,27 @@ export function saveEdit() {
  * Unchanged fields (matching what the editor was opened with) are not
  * persisted.
  *
- * @returns {void}
+ * @returns {boolean} Whether any setting differs from what the editor
+ *   was opened with.
  */
 function applyAdditionalSettings() {
   const values = getEditorSettingsValues();
+
+  const settingsChanged =
+    JSON.stringify(values) !== additionalSettingsSnapshot;
 
   setSRSConfig(values.srsConfig);
 
   state.srsQueueSize = values.srsQueueSize;
 
-  if (JSON.stringify(values) !== additionalSettingsSnapshot) {
+  if (settingsChanged) {
     saveAppDataOverrides(state.quizStorageKey, {
       srsConfig: { ...state.srsConfig },
       srsQueueSize: state.srsQueueSize,
     });
   }
+
+  return settingsChanged;
 }
 
 function closeEditor() {

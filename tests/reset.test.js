@@ -302,10 +302,10 @@ describe("hasUnsavedEditorChanges", () => {
     expect(hasUnsavedEditorChanges()).toBe(true);
   });
 
-  it("is false again after saving", () => {
+  it("is false again after saving", async () => {
     document.querySelector("#editor-question textarea").value = "changed";
 
-    saveEdit();
+    await saveEdit();
 
     expect(hasUnsavedEditorChanges()).toBe(false);
   });

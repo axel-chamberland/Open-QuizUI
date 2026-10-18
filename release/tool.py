@@ -3132,16 +3132,12 @@ function formatTime(seconds) {
 }
 function formatQuestionAsText(question, index) {
   const lines = [];
-  const questionText = toMarkdown(
-    question.question
-  );
+  const questionText = toMarkdown(question.question);
   lines.push(`Question ${index + 1}: ${questionText}`);
   lines.push("");
   for (const [i, option] of question.options.entries()) {
     const letter = String.fromCharCode(65 + i);
-    lines.push(
-      `${letter}. ${toMarkdown(option)}`
-    );
+    lines.push(`${letter}. ${toMarkdown(option)}`);
   }
   return lines.join("\n");
 }
@@ -3154,12 +3150,8 @@ function formatAnswerKey(questions) {
   ];
   const escapeTableCell = (text) => String(text ?? "").replace(/\|/g, "\\|").replace(/\n/g, " ");
   for (const [index, question] of questions.entries()) {
-    const correctLetter = String.fromCharCode(
-      65 + question.correct_index
-    );
-    const explanation = toMarkdown(
-      question.explanation || ""
-    );
+    const correctLetter = String.fromCharCode(65 + question.correct_index);
+    const explanation = toMarkdown(question.explanation || "");
     lines.push(
       `| ${index + 1} | ${correctLetter} | ${escapeTableCell(explanation)} |`
     );
@@ -3167,24 +3159,12 @@ function formatAnswerKey(questions) {
   return lines.join("\n");
 }
 function formatQuizAsText(quiz2) {
-  const lines = [
-    toMarkdown(quiz2.title),
-    ""
-  ];
+  const lines = [toMarkdown(quiz2.title), ""];
   for (const [index, question] of quiz2.questions.entries()) {
-    lines.push(
-      formatQuestionAsText(
-        question,
-        index
-      )
-    );
+    lines.push(formatQuestionAsText(question, index));
     lines.push("");
   }
-  lines.push(
-    formatAnswerKey(
-      quiz2.questions
-    )
-  );
+  lines.push(formatAnswerKey(quiz2.questions));
   return lines.join("\n").trim();
 }
 
@@ -4671,8 +4651,13 @@ function getEditorSettingsValues() {
   return {
     srsQueueSize: parseInt(edit("editor-srs-queue-size").value, 10),
     srsConfig: {
-      request_retention: parseFloat(edit("editor-fsrs-request-retention").value),
-      maximum_interval: parseInt(edit("editor-fsrs-maximum-interval").value, 10),
+      request_retention: parseFloat(
+        edit("editor-fsrs-request-retention").value
+      ),
+      maximum_interval: parseInt(
+        edit("editor-fsrs-maximum-interval").value,
+        10
+      ),
       enable_fuzz: edit("editor-fsrs-enable-fuzz").checked,
       enable_short_term: edit("editor-fsrs-enable-short-term").checked
     }
@@ -4696,9 +4681,9 @@ function getEditorQuestionValues() {
     question: field("editor-question"),
     explanation: field("editor-explanation"),
     answer: document.getElementById("editor-answer-number").value,
-    options: Array.from(
-      optionsContainer.querySelectorAll("textarea")
-    ).map((textarea) => textarea.value)
+    options: Array.from(optionsContainer.querySelectorAll("textarea")).map(
+      (textarea) => textarea.value
+    )
   };
 }
 function rememberEditorValues() {
@@ -4718,9 +4703,7 @@ function validateAdditionalSettings() {
   const retentionInput = document.getElementById(
     "editor-fsrs-request-retention"
   );
-  const intervalInput = document.getElementById(
-    "editor-fsrs-maximum-interval"
-  );
+  const intervalInput = document.getElementById("editor-fsrs-maximum-interval");
   const queueInput = document.getElementById("editor-srs-queue-size");
   const retention = parseFloat(retentionInput.value);
   const maximumInterval = parseInt(intervalInput.value, 10);
@@ -4733,8 +4716,14 @@ function validateAdditionalSettings() {
       valid = false;
     }
   };
-  check(retentionInput, !Number.isNaN(retention) && retention > 0 && retention < 1);
-  check(intervalInput, Number.isInteger(maximumInterval) && maximumInterval >= 1);
+  check(
+    retentionInput,
+    !Number.isNaN(retention) && retention > 0 && retention < 1
+  );
+  check(
+    intervalInput,
+    Number.isInteger(maximumInterval) && maximumInterval >= 1
+  );
   check(queueInput, Number.isInteger(queueSize) && queueSize >= 1);
   if (!valid) {
     showAlert(
@@ -4796,7 +4785,7 @@ function closeEditorConfirm() {
     "no"
   );
 }
-function saveEdit() {
+async function saveEdit() {
   if (!validateAnswerIndex() || !validateAdditionalSettings()) {
     return;
   }
@@ -4819,22 +4808,29 @@ function saveEdit() {
   state.quiz.questions[state.currentQuestionIndex].correct_index = newIndex;
   state.quiz.questions[state.currentQuestionIndex].options = updatedOptions;
   state.quiz.questions[state.currentQuestionIndex].explanation = newExplanationText;
-  applyAdditionalSettings();
-  if (saveLocalEdit(state.currentQuestionIndex, titleChanged)) {
+  const settingsChanged = applyAdditionalSettings();
+  const questionSaved = saveLocalEdit(state.currentQuestionIndex, titleChanged);
+  if (questionSaved || settingsChanged) {
     showAlert("Changes saved.");
   }
   rememberEditorValues();
+  if (settingsChanged && state.srs) {
+    await initSRS(state.quizStorageKey, state.currentQuestionIndex);
+    updateSRSCounts();
+  }
 }
 function applyAdditionalSettings() {
   const values = getEditorSettingsValues();
+  const settingsChanged = JSON.stringify(values) !== additionalSettingsSnapshot;
   setSRSConfig(values.srsConfig);
   state.srsQueueSize = values.srsQueueSize;
-  if (JSON.stringify(values) !== additionalSettingsSnapshot) {
+  if (settingsChanged) {
     saveAppDataOverrides(state.quizStorageKey, {
       srsConfig: { ...state.srsConfig },
       srsQueueSize: state.srsQueueSize
     });
   }
+  return settingsChanged;
 }
 function closeEditor() {
   const editor = document.getElementById("editor");

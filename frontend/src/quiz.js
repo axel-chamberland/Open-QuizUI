@@ -471,10 +471,11 @@ export function renderQuestion(questionText, question) {
   }
 }
 
-/** Update the due/reviewing/completed counts and underline the one corresponding
- to current question
+/**
+ * Update the due/reviewing/completed counts and underline the one
+ * corresponding to the current question.
  */
-function updateSRSCounts() {
+export function updateSRSCounts() {
   const { due, reviewing, completed } = getSRSCounts();
   const currentCategory = getSRSCurrentCategory();
 
