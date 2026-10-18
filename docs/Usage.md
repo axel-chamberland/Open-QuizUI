@@ -81,9 +81,9 @@ Select an answer and move through the questions using the quiz controls. You can
 
 Once the quiz is completed, cycling to the next page displays your statistics and corrections, along with an option to restart the quiz.
 
-Quizzes can be edited, although edits are currently saved only in your browser. However, you can also download a quiz as an HTML Web App, allowing you to share it outside of Open WebUI.
+Quizzes can be edited anytime using the built-in question editor, although the edits are currently saved only in your browser. To keep them, **Copy Quiz** copies the quiz to your clipboard as text in the format the Action parses (paste it into a new message to reproduce the quiz) and **Download HTML** saves it as a standalone HTML Web App you can open and share outside Open WebUI.
 
-> **Note:** iOS/iPadOS does not currently have a native way to view downloaded HTML Web Apps. Consider opening them using an app such as Dropbox or Microsoft Edge.
+> **Note:** iOS/iPadOS does not currently have a native way to view downloaded HTML Web Apps. Consider using something such as [HTML Preview](https://avinashs.com/html-preview), which you can install as a web app for offline use (tested on Safari, iPadOS 26).
 
 ## Results
 
@@ -91,8 +91,8 @@ After finishing the quiz, Open-QuizUI shows your score and lets you review the r
 
 ## Limitations
 
-* Questions and answers must be included in the same message when using the Action.
-* Action-generated quizzes rely on recognizable formatting.
-* Some Markdown structures may not be parsed as expected.
-* Tool-generated quizzes depend on the model correctly following the required JSON format.
-* Modified questions are saved in your browser's local storage.
+- Questions and answers must be included in the same message when using the Action.
+- Action-generated quizzes rely on recognizable formatting.
+- Some Markdown structures may not be parsed as expected.
+- Tool-generated quizzes depend on the model correctly following the required JSON format.
+- Modified questions are saved in your browser's local storage.
