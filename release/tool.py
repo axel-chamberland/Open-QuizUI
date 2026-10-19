@@ -1453,12 +1453,32 @@ textarea:focus {
 }
 
 #editor-additional-settings summary {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
   cursor: pointer;
   user-select: none;
+
+  /* The chevron below stands in for the native marker. */
+  list-style: none;
 }
 
-#editor-additional-settings summary::marker {
-  color: var(--text);
+#editor-additional-settings summary::-webkit-details-marker {
+  display: none;
+}
+
+#editor-additional-settings summary svg {
+  flex: 0 0 auto;
+
+  width: 1em;
+  height: 1em;
+
+  transition: transform 0.15s ease;
+}
+
+#editor-additional-settings[open] summary svg {
+  transform: rotate(90deg);
 }
 
 .editor-section {
@@ -1946,6 +1966,19 @@ th {
         />
         <path d="M11 10v4h4" />
       </symbol>
+      <symbol
+        id="icon-chevron-right"
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        class="lucide lucide-chevron-right"
+      >
+        <path d="m9 18 6-6-6-6" />
+      </symbol>
     </svg>
     <div id="rating-indicator" aria-hidden="true"></div>
     <div id="global-prompt" class="global-prompt">
@@ -2411,7 +2444,10 @@ th {
         <p><strong>Title:</strong></p>
         <div id="editor-title"></div>
         <details id="editor-additional-settings">
-          <summary>Additional Settings</summary>
+          <summary>
+            <svg><use href="#icon-chevron-right"></use></svg>
+            Additional Settings
+          </summary>
           <div class="editor-section">
             <p class="editor-section-title">Review Scheduling (FSRS)</p>
             <div class="editor-settings">

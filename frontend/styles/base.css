@@ -712,12 +712,32 @@ textarea:focus {
 }
 
 #editor-additional-settings summary {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
   cursor: pointer;
   user-select: none;
+
+  /* The chevron below stands in for the native marker. */
+  list-style: none;
 }
 
-#editor-additional-settings summary::marker {
-  color: var(--text);
+#editor-additional-settings summary::-webkit-details-marker {
+  display: none;
+}
+
+#editor-additional-settings summary svg {
+  flex: 0 0 auto;
+
+  width: 1em;
+  height: 1em;
+
+  transition: transform 0.15s ease;
+}
+
+#editor-additional-settings[open] summary svg {
+  transform: rotate(90deg);
 }
 
 .editor-section {
