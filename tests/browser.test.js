@@ -345,8 +345,10 @@ describe("browser smoke", () => {
       );
 
       /* Pressing 1 rates the card unknown and moves to the next one,
-         with its answer still hidden. */
+         with its answer still hidden, showing the rating in the corner
+         of the page for a moment. */
       await page.keyboard.press("1");
+      expect(await page.textContent("#rating-indicator")).toBe("✗");
       await page.waitForFunction(
         () =>
           document
@@ -355,6 +357,11 @@ describe("browser smoke", () => {
         { timeout: 5_000 },
       );
       expect(await page.locator(".flashcard-answer").isVisible()).toBe(false);
+
+      /* The rating fades out on its own. */
+      await page
+        .locator("#rating-indicator")
+        .waitFor({ state: "hidden", timeout: 5_000 });
 
       /* Rating the last card leads to the results page, where both
          ratings are counted: one unknown, one known. */

@@ -32,6 +32,10 @@ import {
   updateSRS,
 } from "./srs.js";
 import { showAlert } from "./ui/alert.js";
+import {
+  hideRatingIndicator,
+  showRatingIndicator,
+} from "./ui/rating_indicator.js";
 
 /**
  * Hides the results page, for navigation that leaves it.
@@ -117,6 +121,8 @@ export function prevQuestion() {
     if (questionIndex === null) {
       return;
     }
+
+    hideRatingIndicator();
 
     hideResults();
     goTo(questionIndex);
@@ -450,6 +456,7 @@ export async function rateFSRS(rating) {
   await updateSRS(ratingNames[rating], state.quizStorageKey);
 
   saveStats();
+  showRatingIndicator(ratingNames[rating]);
 }
 
 export function setQuizTitle(title) {

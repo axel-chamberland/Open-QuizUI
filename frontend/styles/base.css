@@ -415,6 +415,57 @@ button:disabled {
 .fsrs-rating-button.easy-button {
   background: color-mix(in srgb, var(--success) 45%, var(--btn));
 }
+
+/* The rating of the card just rated, in the corner of the page. */
+#rating-indicator {
+  position: fixed;
+  top: 8px;
+  right: 8px;
+  z-index: 1500;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  min-width: 3rem;
+  height: 3rem;
+  padding: 0 0.5rem;
+
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+
+  font-size: 1.5rem;
+  line-height: 1;
+  color: var(--text);
+
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity 0.4s ease,
+    visibility 0.4s;
+}
+
+#rating-indicator.visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+#rating-indicator.again {
+  background: var(--wrong_bg);
+}
+
+#rating-indicator.hard {
+  background: color-mix(in srgb, var(--skipped) 30%, var(--btn));
+}
+
+#rating-indicator.good {
+  background: var(--correct_bg);
+}
+
+#rating-indicator.easy {
+  background: color-mix(in srgb, var(--success) 45%, var(--btn));
+}
 .srs-mode.answer-revealed .fsrs-rating {
   visibility: visible;
 }

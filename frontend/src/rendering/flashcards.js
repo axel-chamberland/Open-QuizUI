@@ -8,6 +8,7 @@ import {
 import { typesetMath } from "../shared/mathjax.js";
 import { renderMarkdown } from "../shared/markdown.js";
 import { saveStats } from "../persistence/stats.js";
+import { showRatingIndicator } from "../ui/rating_indicator.js";
 
 export async function renderFlashcard() {
   const flashcardBox = document.getElementById("flashcard-box");
@@ -48,7 +49,8 @@ export async function renderFlashcard() {
 }
 
 /**
- * Records whether a flashcard was known and moves to the next one.
+ * Records whether a flashcard was known, shows the rating in the
+ * corner of the page and moves to the next one.
  *
  * @param {boolean} correct Whether the card was rated known.
  * @returns {Promise<void>}
@@ -64,4 +66,6 @@ export async function rateFlashcard(correct) {
 
   saveStats();
   nextQuestion();
+
+  showRatingIndicator(correct ? "Good" : "Again");
 }

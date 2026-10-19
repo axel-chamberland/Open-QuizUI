@@ -54,6 +54,14 @@ export function downloadQuizHTML() {
     menu.style.removeProperty("bottom");
   });
 
+  // Reset the rating indicator, which is transient on the live page.
+  const ratingIndicator = documentClone.querySelector("#rating-indicator");
+
+  if (ratingIndicator) {
+    ratingIndicator.replaceChildren();
+    ratingIndicator.className = "";
+  }
+
   // Replace the JSON payload in the cloned document.
   const dataScript = documentClone.querySelector("#app-data");
 

@@ -52,6 +52,18 @@ describe("rateFlashcard", () => {
     expect(nextQuestion).toHaveBeenCalled();
   });
 
+  it("shows the rating in the corner of the page", async () => {
+    document.body.innerHTML = '<div id="rating-indicator"></div>';
+
+    await rateFlashcard(false);
+
+    expect(document.getElementById("rating-indicator").textContent).toBe("✗");
+
+    await rateFlashcard(true);
+
+    expect(document.getElementById("rating-indicator").textContent).toBe("✓");
+  });
+
   it("ignores a rating before the answer is revealed", async () => {
     state.answerRevealed = false;
 

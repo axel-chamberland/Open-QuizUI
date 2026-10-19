@@ -79,7 +79,7 @@ The **Quiz mode** setting only decides which mode the quiz starts in; it can als
 
 Select an answer and move through the questions using the quiz controls. You can cycle through questions using the tap zones, **Enter**, **Space**, or the arrow keys. Choices can also be selected using the number keys.
 
-Flashcards show their question alone. **Reveal answer** (the eye button), **Enter** or **Space** reveals the answer with its explanation, and the card is rated **✗** (unknown) or **✓** (known) once it is revealed, with the buttons or the **1** (unknown) and **2** (known) keys. Rating a card records it and moves on to the next one.
+Flashcards show their question alone. **Reveal answer** (the eye button), **Enter** or **Space** reveals the answer with its explanation, and the card is rated **✗** (unknown) or **✓** (known) once it is revealed, with the buttons or the **1** (unknown) and **2** (known) keys. Rating a card records it, moves on to the next one and shows the rating given — ✗ or ✓, colour-coded like the buttons — in the corner of the page for a moment.
 
 The quiz can be taken in either mode: the mode button, next to the timer, switches between multiple-choice questions and flashcards, whatever the quiz was created as.
 
@@ -99,7 +99,7 @@ In repetition mode, the question number and the next button give way to the revi
 
 The count the question in view belongs to is underlined. The queue is filled with new cards, in the quiz's question order, up to the **Spaced repetition queue size**; from there the quiz moves from card to card in the order the reviews come due, which is why the question number is not shown. The next card appears after each rating, and the **◀** button undoes the last one.
 
-Answers work as they do normally, and the card is then rated on a four-point scale instead — **Again**, **Hard**, **Good** or **Easy**, with the buttons or the **1** to **4** keys. The rating decides when the card comes back; **Again** counts as a wrong answer, and the other three as correct.
+Answers work as they do normally, and the card is then rated on a four-point scale instead — **Again**, **Hard**, **Good** or **Easy**, with the buttons or the **1** to **4** keys. The rating decides when the card comes back; **Again** counts as a wrong answer, and the other three as correct. The rating is shown in the corner of the page for a moment as it is for flashcards: ✗ for **Again**, ✓ for **Hard** and **Good**, and ✓✓ for **Easy**.
 
 The **Spaced repetition queue size** and the FSRS parameters can be set per quiz, in the editor's **Additional Settings**:
 

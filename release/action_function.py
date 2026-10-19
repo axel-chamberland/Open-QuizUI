@@ -2157,6 +2157,57 @@ button:disabled {
 .fsrs-rating-button.easy-button {
   background: color-mix(in srgb, var(--success) 45%, var(--btn));
 }
+
+/* The rating of the card just rated, in the corner of the page. */
+#rating-indicator {
+  position: fixed;
+  top: 8px;
+  right: 8px;
+  z-index: 1500;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  min-width: 3rem;
+  height: 3rem;
+  padding: 0 0.5rem;
+
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+
+  font-size: 1.5rem;
+  line-height: 1;
+  color: var(--text);
+
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity 0.4s ease,
+    visibility 0.4s;
+}
+
+#rating-indicator.visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+#rating-indicator.again {
+  background: var(--wrong_bg);
+}
+
+#rating-indicator.hard {
+  background: color-mix(in srgb, var(--skipped) 30%, var(--btn));
+}
+
+#rating-indicator.good {
+  background: var(--correct_bg);
+}
+
+#rating-indicator.easy {
+  background: color-mix(in srgb, var(--success) 45%, var(--btn));
+}
 .srs-mode.answer-revealed .fsrs-rating {
   visibility: visible;
 }
@@ -2910,6 +2961,7 @@ th {
         <path d="M11 10v4h4" />
       </symbol>
     </svg>
+    <div id="rating-indicator" aria-hidden="true"></div>
     <div id="global-prompt" class="global-prompt">
       <p id="global-prompt-message"></p>
       <div class="button-row">
@@ -4554,6 +4606,35 @@ function toggleTimer() {
   }
 }
 
+// frontend/src/ui/rating_indicator.js
+var RATINGS = {
+  Again: { icon: "\u2717", className: "again" },
+  Hard: { icon: "\u2713", className: "hard" },
+  Good: { icon: "\u2713", className: "good" },
+  Easy: { icon: "\u2713\u2713", className: "easy" }
+};
+var VISIBLE_MS = 2e3;
+var hideTimer = null;
+function showRatingIndicator(rating) {
+  const indicator = document.getElementById("rating-indicator");
+  const entry = RATINGS[rating];
+  if (!indicator || !entry) {
+    return;
+  }
+  for (const { className } of Object.values(RATINGS)) {
+    indicator.classList.remove(className);
+  }
+  indicator.textContent = entry.icon;
+  indicator.classList.add(entry.className, "visible");
+  clearTimeout(hideTimer);
+  hideTimer = setTimeout(hideRatingIndicator, VISIBLE_MS);
+}
+function hideRatingIndicator() {
+  clearTimeout(hideTimer);
+  hideTimer = null;
+  document.getElementById("rating-indicator")?.classList.remove("visible");
+}
+
 // frontend/src/rendering/flashcards.js
 async function renderFlashcard() {
   const flashcardBox = document.getElementById("flashcard-box");
@@ -4587,6 +4668,7 @@ async function rateFlashcard(correct) {
   state.questionResults[questionArrayIndex] = correct ? CORRECT : WRONG;
   saveStats();
   nextQuestion();
+  showRatingIndicator(correct ? "Good" : "Again");
 }
 
 // frontend/src/rendering/results.js
@@ -4894,6 +4976,7 @@ function prevQuestion() {
     if (questionIndex === null) {
       return;
     }
+    hideRatingIndicator();
     hideResults();
     goTo(questionIndex);
     return;
@@ -5073,6 +5156,7 @@ async function rateFSRS(rating) {
   state.questionResults[questionArrayIndex] = rating === 1 ? WRONG : CORRECT;
   await updateSRS(ratingNames[rating], state.quizStorageKey);
   saveStats();
+  showRatingIndicator(ratingNames[rating]);
 }
 function setQuizTitle(title) {
   const displayTitle = title.slice(0, 60);
@@ -5195,6 +5279,11 @@ function downloadQuizHTML() {
     menu.style.removeProperty("top");
     menu.style.removeProperty("bottom");
   });
+  const ratingIndicator = documentClone.querySelector("#rating-indicator");
+  if (ratingIndicator) {
+    ratingIndicator.replaceChildren();
+    ratingIndicator.className = "";
+  }
   const dataScript = documentClone.querySelector("#app-data");
   if (!dataScript) {
     throw new Error("Could not find #app-data");
