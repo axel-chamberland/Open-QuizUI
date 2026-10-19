@@ -4,7 +4,7 @@
 
 ### Introducing Open QuizUI 3.0
 
-Open QuizUI allows models to create **powerful interactive quizzes** inside Open WebUI. 3.0 is the biggest update since the project started: **flashcards** are now supported, **spaced repetition (FSRS)** is built in, and **questions** can be full **edited, reordered, added or deleted** without leaving the editor.
+Open QuizUI allows models to create **powerful interactive quizzes** inside Open WebUI. 3.0 is the biggest update since the project started: **flashcards** are now supported, **spaced repetition (FSRS)** is built in, and **questions** can be fully **edited, reordered, added or deleted** without leaving the editor.
 
 ---
 
