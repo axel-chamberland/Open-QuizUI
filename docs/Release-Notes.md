@@ -16,7 +16,9 @@ This release hopefully fixes all your previous issues with the original plugin. 
 
 #### Flashcard mode
 
-![](../examples/flashcards.png)
+<p align="center">
+  <img src="../examples/flashcards.png" alt="Flashcard Mode">
+</p>
 
 Open QuizUI is **no longer limited** to multiple choice and truth/false questions! It now features a flashcard mode, which, intelligently, can be toggled on even after generating a multiple choice quiz.
 
@@ -25,7 +27,9 @@ Open QuizUI is **no longer limited** to multiple choice and truth/false question
 
 #### Spaced repetition (FSRS)
 
-![](../examples/fsrs.png)
+<p align="center">
+  <img src="../examples/fsrs.png" alt="Spaced Repetition">
+</p>
 
 Ever took a quiz and had a few questions which you got wrong, and wished for a way to retake it later? Well, take a look at the new spaced repetition mode!
 
@@ -35,7 +39,9 @@ Ever took a quiz and had a few questions which you got wrong, and wished for a w
 
 #### Upgraded Question editor
 
-![](../examples/question_editor.png)
+<p align="center">
+  <img src="../examples/question_editor.png" alt="Question Editor">
+</p>
 
 Previously, anything more complicated than a quick edit meant copying the quiz into plain text and editing it manually. Well, those days are over! (Unless you're like me, creating 256-question quizzes, in which case . . . some surgery will be needed.)
 
@@ -52,11 +58,15 @@ Both support everything mentioned above!
 
 #### Results / UI
 
+<p align="center">
+  <img src="../examples/results_page.png" alt="Results Page">
+</p>
+
 No more squinting your eyes to find which questions you missed!
 
-- Results reworked: each question is **colour coded** depending on how you answered it.
+- Results reworked: each question is **colour coded** depending on how you answered it, and the confusing donut chart has been replaced with a labelled horizontal bar.
 - Rating indicator in the page corner after each rating (✗ / ✓ / ✓✓, in the button's colour).
-- There were **so many buttons**, I had to add “More” **dropdown menus** per page.
+- There were **so many buttons**, I had to add a “More” **dropdown menus** in most pages.
 - Full-screen improvements : entirely remove the title row from full-screen to avoid distractions!
 - Hover over any new button to see what it does!
 
@@ -93,5 +103,3 @@ Replace both functions with the files from this release:
 - **Admin Panel → Functions**, re-import [`release/action_function.py`](https://github.com/axel-chamberland/Open-QuizUI/blob/main/release/action_function.py)
 - **Workspace → Tools**, re-import [`release/tool.py`](https://github.com/axel-chamberland/Open-QuizUI/blob/main/release/tool.py)
 - Bookmark and upvote the [tool](https://openwebui.com/posts/open_quizui_interactive_quiz_generator_tool_afcbe686) and the [action function](https://openwebui.com/posts/open_quizui_interactive_quiz_generator_58a378ef) to be updated on new releases and bug fixes.
-
-Your existing valves are kept, and the new ones (**Parse mode**, **Flashcard format**, **Enable spaced repetition**, etc.) default to the previous behaviour.
