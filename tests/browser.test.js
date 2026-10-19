@@ -571,4 +571,32 @@ describe("browser smoke", () => {
       ),
     ).toEqual(order);
   }, 60_000);
+
+  it("offers each page's documentation in its own menu", async () => {
+    const directory = mkdtempSync(join(tmpdir(), "openquizui-docs-"));
+
+    writeFileSync(join(directory, "quiz.html"), html);
+
+    await page.goto(`file://${join(directory, "quiz.html")}`);
+    await visible("#question", "question box");
+
+    /*
+     * Every page's ⋮ menu holds a docs link, each to the section that
+     * covers it: the question pages to taking a quiz (and to flashcards
+     * for the flashcard page), the editor to editing a quiz.
+     */
+    const docs = await page.evaluate(() =>
+      ["mcq", "flashcard", "editor"].map(
+        (name) =>
+          document.querySelector(`#${name}-dropdown-menu .docs-link`)?.href ??
+          null,
+      ),
+    );
+
+    expect(docs).toEqual([
+      "https://axel-chamberland.github.io/Open-QuizUI/docs/Usage.html#taking-a-quiz",
+      "https://axel-chamberland.github.io/Open-QuizUI/docs/Usage.html#flashcards",
+      "https://axel-chamberland.github.io/Open-QuizUI/docs/Usage.html#editing-a-quiz",
+    ]);
+  });
 });

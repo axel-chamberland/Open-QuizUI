@@ -3,7 +3,7 @@ title: QuizUI
 author: Axel Chamberland
 git_url: https://github.com/axel-chamberland/OpenQuizUI
 description: Converts a multiple-choice quiz or flashcard message into an interactive HTML quiz.
-version: 2.2.1
+version: 3.0
 """
 
 import random
@@ -2021,7 +2021,8 @@ button {
   justify-content: center;
 }
 
-button svg {
+button svg,
+.dropdown-menu a svg {
   width: 1em;
   height: 1em;
   fill: none;
@@ -2896,7 +2897,7 @@ textarea:focus {
   background: var(--bg);
 }
 
-.dropdown-menu button {
+.dropdown-menu :is(button, a) {
   display: grid;
   grid-template-columns: 1em 1fr;
   align-items: center;
@@ -2909,12 +2910,18 @@ textarea:focus {
   padding: 0.5rem;
 }
 
-.dropdown-menu button svg {
+/* Links carry their own look; the menu styles them like its buttons. */
+.dropdown-menu a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.dropdown-menu :is(button, a) svg {
   width: 1em;
   height: 1em;
 }
 
-.dropdown-menu button:not(:has(svg)) {
+.dropdown-menu :is(button, a):not(:has(svg)) {
   grid-template-columns: 1fr;
 }
 
@@ -2922,7 +2929,7 @@ textarea:focus {
   display: block;
 }
 
-.dropdown-menu button + button {
+.dropdown-menu > * + * {
   border-top: 1px solid var(--border);
 }
 
@@ -3154,6 +3161,12 @@ th {
       >
         <path d="m9 18 6-6-6-6" />
       </symbol>
+      <symbol id="icon-docs" viewBox="0 0 24 24">
+        <path
+          d="M12 7C10.4 5.4 8.3 4.8 4.5 4.8v12.4c3.8 0 5.9.6 7.5 2.2 1.6-1.6 3.7-2.2 7.5-2.2V4.8C15.7 4.8 13.6 5.4 12 7z"
+        />
+        <path d="M12 7v12.4" />
+      </symbol>
     </svg>
     <div id="rating-indicator" aria-hidden="true"></div>
     <div id="global-prompt" class="global-prompt">
@@ -3305,6 +3318,17 @@ th {
           <svg><use href="#icon-table"></use></svg>
           Copy as Flashcards
         </button>
+        <a
+          class="docs-link"
+          href="https://axel-chamberland.github.io/Open-QuizUI/docs/Usage.html#taking-a-quiz"
+          target="_blank"
+          rel="noopener noreferrer"
+          title="Documentation"
+          aria-label="Documentation"
+        >
+          <svg><use href="#icon-docs"></use></svg>
+          Documentation
+        </a>
       </div>
       <div id="question-scroll">
         <p id="question"></p>
@@ -3438,6 +3462,17 @@ th {
           <svg><use href="#icon-table"></use></svg>
           Copy as Flashcards
         </button>
+        <a
+          class="docs-link"
+          href="https://axel-chamberland.github.io/Open-QuizUI/docs/Usage.html#flashcards"
+          target="_blank"
+          rel="noopener noreferrer"
+          title="Documentation"
+          aria-label="Documentation"
+        >
+          <svg><use href="#icon-docs"></use></svg>
+          Documentation
+        </a>
       </div>
 
       <div id="flashcard-scroll">
@@ -3607,6 +3642,17 @@ th {
         >
           Reset Question
         </button>
+        <a
+          class="docs-link"
+          href="https://axel-chamberland.github.io/Open-QuizUI/docs/Usage.html#editing-a-quiz"
+          target="_blank"
+          rel="noopener noreferrer"
+          title="Documentation"
+          aria-label="Documentation"
+        >
+          <svg><use href="#icon-docs"></use></svg>
+          Documentation
+        </a>
       </div>
       <p>
         <strong>Limitation:</strong>
@@ -6504,8 +6550,8 @@ function initializeEvents() {
     const observer = new ResizeObserver(positionMenu);
     observer.observe(navigation);
     window.addEventListener("scroll", positionMenu, true);
-    menu.querySelectorAll("button").forEach((button) => {
-      button.addEventListener("click", () => {
+    menu.querySelectorAll("button, a").forEach((item) => {
+      item.addEventListener("click", () => {
         menu.classList.remove("show");
       });
     });

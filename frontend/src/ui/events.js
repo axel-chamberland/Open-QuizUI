@@ -178,8 +178,8 @@ export function initializeEvents() {
     observer.observe(navigation);
     window.addEventListener("scroll", positionMenu, true);
 
-    menu.querySelectorAll("button").forEach((button) => {
-      button.addEventListener("click", () => {
+    menu.querySelectorAll("button, a").forEach((item) => {
+      item.addEventListener("click", () => {
         menu.classList.remove("show");
       });
     });
