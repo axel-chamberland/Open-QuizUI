@@ -247,64 +247,134 @@ class Action:
     # the user leaves alone follows the admin's value, so a user who never
     # opens the panel gets the quiz as the admin set it up.
     class UserValves(BaseModel):
+        shuffle_choices: bool = Field(
+            default=True,
+            description="Shuffle the order of choices",
+        )
+        enable_mathjax: bool = Field(
+            default=False,
+            description=(
+                "Disabled by default for privacy. Enable LaTeX/math rendering with MathJax."
+                "Requires Internet access to load the MathJax library from a CDN. When disabled or"
+                "offline, LaTeX expressions are displayed as plain text."
+            ),
+        )
+
+        enable_explanations: bool = Field(
+            default=True,
+            description="Attempt to include an explanation for each question if one exists",
+        )
+
+        strip_references: bool = Field(
+            default=True,
+            description="Remove reference-style link definitions: [id]: url",
+        )
+
+        strip_ending_brackets: bool = Field(
+            default=True,
+            description=(
+                "LLMs will sometimes give the answer inline in [brackets]"
+                "or a hint that gives off the answer. This may interfere with some questions."
+            ),
+        )
+
         quiz_mode: Literal["multiple-choice questions", "flashcards"] = Field(
             default="multiple-choice questions",
             description=(
-                "Mode the quiz opens in. The viewer still switches between "
-                "the two, either way."
+                "Default mode to start the quiz in. This does not affect the parsing; "
+                "use parse_mode for that."
+            ),
+        )
+
+        parse_mode: Literal["auto", "multiple-choice questions", "flashcards"] = Field(
+            default="auto",
+            description=(
+                "How to parse the message. 'auto' tries multiple-choice questions first "
+                "and falls back to flashcards when the message holds no choices; the other "
+                "values force one format. Forcing flashcards on a quiz with choices shows "
+                "it as cards, using the correct choice as the answer."
+            ),
+        )
+
+        flashcard_format: Literal["auto", "table", "question labels"] = Field(
+            default="auto",
+            description=(
+                "Which part of a flashcard message holds the cards. 'auto' reads a markdown "
+                "table first, since a table is the clearer signal, and question labels only "
+                "when the message holds no table. The other values read that part alone, "
+                "without falling back to the other one."
             ),
         )
 
         theme_mode: Literal["browser", "light", "dark"] = Field(
             default="browser",
         )
+
         light_theme: Literal[tuple(THEMES)] = Field(
             default="default_light",
-            description="Light mode theme.",
+            description=(
+                "Change the light mode theme. "
+                "To define a new theme, add it to the THEMES dictionary at the top of the code. "
+            ),
         )
         dark_theme: Literal[tuple(THEMES)] = Field(
             default="default_dark",
-            description="Dark mode theme.",
-        )
-
-        enable_mathjax: bool = Field(
-            default=False,
             description=(
-                "Enable LaTeX/math rendering with MathJax. Requires Internet "
-                "access to load the MathJax library from a CDN. When disabled "
-                "or offline, LaTeX expressions are displayed as plain text."
+                "Change the dark mode theme. "
+                "To define a new theme, add it to the THEMES dictionary at the top of the code. "
             ),
         )
 
-        shuffle_choices: bool = Field(
-            default=True,
-            description="Shuffle the order of choices",
+        question_pattern: str = Field(
+            default=r"question|bonus|q(?!\p{L})",
+            description="Regex pattern for detecting question labels; use | for OR.",
         )
-
-        enable_spaced_repetition: bool = Field(
-            default=False,
-            description="Enable spaced repetition mode when the quiz loads.",
+        answer_pattern: str = Field(
+            default="answer|correct answer|réponse|bonne réponse|réponse correcte|r|a",
+            description="Regex pattern for detecting answer labels; use | for OR.",
+        )
+        choice_pattern: str = Field(
+            default=r"\p{L}",
+            description="Regex for the multiple-choice option identifier.",
+        )
+        prevent_reference_shuffle: bool = Field(
+            default=True,
+            description=(
+                "Prevent shuffling choices when a choice refers to another "
+                "answer choice or it is a true/false question."
+            ),
+        )
+        choice_reference_patterns: str = Field(
+            default="",
+            description=(
+                "Additional regex patterns for detecting when a choice should not be shuffled."
+                "Separate multiple patterns with |."
+            ),
         )
         request_retention: float = Field(
             default=0.9,
             ge=0.0,
             le=1.0,
             description=(
-                "Target probability of recalling a card when it is scheduled "
-                "for review in spaced repetition mode. Higher values generally "
-                "result in shorter review intervals and more frequent reviews; "
-                "lower values generally result in longer intervals and less "
-                "frequent reviews."
+                "Target probability of recalling a card when it is scheduled for review "
+                "in spaced repetition mode. "
+                "Higher values generally result in shorter review intervals and more "
+                "frequent reviews; lower values generally result in longer intervals "
+                "and less frequent reviews."
             ),
         )
         spaced_repetition_queue_size: int = Field(
             default=20,
             ge=1,
             description=(
-                "Number of questions available at a time in spaced repetition "
-                "mode. Larger values provide a larger pool of questions to "
-                "review before the queue needs to be replenished."
+                "Number of questions available at a time in spaced repetition mode. "
+                "Larger values provide a larger pool of questions to review before "
+                "the queue needs to be replenished."
             ),
+        )
+        enable_spaced_repetition: bool = Field(
+            default=False,
+            description="Enable spaced repetition mode when the quiz loads.",
         )
 
     def __init__(self):
