@@ -1317,7 +1317,6 @@ mjx-container {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  margin: 0 auto;
   text-align: center;
   overflow-y: auto;
 }
