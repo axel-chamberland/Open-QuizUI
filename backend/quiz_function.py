@@ -429,19 +429,33 @@ def question_parser(
 
     questions = []
     question_lines = []
+    rejected_questions = []
 
     current_question = None
     current_question_line = None
+
+    def finish_question():
+        if current_question is None:
+            return
+
+        current_question["question"] = current_question["question"].rstrip("\n")
+
+        if len(current_question["options"]) >= 2:
+            questions.append(current_question)
+            question_lines.append(current_question_line)
+        else:
+            rejected_questions.append(
+                f"Line {current_question_line + 1}: "
+                f"question has only {len(current_question['options'])} "
+                f"option(s) (need >= 2)."
+            )
 
     for line_no, line in enumerate(lines):
         question_match = question_re.match(line) if line else None
 
         if question_match:
             # Finish the previous question.
-            if current_question and len(current_question["options"]) >= 2:
-                current_question["question"] = current_question["question"].rstrip("\n")
-                questions.append(current_question)
-                question_lines.append(current_question_line)
+            finish_question()
 
             # Start the new question.
             current_question = {
@@ -459,10 +473,7 @@ def question_parser(
         choice_match = choice_re.match(line)
 
         if choice_match:
-            value = choice_match.group(2)
-
-            value = clean_text(value, False)
-
+            value = clean_text(choice_match.group(2), False)
             current_question["options"].append(value)
 
             # Fallback only.
@@ -478,10 +489,15 @@ def question_parser(
             current_question["question"] += line
 
     # Finish the final question.
-    if current_question and len(current_question["options"]) >= 2:
-        current_question["question"] = current_question["question"].rstrip("\n")
-        questions.append(current_question)
-        question_lines.append(current_question_line)
+    finish_question()
+
+    if not questions:
+        message = "question_parser_standard: no valid questions were parsed."
+
+        if rejected_questions:
+            message += "\n" + "\n".join(f"  - {e}" for e in rejected_questions)
+
+        raise NoQuestionsFound(message)
 
     _verify_questions(questions)
 

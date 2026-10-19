@@ -241,7 +241,12 @@ async def test_forcing_multiple_choice_on_flashcards(built_action):
     assert "html" not in extract_output(result).lower()
 
     assert notifications[-1]["data"]["type"] == "error"
-    assert "no questions were parsed" in notifications[-1]["data"]["content"]
+
+    message = notifications[-1]["data"]["content"]
+
+    assert "no valid questions were parsed" in message
+    # The questions the parser turned down are reported one by one.
+    assert "Line 1: question has only 0 option(s) (need >= 2)." in message
 
 
 @pytest.mark.asyncio
@@ -286,5 +291,5 @@ async def test_unreadable_message_reports_both_parsers(built_action):
 
     message = notifications[-1]["data"]["content"]
 
-    assert "no questions were parsed" in message
+    assert "no valid questions were parsed" in message
     assert "No flashcards were parsed either" in message
