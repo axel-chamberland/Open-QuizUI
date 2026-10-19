@@ -1,6 +1,6 @@
 [project]
 name = "openquizui"
-version = "2.1.0"
+version = "3.0.0"
 description = "A simple multiple choice questions tool/function for displaying quizzes with OpenWebUi. "
 readme = "README.md"
 requires-python = ">=3.12"

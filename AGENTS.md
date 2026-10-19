@@ -27,7 +27,7 @@ npm run release         # test:all, then build (what CI/PR should end with)
 
 ## Architecture
 
-- `backend/quiz_function.py` — Action: a post-message button that parses free-form LLM output as a multiple-choice quiz or as flashcards (per its `parse_mode` valve) and renders it. Module docstring says `version: 2.2.1`; `pyproject.toml` (2.1.0) lags.
+- `backend/quiz_function.py` — Action: a post-message button that parses free-form LLM output as a multiple-choice quiz or as flashcards (per its `parse_mode` valve) and renders it. Module docstring says `version: 3.0`; `pyproject.toml` (3.0.0) matches it.
 - `backend/quiz_tool.py` — Tool: the same rendering, fed by a structured tool call. Its model-facing docstring is patched from `__getattribute__` (per `quiz_mode`, plus `enable_explanations`) while the tool is listed, where `__user__` is not available yet.
 - The two backend files **duplicate** the shared logic (parsing, valves, theme plumbing) — no imports between them; a fix in one usually belongs in the other.
 - `frontend/src/` — vanilla ES modules; no framework, and no bundler at dev time (esbuild runs only inside `build.py`):
@@ -48,7 +48,7 @@ npm run release         # test:all, then build (what CI/PR should end with)
 ## Conventions
 
 - Commit subjects use `feat:` / `fix:` / `refac:` / `minor:` / `test:` / `style:`, a short imperative subject, and a body that says what the problem was and what changing it does. One concern per commit, so a diff stays reviewable on its own.
-- Don't bump versions as part of feature work: the version strings live in the module docstrings (`version: 2.2.1`) and `pyproject.toml` (2.1.0), and already lag each other.
+- Don't bump versions as part of feature work: the version strings live in the module docstrings (`version: 3.0`) and `pyproject.toml` (3.0.0).
 
 ## Gotchas
 
