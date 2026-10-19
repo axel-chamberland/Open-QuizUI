@@ -423,20 +423,8 @@ button:disabled {
   right: 8px;
   z-index: 1500;
 
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  min-width: 3rem;
-  height: 3rem;
-  padding: 0 0.5rem;
-
-  border: 1px solid var(--border);
-  border-radius: 0.5rem;
-
   font-size: 1.5rem;
   line-height: 1;
-  color: var(--text);
 
   opacity: 0;
   visibility: hidden;
@@ -452,19 +440,16 @@ button:disabled {
 }
 
 #rating-indicator.again {
-  background: var(--wrong_bg);
+  color: var(--danger);
 }
 
 #rating-indicator.hard {
-  background: color-mix(in srgb, var(--skipped) 30%, var(--btn));
+  color: var(--skipped);
 }
 
-#rating-indicator.good {
-  background: var(--correct_bg);
-}
-
+#rating-indicator.good,
 #rating-indicator.easy {
-  background: color-mix(in srgb, var(--success) 45%, var(--btn));
+  color: var(--success);
 }
 .srs-mode.answer-revealed .fsrs-rating {
   visibility: visible;
