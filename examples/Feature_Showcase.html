@@ -156,7 +156,8 @@ button {
   justify-content: center;
 }
 
-button svg {
+button svg,
+.dropdown-menu a svg {
   width: 1em;
   height: 1em;
   fill: none;
@@ -1031,7 +1032,7 @@ textarea:focus {
   background: var(--bg);
 }
 
-.dropdown-menu button {
+.dropdown-menu :is(button, a) {
   display: grid;
   grid-template-columns: 1em 1fr;
   align-items: center;
@@ -1044,12 +1045,18 @@ textarea:focus {
   padding: 0.5rem;
 }
 
-.dropdown-menu button svg {
+/* Links carry their own look; the menu styles them like its buttons. */
+.dropdown-menu a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.dropdown-menu :is(button, a) svg {
   width: 1em;
   height: 1em;
 }
 
-.dropdown-menu button:not(:has(svg)) {
+.dropdown-menu :is(button, a):not(:has(svg)) {
   grid-template-columns: 1fr;
 }
 
@@ -1057,7 +1064,7 @@ textarea:focus {
   display: block;
 }
 
-.dropdown-menu button + button {
+.dropdown-menu > * + * {
   border-top: 1px solid var(--border);
 }
 
@@ -1289,6 +1296,12 @@ th {
       >
         <path d="m9 18 6-6-6-6" />
       </symbol>
+      <symbol id="icon-docs" viewBox="0 0 24 24">
+        <path
+          d="M12 7C10.4 5.4 8.3 4.8 4.5 4.8v12.4c3.8 0 5.9.6 7.5 2.2 1.6-1.6 3.7-2.2 7.5-2.2V4.8C15.7 4.8 13.6 5.4 12 7z"
+        />
+        <path d="M12 7v12.4" />
+      </symbol>
     </svg>
     <div id="rating-indicator" aria-hidden="true"></div>
     <div id="global-prompt" class="global-prompt">
@@ -1440,6 +1453,17 @@ th {
           <svg><use href="#icon-table"></use></svg>
           Copy as Flashcards
         </button>
+        <a
+          class="docs-link"
+          href="https://github.com/axel-chamberland/Open-QuizUI/blob/main/docs/Usage.md#taking-a-quiz"
+          target="_blank"
+          rel="noopener noreferrer"
+          title="Documentation"
+          aria-label="Documentation"
+        >
+          <svg><use href="#icon-docs"></use></svg>
+          Documentation
+        </a>
       </div>
       <div id="question-scroll">
         <p id="question"></p>
@@ -1573,6 +1597,17 @@ th {
           <svg><use href="#icon-table"></use></svg>
           Copy as Flashcards
         </button>
+        <a
+          class="docs-link"
+          href="https://github.com/axel-chamberland/Open-QuizUI/blob/main/docs/Usage.md#flashcards"
+          target="_blank"
+          rel="noopener noreferrer"
+          title="Documentation"
+          aria-label="Documentation"
+        >
+          <svg><use href="#icon-docs"></use></svg>
+          Documentation
+        </a>
       </div>
 
       <div id="flashcard-scroll">
@@ -1742,6 +1777,17 @@ th {
         >
           Reset Question
         </button>
+        <a
+          class="docs-link"
+          href="https://github.com/axel-chamberland/Open-QuizUI/blob/main/docs/Usage.md#editing-a-quiz"
+          target="_blank"
+          rel="noopener noreferrer"
+          title="Documentation"
+          aria-label="Documentation"
+        >
+          <svg><use href="#icon-docs"></use></svg>
+          Documentation
+        </a>
       </div>
       <p>
         <strong>Limitation:</strong>
@@ -2791,6 +2837,10 @@ async function updateSRS(rating, quizStorageKey) {
   saveSRS(quizStorageKey);
   return true;
 }
+function canUndoSRS(quizStorageKey) {
+  const change = history.at(-1);
+  return change !== void 0 && change.quizStorageKey === quizStorageKey;
+}
 function prevSRSQuestion(quizStorageKey) {
   const change = history.at(-1);
   if (!change) {
@@ -3084,6 +3134,20 @@ transform="rotate(-90 ${center} ${center})"
 </svg>
 `;
 }
+function describeUserAnswer(index, question) {
+  const result = state.questionResults[index];
+  if (state.mode === "flashcard") {
+    return result === CORRECT ? "\u2713" : result === WRONG ? "\u2717" : "Unanswered";
+  }
+  if (result === SKIPPED) {
+    return "Skipped";
+  }
+  const userIndex = state.questionAnswers[index];
+  if (userIndex !== null) {
+    return question.options[userIndex];
+  }
+  return result === CORRECT ? "\u2713" : result === WRONG ? "\u2717" : "Unanswered";
+}
 function showCorrectionSheet() {
   const container = document.getElementById("question-corrections");
   const questions = state.quiz.questions;
@@ -3098,8 +3162,7 @@ function showCorrectionSheet() {
     const index = state.questionOrder[orderIndex];
     const question = questions[index];
     const correctAnswer = question.options[question.correct_index];
-    const userIndex = state.questionAnswers[index];
-    const userAnswer = state.mode === "flashcard" ? state.questionResults[index] === CORRECT ? "\u2713" : state.questionResults[index] === WRONG ? "\u2717" : "Unanswered" : state.questionResults[index] === SKIPPED ? "Skipped" : userIndex !== null ? question.options[userIndex] : "Unanswered";
+    const userAnswer = describeUserAnswer(index, question);
     const article = document.createElement("article");
     const currentClass = resultClass[state.questionResults[index]];
     article.innerHTML = `
@@ -3306,6 +3369,18 @@ function prevQuestion() {
   if (state.srs) {
     const questionIndex = prevSRSQuestion(state.quizStorageKey);
     if (questionIndex === null) {
+      if (!isResultsVisible()) {
+        return;
+      }
+      const lastOrderIndex = state.questionOrder.length - 1;
+      if (lastOrderIndex < 0) {
+        return;
+      }
+      hideRatingIndicator();
+      hideResults();
+      goTo(
+        state.questionOrder.includes(state.currentQuestionIndex) ? state.currentQuestionIndex : state.questionOrder[lastOrderIndex]
+      );
       return;
     }
     hideRatingIndicator();
@@ -3523,7 +3598,7 @@ function updateSRSCounts() {
 function updateNavigation() {
   document.querySelectorAll(".prev-button").forEach((button) => {
     if (state.srs) {
-      button.disabled = false;
+      button.disabled = !canUndoSRS(state.quizStorageKey);
       return;
     }
     button.disabled = state.questionOrder.indexOf(state.currentQuestionIndex) <= 0;
@@ -3567,6 +3642,7 @@ async function toggleSRS() {
   }
   document.body.classList.toggle("srs-mode", state.srs);
   updateQuestionNumbers();
+  updateNavigation();
   if (state.srs) {
     updateSRSCounts();
     const questionIndex = nextSRSQuestion();
@@ -4626,8 +4702,8 @@ function initializeEvents() {
     const observer = new ResizeObserver(positionMenu);
     observer.observe(navigation);
     window.addEventListener("scroll", positionMenu, true);
-    menu.querySelectorAll("button").forEach((button) => {
-      button.addEventListener("click", () => {
+    menu.querySelectorAll("button, a").forEach((item) => {
+      item.addEventListener("click", () => {
         menu.classList.remove("show");
       });
     });
