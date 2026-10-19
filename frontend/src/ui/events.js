@@ -11,7 +11,11 @@ import {
 import { downloadQuizHTML } from "../shared/download.js";
 import { state } from "../state.js";
 import { toggleTimer } from "../timer.js";
-import { copyQuiz, copyQuestion } from "../shared/clipboard.js";
+import {
+  copyQuiz,
+  copyQuestion,
+  copyQuizAsFlashcards,
+} from "../shared/clipboard.js";
 import {
   closeEditorConfirm,
   openEditor,
@@ -54,6 +58,10 @@ export function initializeEvents() {
 
   document.querySelectorAll(".copy-all-button").forEach((button) => {
     button.addEventListener("click", copyQuiz);
+  });
+
+  document.querySelectorAll(".copy-flashcards-button").forEach((button) => {
+    button.addEventListener("click", copyQuizAsFlashcards);
   });
 
   document.querySelectorAll(".copy-question-button").forEach((button) => {

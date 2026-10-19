@@ -2815,6 +2815,22 @@ th {
       </symbol>
 
       <symbol
+        id="icon-table"
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        class="lucide lucide-table preview-icon"
+      >
+        <path d="M12 3v18" />
+        <rect width="18" height="18" x="3" y="3" rx="2" />
+        <path d="M3 9h18" />
+        <path d="M3 15h18" />
+      </symbol>
+      <symbol
         id="icon-save"
         viewBox="0 0 24 24"
         fill="none"
@@ -2904,12 +2920,20 @@ th {
     <div id="order-editor" class="global-prompt order-editor">
       <p><strong>Questions</strong></p>
       <div class="order-actions">
-        <button id="order-editor-add" class="order-add-button">+ Add question</button>
+        <button id="order-editor-add" class="order-add-button">
+          + Add question
+        </button>
         <div class="order-action-row">
-          <button id="order-editor-add-before" title="Add a new question before the current one">
+          <button
+            id="order-editor-add-before"
+            title="Add a new question before the current one"
+          >
             Add before
           </button>
-          <button id="order-editor-add-after" title="Add a new question after the current one">
+          <button
+            id="order-editor-add-after"
+            title="Add a new question after the current one"
+          >
             Add after
           </button>
           <button
@@ -3026,6 +3050,14 @@ th {
           aria-label="Copy quiz"
         >
           <svg><use href="#icon-copy-all"></use></svg>Copy Quiz
+        </button>
+        <button
+          class="copy-flashcards-button"
+          title="Copy as flashcards"
+          aria-label="Copy as flashcards"
+        >
+          <svg><use href="#icon-table"></use></svg>
+          Copy as Flashcards
         </button>
       </div>
       <div id="question-scroll">
@@ -3151,6 +3183,14 @@ th {
           aria-label="Copy quiz"
         >
           <svg><use href="#icon-copy-all"></use></svg>Copy Quiz
+        </button>
+        <button
+          class="copy-flashcards-button"
+          title="Copy as flashcards"
+          aria-label="Copy as flashcards"
+        >
+          <svg><use href="#icon-table"></use></svg>
+          Copy as Flashcards
         </button>
       </div>
 
@@ -3339,7 +3379,12 @@ th {
             <div class="editor-settings">
               <label>
                 <span>Spaced repetition queue size:</span>
-                <input type="number" id="editor-srs-queue-size" min="1" step="1" />
+                <input
+                  type="number"
+                  id="editor-srs-queue-size"
+                  min="1"
+                  step="1"
+                />
               </label>
               <label>
                 <span>Request retention:</span>
@@ -4142,6 +4187,9 @@ function formatQuestionAsText(question, index) {
   }
   return lines.join("\n");
 }
+function escapeTableCell(text) {
+  return String(text ?? "").replace(/\|/g, "\\|").replace(/\n/g, " ");
+}
 function formatAnswerKey(questions) {
   const lines = [
     "Answer Key:",
@@ -4149,7 +4197,6 @@ function formatAnswerKey(questions) {
     "| Question | Correct Answer | Explanation |",
     "| --- | --- | --- |"
   ];
-  const escapeTableCell = (text) => String(text ?? "").replace(/\|/g, "\\|").replace(/\n/g, " ");
   for (const [index, question] of questions.entries()) {
     const correctLetter = String.fromCharCode(65 + question.correct_index);
     const explanation = toMarkdown(question.explanation || "");
@@ -4166,6 +4213,24 @@ function formatQuizAsText(quiz2) {
     lines.push("");
   }
   lines.push(formatAnswerKey(quiz2.questions));
+  return lines.join("\n").trim();
+}
+function formatQuizAsFlashcards(quiz2) {
+  const lines = [
+    toMarkdown(quiz2.title),
+    "",
+    "| Question | Answer | Explanation |",
+    "| --- | --- | --- |"
+  ];
+  for (const question of quiz2.questions) {
+    const answerIndex = question.options.length === 1 ? 0 : question.correct_index;
+    const questionText = escapeTableCell(toMarkdown(question.question));
+    const answer = escapeTableCell(
+      toMarkdown(question.options[answerIndex] ?? "")
+    );
+    const explanation = escapeTableCell(toMarkdown(question.explanation || ""));
+    lines.push(`| ${questionText} | ${answer} | ${explanation} |`);
+  }
   return lines.join("\n").trim();
 }
 
@@ -5150,26 +5215,39 @@ function downloadQuizHTML() {
 // frontend/src/shared/clipboard.js
 async function copyQuestion() {
   const question = state.quiz.questions[state.currentQuestionIndex];
-  const quiz2 = {
-    title: state.quiz.title,
-    questions: normalizeSingleChoiceQuestions([question])
-  };
-  await copyToClipboard(formatQuizAsText(quiz2));
+  await copyToClipboard(
+    formatQuiz({ title: state.quiz.title, questions: [question] })
+  );
 }
 async function copyQuiz() {
-  const quiz2 = {
+  await copyToClipboard(formatQuiz(orderedQuiz()));
+}
+async function copyQuizAsFlashcards() {
+  await copyToClipboard(formatQuizAsFlashcards(orderedQuiz()));
+}
+function orderedQuiz() {
+  return {
     ...state.quiz,
-    questions: normalizeSingleChoiceQuestions(
-      state.questionOrder.map(
-        (questionIndex) => state.quiz.questions[questionIndex]
-      )
+    questions: state.questionOrder.map(
+      (questionIndex) => state.quiz.questions[questionIndex]
     )
   };
-  await copyToClipboard(formatQuizAsText(quiz2));
+}
+function formatQuiz(quiz2) {
+  if (quiz2.questions.every(isSingleChoice)) {
+    return formatQuizAsFlashcards(quiz2);
+  }
+  return formatQuizAsText({
+    ...quiz2,
+    questions: normalizeSingleChoiceQuestions(quiz2.questions)
+  });
+}
+function isSingleChoice(question) {
+  return question.options.length === 1;
 }
 function normalizeSingleChoiceQuestions(questions) {
   return questions.map(
-    (question) => question.options.length === 1 ? {
+    (question) => isSingleChoice(question) ? {
       ...question,
       options: [...question.options, "N/A"]
     } : question
@@ -6003,6 +6081,9 @@ function initializeEvents() {
   });
   document.querySelectorAll(".copy-all-button").forEach((button) => {
     button.addEventListener("click", copyQuiz);
+  });
+  document.querySelectorAll(".copy-flashcards-button").forEach((button) => {
+    button.addEventListener("click", copyQuizAsFlashcards);
   });
   document.querySelectorAll(".copy-question-button").forEach((button) => {
     button.addEventListener("click", copyQuestion);

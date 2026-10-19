@@ -120,7 +120,12 @@ The **Spaced repetition queue size** and the FSRS parameters can be set per quiz
 
 The **Save changes** button (a floppy-disk icon) saves the question, and **✕** closes the editor. **Reset Question** and **Reset Quiz**, in the editor's **⋮** menu, discard the local edits of the current question and of the whole quiz — resetting a question that was added removes it instead.
 
-The edits are saved in your browser only, so they can be kept in two ways: **Copy Quiz** copies the quiz to your clipboard as text in the format the Action parses (paste it into a new message to reproduce the quiz), and **Download HTML** saves it as a standalone HTML Web App you can open and share outside Open WebUI.
+The edits are saved in your browser only, so a quiz is kept by copying it back into a message or downloading it:
+
+- **Copy Quiz** copies the quiz to your clipboard as text in the format the Action parses — a quiz of flashcards as the flashcard table, anything else as questions with their choices. Paste it into a new message to reproduce the quiz.
+- **Copy as Flashcards** copies it as the flashcard table whatever it holds, each question answered by its correct choice.
+- **Copy question** (the copy button in the navigation bar) copies the question being edited alone, in the same format.
+- **Download HTML** saves the quiz as a standalone HTML Web App you can open and share outside Open WebUI.
 
 > **Note:** iOS/iPadOS does not currently have a native way to view downloaded HTML Web Apps. Consider using something such as [HTML Preview](https://avinashs.com/html-preview), which you can install as a web app for offline use (tested on Safari, iPadOS 26).
 

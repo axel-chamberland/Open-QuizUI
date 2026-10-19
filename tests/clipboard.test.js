@@ -1,7 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { state } from "../frontend/src/state.js";
-import { copyQuestion, copyQuiz } from "../frontend/src/shared/clipboard.js";
+import {
+  copyQuestion,
+  copyQuiz,
+  copyQuizAsFlashcards,
+} from "../frontend/src/shared/clipboard.js";
 
 vi.mock("../frontend/src/shared/markdown.js", () => ({
   toMarkdown: (text) => text,
@@ -78,7 +82,7 @@ Answer Key:
       );
     });
 
-    it("adds an N/A option when copying a flashcard question", async () => {
+    it("copies a flashcard question as a flashcard table", async () => {
       state.quiz.questions[1].options = ["Answer"];
 
       await copyQuestion();
@@ -87,16 +91,9 @@ Answer Key:
       expect(writeText).toHaveBeenCalledWith(
         `Test Quiz
 
-Question 1: Question B
-
-A. Answer
-B. N/A
-
-Answer Key:
-
-| Question | Correct Answer | Explanation |
+| Question | Answer | Explanation |
 | --- | --- | --- |
-| 1 | B | Explanation B |`,
+| Question B | Answer | Explanation B |`,
       );
 
       expect(state.quiz.questions[1].options).toEqual(["Answer"]);
@@ -146,6 +143,99 @@ Answer Key:
 | 2 | A | Explanation A |
 | 3 | B | Explanation B |`,
       );
+    });
+
+    it("copies a quiz of flashcards as a flashcard table", async () => {
+      state.quiz.questions = [
+        {
+          question: "Card A",
+          options: ["A1"],
+          correct_index: 0,
+          explanation: "Explanation A",
+        },
+        { question: "Card B", options: ["B1"], correct_index: 0 },
+      ];
+
+      state.questionOrder = [1, 0];
+
+      await copyQuiz();
+
+      expect(writeText).toHaveBeenCalledWith(
+        `Test Quiz
+
+| Question | Answer | Explanation |
+| --- | --- | --- |
+| Card B | B1 |  |
+| Card A | A1 | Explanation A |`,
+      );
+    });
+
+    it("keeps a second choice for a flashcard in a quiz that holds choices", async () => {
+      state.quiz.questions[1] = {
+        question: "Question B",
+        options: ["Answer"],
+        correct_index: 0,
+        explanation: "Explanation B",
+      };
+
+      await copyQuiz();
+
+      expect(writeText).toHaveBeenCalledWith(
+        `Test Quiz
+
+Question 1: Question C
+
+A. C1
+B. C2
+
+Question 2: Question A
+
+A. A1
+B. A2
+
+Question 3: Question B
+
+A. Answer
+B. N/A
+
+Answer Key:
+
+| Question | Correct Answer | Explanation |
+| --- | --- | --- |
+| 1 | A | Explanation C |
+| 2 | A | Explanation A |
+| 3 | A | Explanation B |`,
+      );
+    });
+  });
+
+  describe("copyQuizAsFlashcards", () => {
+    it("answers every question with its correct choice", async () => {
+      await copyQuizAsFlashcards();
+
+      expect(writeText).toHaveBeenCalledOnce();
+      expect(writeText).toHaveBeenCalledWith(
+        `Test Quiz
+
+| Question | Answer | Explanation |
+| --- | --- | --- |
+| Question C | C1 | Explanation C |
+| Question A | A1 | Explanation A |
+| Question B | B2 | Explanation B |`,
+      );
+    });
+
+    it("does not modify the original quiz questions", async () => {
+      const originalQuestions = state.quiz.questions;
+
+      await copyQuizAsFlashcards();
+
+      expect(state.quiz.questions).toBe(originalQuestions);
+      expect(state.quiz.questions.map((q) => q.question)).toEqual([
+        "Question A",
+        "Question B",
+        "Question C",
+      ]);
     });
   });
 });

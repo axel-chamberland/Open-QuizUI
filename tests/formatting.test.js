@@ -4,6 +4,7 @@ import {
   formatQuestionAsText,
   formatAnswerKey,
   formatQuizAsText,
+  formatQuizAsFlashcards,
 } from "../frontend/src/shared/formatting.js";
 
 vi.mock("../frontend/src/shared/markdown.js", () => ({
@@ -129,6 +130,53 @@ describe("formatQuizAsText", () => {
         "| --- | --- | --- |\n" +
         "| 1 | B | Because choice2. |\n" +
         "| 2 | A | Because choice3. |",
+    );
+  });
+});
+
+describe("formatQuizAsFlashcards", () => {
+  it("formats every question as a row of the table", () => {
+    const quiz = {
+      title: "My Quiz",
+      questions: [
+        {
+          question: "Question?",
+          options: ["choice1", "choice2"],
+          correct_index: 1,
+          explanation: "Because choice2.",
+        },
+        {
+          question: "Another question?",
+          options: ["answer"],
+          correct_index: 0,
+        },
+      ],
+    };
+
+    expect(formatQuizAsFlashcards(quiz)).toBe(
+      "My Quiz\n\n" +
+        "| Question | Answer | Explanation |\n" +
+        "| --- | --- | --- |\n" +
+        "| Question? | choice2 | Because choice2. |\n" +
+        "| Another question? | answer |  |",
+    );
+  });
+
+  it("escapes pipes and newlines in every cell", () => {
+    const quiz = {
+      title: "My Quiz",
+      questions: [
+        {
+          question: "A | B\nC",
+          options: ["answer | 1"],
+          correct_index: 0,
+          explanation: "explanation\nline two",
+        },
+      ],
+    };
+
+    expect(formatQuizAsFlashcards(quiz)).toContain(
+      "| A \\| B C | answer \\| 1 | explanation line two |",
     );
   });
 });

@@ -226,6 +226,13 @@ describe("browser smoke", () => {
       await page.click("#results-back-button");
       await visible("#question-box", "question box again");
 
+      /* Copying as flashcards runs and closes the menu again. */
+      await page.click("#mcq-menu-button");
+      await page.click("#mcq-dropdown-menu .copy-flashcards-button");
+      await page
+        .locator("#mcq-dropdown-menu")
+        .waitFor({ state: "hidden", timeout: 5_000 });
+
       /* The editor opens through the page's own dropdown menu. */
       await page.click("#mcq-menu-button");
       await page.click("#mcq-dropdown-menu .editor-button");

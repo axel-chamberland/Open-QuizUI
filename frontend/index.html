@@ -68,6 +68,22 @@
       </symbol>
 
       <symbol
+        id="icon-table"
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        class="lucide lucide-table preview-icon"
+      >
+        <path d="M12 3v18" />
+        <rect width="18" height="18" x="3" y="3" rx="2" />
+        <path d="M3 9h18" />
+        <path d="M3 15h18" />
+      </symbol>
+      <symbol
         id="icon-save"
         viewBox="0 0 24 24"
         fill="none"
@@ -157,12 +173,20 @@
     <div id="order-editor" class="global-prompt order-editor">
       <p><strong>Questions</strong></p>
       <div class="order-actions">
-        <button id="order-editor-add" class="order-add-button">+ Add question</button>
+        <button id="order-editor-add" class="order-add-button">
+          + Add question
+        </button>
         <div class="order-action-row">
-          <button id="order-editor-add-before" title="Add a new question before the current one">
+          <button
+            id="order-editor-add-before"
+            title="Add a new question before the current one"
+          >
             Add before
           </button>
-          <button id="order-editor-add-after" title="Add a new question after the current one">
+          <button
+            id="order-editor-add-after"
+            title="Add a new question after the current one"
+          >
             Add after
           </button>
           <button
@@ -279,6 +303,14 @@
           aria-label="Copy quiz"
         >
           <svg><use href="#icon-copy-all"></use></svg>Copy Quiz
+        </button>
+        <button
+          class="copy-flashcards-button"
+          title="Copy as flashcards"
+          aria-label="Copy as flashcards"
+        >
+          <svg><use href="#icon-table"></use></svg>
+          Copy as Flashcards
         </button>
       </div>
       <div id="question-scroll">
@@ -404,6 +436,14 @@
           aria-label="Copy quiz"
         >
           <svg><use href="#icon-copy-all"></use></svg>Copy Quiz
+        </button>
+        <button
+          class="copy-flashcards-button"
+          title="Copy as flashcards"
+          aria-label="Copy as flashcards"
+        >
+          <svg><use href="#icon-table"></use></svg>
+          Copy as Flashcards
         </button>
       </div>
 
@@ -592,7 +632,12 @@
             <div class="editor-settings">
               <label>
                 <span>Spaced repetition queue size:</span>
-                <input type="number" id="editor-srs-queue-size" min="1" step="1" />
+                <input
+                  type="number"
+                  id="editor-srs-queue-size"
+                  min="1"
+                  step="1"
+                />
               </label>
               <label>
                 <span>Request retention:</span>
