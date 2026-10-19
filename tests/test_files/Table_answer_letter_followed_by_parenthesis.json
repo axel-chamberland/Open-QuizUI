@@ -1,0 +1,58 @@
+{
+  "content": "Here is a short quiz based on the provided documentation on Graph Theory.\n\n### Graph Theory Quiz\n\n**1. A formal graph $G = (V, E)$ is composed of which two sets? [1]**\nA) Vertices and paths\nB) Vertices and edges\nC) Edges and cycles\nD) Nodes and weights\n\n**2. In graph theory, what is a \"loop\" (boucle)? [1]**\nA) A path that visits every vertex exactly once\nB) A cycle with a length of 1, where the start and end vertices are the same\nC) A subgraph that is maximal and connected\nD) A type of edge that connects two different graphs\n\n**3. Which of the following is a defining characteristic of a \"Tree\" (Arbre)? [1]**\nA) It is a graph where $|V| = |E|$\nB) It is a graph that must contain at least one cycle\nC) It is an acyclic graph where $|V| = |E| + 1$\nD) It is a directed graph that is always strongly connected\n\n**4. If you are working with a \"sparse\" graph (where the number of edges $|E|$ is much smaller than $|V|^2$), which representation is recommended? [1]**\nA) Adjacency Matrix\nB) Adjacency List\nC) Dictionary of Dictionaries\nD) Complete Matrix\n\n**5. Which traversal algorithm is specifically noted for its ability to find the shortest path between two vertices using the minimum number of edges? [1]**\nA) Depth-First Search (DFS)\nB) Breadth-First Search (BFS)\nC) Dijkstra's Algorithm\nD) Prim's Algorithm\n\n***\n\n### Answer Key\n\n1.  **B**\n2.  **B**\n3.  **C**\n4.  **B**\n5.  **B**",
+  "expected": [
+    "Graph Theory Quiz",
+    [
+      {
+        "question": "<p>A formal graph $G = (V, E)$ is composed of which two sets?</p>",
+        "options": [
+          "<p>Vertices and paths</p>",
+          "<p>Vertices and edges</p>",
+          "<p>Edges and cycles</p>",
+          "<p>Nodes and weights</p>"
+        ],
+        "correct_index": 1
+      },
+      {
+        "question": "<p>In graph theory, what is a \"loop\" (boucle)?</p>",
+        "options": [
+          "<p>A path that visits every vertex exactly once</p>",
+          "<p>A cycle with a length of 1, where the start and end vertices are the same</p>",
+          "<p>A subgraph that is maximal and connected</p>",
+          "<p>A type of edge that connects two different graphs</p>"
+        ],
+        "correct_index": 1
+      },
+      {
+        "question": "<p>Which of the following is a defining characteristic of a \"Tree\" (Arbre)?</p>",
+        "options": [
+          "<p>It is a graph where $|V| = |E|$</p>",
+          "<p>It is a graph that must contain at least one cycle</p>",
+          "<p>It is an acyclic graph where $|V| = |E| + 1$</p>",
+          "<p>It is a directed graph that is always strongly connected</p>"
+        ],
+        "correct_index": 2
+      },
+      {
+        "question": "<p>If you are working with a \"sparse\" graph (where the number of edges $|E|$ is much smaller than $|V|^2$), which representation is recommended?</p>",
+        "options": [
+          "<p>Adjacency Matrix</p>",
+          "<p>Adjacency List</p>",
+          "<p>Dictionary of Dictionaries</p>",
+          "<p>Complete Matrix</p>"
+        ],
+        "correct_index": 1
+      },
+      {
+        "question": "<p>Which traversal algorithm is specifically noted for its ability to find the shortest path between two vertices using the minimum number of edges?</p>",
+        "options": [
+          "<p>Depth-First Search (DFS)</p>",
+          "<p>Breadth-First Search (BFS)</p>",
+          "<p>Dijkstra's Algorithm</p>",
+          "<p>Prim's Algorithm</p>"
+        ],
+        "correct_index": 1
+      }
+    ]
+  ]
+}

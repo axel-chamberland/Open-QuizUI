@@ -329,7 +329,7 @@ ANSWER_PATTERNS = [
     # Adding a space as option:
     r"\b\d+\s*\*{0,2}\s*[-.):\s]\s*\*{0,2}\s*({CHOICE_PATTERN})\s*\)?(?=\s*(?:\||,|$|\s+\d+\s*[-.):\s]))",
     # In Table
-    r"^\|\s*\*{0,2}\d+\*{0,2}\s*\|\s*\*{0,2}({CHOICE_PATTERN})\*{0,2}(?=\s*\|)",
+    r"^\|\s*\*{0,2}\d+\*{0,2}\s*\|\s*\*{0,2}({CHOICE_PATTERN})\*{0,2}[^|\n]*(?=\|)",
     # Numbered list with trailing text: 1. **B** (Vertices and edges) [1]
     # Excludes numbered questions containing '?'
     r"^\s*\*{0,2}\d+\s*\*{0,2}\s*[\.\):-]\s*\*{0,2}({CHOICE_PATTERN})\*{0,2}(?=\s+[^?\n]+$)",
