@@ -152,14 +152,102 @@ class Action:
             description="Enable spaced repetition mode when the quiz loads.",
         )
 
+    # Settings each user changes for themselves, in the Valves section of
+    # the chat's Controls panel: the Controls button, then Valves, then the
+    # Functions tab. Every field here also exists in Valves above: whatever
+    # the user leaves alone follows the admin's value, so a user who never
+    # opens the panel gets the quiz as the admin set it up.
+    class UserValves(BaseModel):
+        quiz_mode: Literal["multiple-choice questions", "flashcards"] = Field(
+            default="multiple-choice questions",
+            description=(
+                "Mode the quiz opens in. The viewer still switches between "
+                "the two, either way."
+            ),
+        )
+
+        theme_mode: Literal["browser", "light", "dark"] = Field(
+            default="browser",
+        )
+        light_theme: Literal[tuple(THEMES)] = Field(
+            default="default_light",
+            description="Light mode theme.",
+        )
+        dark_theme: Literal[tuple(THEMES)] = Field(
+            default="default_dark",
+            description="Dark mode theme.",
+        )
+
+        enable_mathjax: bool = Field(
+            default=False,
+            description=(
+                "Enable LaTeX/math rendering with MathJax. Requires Internet "
+                "access to load the MathJax library from a CDN. When disabled "
+                "or offline, LaTeX expressions are displayed as plain text."
+            ),
+        )
+
+        shuffle_choices: bool = Field(
+            default=True,
+            description="Shuffle the order of choices",
+        )
+
+        enable_spaced_repetition: bool = Field(
+            default=False,
+            description="Enable spaced repetition mode when the quiz loads.",
+        )
+        request_retention: float = Field(
+            default=0.9,
+            ge=0.0,
+            le=1.0,
+            description=(
+                "Target probability of recalling a card when it is scheduled "
+                "for review in spaced repetition mode. Higher values generally "
+                "result in shorter review intervals and more frequent reviews; "
+                "lower values generally result in longer intervals and less "
+                "frequent reviews."
+            ),
+        )
+        spaced_repetition_queue_size: int = Field(
+            default=20,
+            ge=1,
+            description=(
+                "Number of questions available at a time in spaced repetition "
+                "mode. Larger values provide a larger pool of questions to "
+                "review before the queue needs to be replenished."
+            ),
+        )
+
     def __init__(self):
         self.valves = self.Valves()
+
+    def effective_valves(self, __user__):
+        """The admin's valves with this user's own settings applied on top.
+
+        Open WebUI hands the user's saved settings over as a UserValves
+        instance that holds only the fields that user has set, so any
+        other field keeps following the admin's Valves.
+
+        Returns:
+            The Valves to run with: the user's where they have their own
+            value, the admin's everywhere else.
+        """
+
+        user_valves = (__user__ or {}).get("valves")
+
+        if not isinstance(user_valves, self.UserValves):
+            return self.valves
+
+        return self.valves.model_copy(update=user_valves.model_dump(exclude_unset=True))
 
     async def action(
         self, body: dict, __event_emitter__, __event_call__=None, __user__=None
     ):
 
         try:
+            # The user's own settings, everywhere they have them.
+            valves = self.effective_valves(__user__)
+
             # Take latest message.
             # Contrary to the API endpoint which has output field, the body element only contains
             # the raw content with reasoning blocks included.
@@ -190,21 +278,21 @@ class Action:
 
             # Remove HTML tags, reasoning blocks and other artifacts
             text = clean_message(
-                text, self.valves.strip_references, self.valves.strip_ending_brackets
+                text, valves.strip_references, valves.strip_ending_brackets
             )
 
             if not text:
                 raise ValueError("No content received")
 
-            parse_mode = self.valves.parse_mode
+            parse_mode = valves.parse_mode
 
             try:
                 title, questions = parse_quiz(
                     text,
-                    self.valves.enable_explanations,
-                    self.valves.question_pattern,
-                    self.valves.answer_pattern,
-                    self.valves.choice_pattern,
+                    valves.enable_explanations,
+                    valves.question_pattern,
+                    valves.answer_pattern,
+                    valves.choice_pattern,
                 )
             except NoQuestionsFound as error:
                 if parse_mode == "multiple-choice questions":
@@ -217,10 +305,10 @@ class Action:
                 try:
                     title, questions = parse_flashcards(
                         text,
-                        self.valves.enable_explanations,
-                        self.valves.question_pattern,
-                        self.valves.answer_pattern,
-                        self.valves.flashcard_format,
+                        valves.enable_explanations,
+                        valves.question_pattern,
+                        valves.answer_pattern,
+                        valves.flashcard_format,
                     )
                 except NoQuestionsFound:
                     if parse_mode == "flashcards":
@@ -236,15 +324,15 @@ class Action:
 
             choice_reference_patterns = [
                 pattern.strip()
-                for pattern in self.valves.choice_reference_patterns.split("|")
+                for pattern in valves.choice_reference_patterns.split("|")
                 if pattern.strip()
             ]
 
-            if self.valves.shuffle_choices:
+            if valves.shuffle_choices:
                 shuffle_options(
                     questions,
-                    self.valves.prevent_reference_shuffle,
-                    self.valves.choice_pattern,
+                    valves.prevent_reference_shuffle,
+                    valves.choice_pattern,
                     choice_reference_patterns,
                 )
 
@@ -252,12 +340,12 @@ class Action:
 
             # Modify Theme
 
-            option_dark = self.valves.dark_theme
-            option_light = self.valves.light_theme
+            option_dark = valves.dark_theme
+            option_light = valves.light_theme
 
-            if self.valves.theme_mode == "light":
+            if valves.theme_mode == "light":
                 option_dark = option_light
-            elif self.valves.theme_mode == "dark":
+            elif valves.theme_mode == "dark":
                 option_light = option_dark
 
             dark_theme = THEMES.get(option_dark, THEMES["default_dark"])
@@ -266,15 +354,15 @@ class Action:
             # Generate quiz
             content = wrap_html(
                 quiz,
-                self.valves.enable_mathjax,
+                valves.enable_mathjax,
                 light_theme,
                 dark_theme,
                 "mcq"
-                if self.valves.quiz_mode == "multiple-choice questions"
+                if valves.quiz_mode == "multiple-choice questions"
                 else "flashcard",
-                self.valves.request_retention,
-                self.valves.spaced_repetition_queue_size,
-                self.valves.enable_spaced_repetition,
+                valves.request_retention,
+                valves.spaced_repetition_queue_size,
+                valves.enable_spaced_repetition,
             )
 
             return HTMLResponse(

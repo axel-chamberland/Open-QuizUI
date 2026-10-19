@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from backend.build import ACTION_FILE, ACTION_OUTPUT, build
+from backend.build import ACTION_FILE, ACTION_OUTPUT, THEMES, build
 
 ROOT = Path(__file__).resolve().parents[1]
 TEST_DIR = ROOT / "tests" / "test_files"
@@ -293,3 +293,136 @@ async def test_unreadable_message_reports_both_parsers(built_action):
 
     assert "no valid questions were parsed" in message
     assert "No flashcards were parsed either" in message
+
+
+QUIZ_MESSAGE = """### Capital cities
+
+**1. What is the capital of France?**
+
+A) Lyon
+B) Paris
+C) Marseille
+
+**Answer:** B
+
+**2. What is the capital of Italy?**
+
+A) Rome
+B) Milan
+C) Turin
+
+**Answer:** A
+"""
+
+
+async def run_action(built_action, __user__, **admin_valves):
+    """Run the action on the sample quiz, and read its page payload."""
+
+    action = built_action()
+    action.valves = built_action.Valves(**admin_valves)
+
+    result = await action.action(
+        minimal_body(QUIZ_MESSAGE),
+        __event_emitter__=lambda *_a, **_k: None,
+        __event_call__=None,
+        __user__=__user__,
+    )
+
+    return extract_payload(extract_output(result))
+
+
+def test_user_valves_are_all_admin_valves(built_action):
+    """Every user valve is one the admin's Valves also holds.
+
+    effective_valves copies the user's values onto a Valves instance, so
+    a field that only UserValves holds would be set there without ever
+    reaching the quiz.
+    """
+
+    assert set(built_action.UserValves.model_fields) <= set(
+        built_action.Valves.model_fields
+    )
+
+
+@pytest.mark.asyncio
+async def test_user_valves_override_the_admin_ones(built_action):
+    """The settings a user saved are the ones their page runs with."""
+
+    payload = await run_action(
+        built_action,
+        quiz_mode="multiple-choice questions",
+        enable_mathjax=True,
+        request_retention=0.9,
+        spaced_repetition_queue_size=20,
+        __user__={
+            "valves": built_action.UserValves(
+                quiz_mode="flashcards",
+                enable_mathjax=False,
+                enable_spaced_repetition=True,
+                request_retention=0.75,
+                spaced_repetition_queue_size=5,
+            )
+        },
+    )
+
+    assert payload["mode"] == "flashcard"
+    assert payload["enableMathJax"] is False
+    assert payload["srsOnLoad"] is True
+    assert payload["requestRetention"] == 0.75
+    assert payload["srsQueueSize"] == 5
+
+
+@pytest.mark.asyncio
+async def test_user_valves_leave_the_rest_to_the_admin(built_action):
+    """A field the user never set keeps following the admin's valve."""
+
+    payload = await run_action(
+        built_action,
+        quiz_mode="flashcards",
+        enable_mathjax=True,
+        request_retention=0.8,
+        spaced_repetition_queue_size=7,
+        # This user only ever changed the theme.
+        __user__={"valves": built_action.UserValves(theme_mode="dark")},
+    )
+
+    assert payload["mode"] == "flashcard"
+    assert payload["enableMathJax"] is True
+    assert payload["requestRetention"] == 0.8
+    assert payload["srsQueueSize"] == 7
+
+
+@pytest.mark.asyncio
+async def test_user_without_saved_valves_gets_the_admin_ones(built_action):
+    """A user who never opened the panel runs on the admin's valves."""
+
+    payload = await run_action(
+        built_action,
+        quiz_mode="flashcards",
+        enable_mathjax=True,
+        __user__={"id": "a-user-id"},
+    )
+
+    assert payload["mode"] == "flashcard"
+    assert payload["enableMathJax"] is True
+
+
+@pytest.mark.asyncio
+async def test_user_theme_reaches_the_page(built_action):
+    """The theme a user picked is the one their page is built with."""
+
+    action = built_action()
+    action.valves = action.Valves(dark_theme="default_dark")
+
+    result = await action.action(
+        minimal_body(QUIZ_MESSAGE),
+        __event_emitter__=lambda *_a, **_k: None,
+        __event_call__=None,
+        __user__={
+            "valves": built_action.UserValves(
+                theme_mode="dark", dark_theme="tokyonight"
+            )
+        },
+    )
+
+    assert THEMES["tokyonight"] in extract_output(result)
