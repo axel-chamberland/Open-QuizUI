@@ -128,7 +128,7 @@ class Tools:
 
             doc = original.__doc__ or ""
 
-            if valves.quiz_mode == "flashcard":
+            if valves.quiz_mode == "flashcards":
                 doc = dedent("""
             Generate a flashcard quiz and display it to the user.
 
