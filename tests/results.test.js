@@ -33,6 +33,20 @@ vi.mock("../frontend/src/rendering/mcq.js", () => ({
   renderQuiz: vi.fn(),
 }));
 
+/**
+ * The "Your answer" of each correction, in the order they are shown.
+ *
+ * The template's newlines and indentation are collapsed first, so the
+ * value can be read between its label and the next one.
+ */
+const correctionAnswers = () =>
+  [...document.querySelectorAll("#question-corrections article")].map(
+    (article) =>
+      article.textContent
+        .replace(/\s+/g, " ")
+        .match(/Your answer: (.*?) Correct answer: /)?.[1],
+  );
+
 describe("renderResults", () => {
   beforeEach(() => {
     document.body.innerHTML = `
@@ -85,6 +99,8 @@ describe("renderResults", () => {
     state.questionAnswers = [0, 0, null, null];
     state.questionOrder = [0, 1, 2, 3];
 
+    state.mode = "mcq";
+
     state.timer.visible = false;
     state.defaultStartDate = Date.now();
 
@@ -129,5 +145,29 @@ describe("renderResults", () => {
     expect(corrections.textContent).toContain("Your answer:");
     expect(corrections.textContent).toContain("Correct answer:");
     expect(corrections.textContent).toContain("Explanation");
+  });
+
+  it("tells the picked option from a skip and from no answer", async () => {
+    await renderResults();
+
+    expect(correctionAnswers()).toEqual(["A", "A", "Unanswered", "Skipped"]);
+  });
+
+  it("shows the rating of a question that was rated, not picked", async () => {
+    // Rating a question in spaced repetition mode answers it without
+    // picking an option.
+    state.questionAnswers = [null, null, null, null];
+
+    await renderResults();
+
+    expect(correctionAnswers()).toEqual(["✓", "✗", "Unanswered", "Skipped"]);
+  });
+
+  it("shows the checkmarks a flashcard is rated with", async () => {
+    state.mode = "flashcard";
+
+    await renderResults();
+
+    expect(correctionAnswers()).toEqual(["✓", "✗", "Unanswered", "Unanswered"]);
   });
 });

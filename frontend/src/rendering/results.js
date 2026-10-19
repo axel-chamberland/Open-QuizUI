@@ -131,6 +131,39 @@ transform="rotate(-90 ${center} ${center})"
 `;
 }
 
+/**
+ * Reads the "Your answer" line of a correction.
+ *
+ * A flashcard is rated rather than picked, so it shows the checkmark
+ * convention. A multiple-choice question shows the option that was
+ * picked, and one answered by rating it - spaced repetition review,
+ * where the rating is the verdict - shows the same checkmarks instead
+ * of reading as unanswered.
+ *
+ * @param {number} index Index of the question in state.quiz.questions.
+ * @param {object} question The question at that index.
+ * @returns {string} What the correction shows as the user's answer.
+ */
+function describeUserAnswer(index, question) {
+  const result = state.questionResults[index];
+
+  if (state.mode === "flashcard") {
+    return result === CORRECT ? "✓" : result === WRONG ? "✗" : "Unanswered";
+  }
+
+  if (result === SKIPPED) {
+    return "Skipped";
+  }
+
+  const userIndex = state.questionAnswers[index];
+
+  if (userIndex !== null) {
+    return question.options[userIndex];
+  }
+
+  return result === CORRECT ? "✓" : result === WRONG ? "✗" : "Unanswered";
+}
+
 function showCorrectionSheet() {
   const container = document.getElementById("question-corrections");
   const questions = state.quiz.questions;
@@ -153,20 +186,8 @@ function showCorrectionSheet() {
     const question = questions[index];
 
     const correctAnswer = question.options[question.correct_index];
-    const userIndex = state.questionAnswers[index];
 
-    const userAnswer =
-      state.mode === "flashcard"
-        ? state.questionResults[index] === CORRECT
-          ? "✓"
-          : state.questionResults[index] === WRONG
-            ? "✗"
-            : "Unanswered"
-        : state.questionResults[index] === SKIPPED
-          ? "Skipped"
-          : userIndex !== null
-            ? question.options[userIndex]
-            : "Unanswered";
+    const userAnswer = describeUserAnswer(index, question);
 
     const article = document.createElement("article");
 

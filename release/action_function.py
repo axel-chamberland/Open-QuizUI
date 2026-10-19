@@ -4949,6 +4949,20 @@ transform="rotate(-90 ${center} ${center})"
 </svg>
 `;
 }
+function describeUserAnswer(index, question) {
+  const result = state.questionResults[index];
+  if (state.mode === "flashcard") {
+    return result === CORRECT ? "\u2713" : result === WRONG ? "\u2717" : "Unanswered";
+  }
+  if (result === SKIPPED) {
+    return "Skipped";
+  }
+  const userIndex = state.questionAnswers[index];
+  if (userIndex !== null) {
+    return question.options[userIndex];
+  }
+  return result === CORRECT ? "\u2713" : result === WRONG ? "\u2717" : "Unanswered";
+}
 function showCorrectionSheet() {
   const container = document.getElementById("question-corrections");
   const questions = state.quiz.questions;
@@ -4963,8 +4977,7 @@ function showCorrectionSheet() {
     const index = state.questionOrder[orderIndex];
     const question = questions[index];
     const correctAnswer = question.options[question.correct_index];
-    const userIndex = state.questionAnswers[index];
-    const userAnswer = state.mode === "flashcard" ? state.questionResults[index] === CORRECT ? "\u2713" : state.questionResults[index] === WRONG ? "\u2717" : "Unanswered" : state.questionResults[index] === SKIPPED ? "Skipped" : userIndex !== null ? question.options[userIndex] : "Unanswered";
+    const userAnswer = describeUserAnswer(index, question);
     const article = document.createElement("article");
     const currentClass = resultClass[state.questionResults[index]];
     article.innerHTML = `
