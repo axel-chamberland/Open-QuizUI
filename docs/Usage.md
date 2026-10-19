@@ -97,7 +97,7 @@ In repetition mode, the question number and the next button give way to the revi
 - The second counts the **reviewing** cards: the ones seen before that are back in the queue.
 - The third counts the **completed** cards: the ones whose next review is scheduled in the future, and are done with for now.
 
-The count the question in view belongs to is underlined. The queue is filled with new cards, in the quiz's question order, up to the **Spaced repetition queue size**; from there the quiz moves from card to card in the order the reviews come due, which is why the question number is not shown. The next card appears after each rating, and the **◀** button undoes the last one.
+The count the question in view belongs to is underlined. The queue is filled with new cards, in the quiz's question order, up to the **Spaced repetition queue size**; from there the quiz moves from card to card in the order the reviews come due, which is why the question number is not shown. The next card appears after each rating, and the **◀** button undoes the last one. The ratings are only kept for the session, so a reload leaves the button with nothing to undo: it is disabled until you rate a card, and on the results page it steps back to the question the results were reached from instead.
 
 Answers work as they do normally, and the card is then rated on a four-point scale instead — **Again**, **Hard**, **Good** or **Easy**, with the buttons or the **1** to **4** keys. The rating decides when the card comes back; **Again** counts as a wrong answer, and the other three as correct. The rating is shown in the corner of the page for a moment as it is for flashcards: ✗ for **Again**, ✓ for **Hard** and **Good**, and ✓✓ for **Easy**.
 

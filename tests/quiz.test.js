@@ -28,7 +28,7 @@ vi.mock("../frontend/src/rendering/results.js", () => ({
 import { goTo } from "../frontend/src/quiz.js";
 import { goToPosition, prevQuestion } from "../frontend/src/quiz.js";
 import { addQuestion, deleteQuestion } from "../frontend/src/quiz.js";
-import { toggleSRS } from "../frontend/src/quiz.js";
+import { toggleSRS, updateNavigation } from "../frontend/src/quiz.js";
 import { state } from "../frontend/src/state.js";
 import { renderMCQ } from "../frontend/src/rendering/mcq.js";
 import { setStoredQuestionIndex } from "../frontend/src/persistence/progress.js";
@@ -307,6 +307,41 @@ describe("prevQuestion", () => {
     prevQuestion();
 
     expect(state.currentQuestionIndex).toBe(2);
+  });
+});
+
+describe("updateNavigation", () => {
+  beforeEach(() => {
+    document.body.innerHTML = `<button class="prev-button"></button>`;
+
+    state.srs = false;
+    state.quizStorageKey = "test-quiz";
+    state.questionOrder = [0, 1, 2];
+    state.currentQuestionIndex = 1;
+  });
+
+  it("disables the back button on the first question", () => {
+    state.currentQuestionIndex = 0;
+
+    updateNavigation();
+
+    expect(document.querySelector(".prev-button").disabled).toBe(true);
+  });
+
+  it("enables it past the first question", () => {
+    updateNavigation();
+
+    expect(document.querySelector(".prev-button").disabled).toBe(false);
+  });
+
+  it("disables it in SRS mode with no rating to undo", () => {
+    // Nothing was rated since the page loaded - a reload clears the
+    // session's ratings - so there is nothing to step back through.
+    state.srs = true;
+
+    updateNavigation();
+
+    expect(document.querySelector(".prev-button").disabled).toBe(true);
   });
 });
 

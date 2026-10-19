@@ -4702,6 +4702,10 @@ async function updateSRS(rating, quizStorageKey) {
   saveSRS(quizStorageKey);
   return true;
 }
+function canUndoSRS(quizStorageKey) {
+  const change = history.at(-1);
+  return change !== void 0 && change.quizStorageKey === quizStorageKey;
+}
 function prevSRSQuestion(quizStorageKey) {
   const change = history.at(-1);
   if (!change) {
@@ -5459,7 +5463,7 @@ function updateSRSCounts() {
 function updateNavigation() {
   document.querySelectorAll(".prev-button").forEach((button) => {
     if (state.srs) {
-      button.disabled = false;
+      button.disabled = !canUndoSRS(state.quizStorageKey);
       return;
     }
     button.disabled = state.questionOrder.indexOf(state.currentQuestionIndex) <= 0;
@@ -5503,6 +5507,7 @@ async function toggleSRS() {
   }
   document.body.classList.toggle("srs-mode", state.srs);
   updateQuestionNumbers();
+  updateNavigation();
   if (state.srs) {
     updateSRSCounts();
     const questionIndex = nextSRSQuestion();

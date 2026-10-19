@@ -55,6 +55,7 @@ vi.mock("https://cdn.jsdelivr.net/npm/ts-fsrs@5.4.2/+esm", () => {
 import { state } from "../frontend/src/state.js";
 import { loadQuestionSRSState } from "../frontend/src/persistence/question_order.js";
 import {
+  canUndoSRS,
   clearSRSHistory,
   getSRSCounts,
   getSRSCurrentCategory,
@@ -310,6 +311,37 @@ describe("clearSRSHistory", () => {
     clearSRSHistory();
 
     expect(prevSRSQuestion(QUIZ_KEY)).toBeNull();
+  });
+});
+
+describe("canUndoSRS", () => {
+  it("is false before anything is rated", async () => {
+    await startSession({ questions: 2, queueSize: 2 });
+
+    expect(canUndoSRS(QUIZ_KEY)).toBe(false);
+  });
+
+  it("is true once a card is rated", async () => {
+    await startSession({ questions: 2, queueSize: 2 });
+    await updateSRS("Good", QUIZ_KEY);
+
+    expect(canUndoSRS(QUIZ_KEY)).toBe(true);
+  });
+
+  it("is false again once the rating is undone", async () => {
+    await startSession({ questions: 2, queueSize: 2 });
+    await updateSRS("Good", QUIZ_KEY);
+
+    prevSRSQuestion(QUIZ_KEY);
+
+    expect(canUndoSRS(QUIZ_KEY)).toBe(false);
+  });
+
+  it("is false for another quiz's session", async () => {
+    await startSession({ questions: 2, queueSize: 2 });
+    await updateSRS("Good", QUIZ_KEY);
+
+    expect(canUndoSRS("another-quiz")).toBe(false);
   });
 });
 

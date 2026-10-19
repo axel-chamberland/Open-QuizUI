@@ -23,6 +23,7 @@ import { saveQuestionRemovals } from "./persistence/question_removals.js";
 import { renderMarkdown } from "./shared/markdown.js";
 import { renderFlashcard } from "./rendering/flashcards.js";
 import {
+  canUndoSRS,
   getSRSCounts,
   getSRSCurrentCategory,
   initSRS,
@@ -536,7 +537,11 @@ export function updateSRSCounts() {
 export function updateNavigation() {
   document.querySelectorAll(".prev-button").forEach((button) => {
     if (state.srs) {
-      button.disabled = false;
+      /*
+       * SRS mode steps back through this session's ratings, so the
+       * button has nothing to do until one has been given.
+       */
+      button.disabled = !canUndoSRS(state.quizStorageKey);
       return;
     }
 
@@ -616,6 +621,13 @@ export async function toggleSRS() {
    * rewritten when the mode changes.
    */
   updateQuestionNumbers();
+
+  /*
+   * The back button steps through the question order outside SRS mode
+   * and through this session's ratings inside it, and neither is
+   * rewritten by the navigation below when the queue is empty.
+   */
+  updateNavigation();
 
   if (state.srs) {
     updateSRSCounts();

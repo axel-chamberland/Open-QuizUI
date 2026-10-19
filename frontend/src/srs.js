@@ -382,6 +382,22 @@ export async function updateSRS(rating, quizStorageKey) {
 }
 
 /**
+ * Whether there is a rating to step back through.
+ *
+ * The history holds the ratings of this session only, so a page that
+ * has just loaded - or one whose ratings have all been undone - has
+ * nothing to undo.
+ *
+ * @param {string} quizStorageKey
+ * @returns {boolean}
+ */
+export function canUndoSRS(quizStorageKey) {
+  const change = history.at(-1);
+
+  return change !== undefined && change.quizStorageKey === quizStorageKey;
+}
+
+/**
  * Reverts the most recent SRS update.
  *
  * This restores the previous FSRS card state and the
