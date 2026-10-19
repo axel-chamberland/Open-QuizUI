@@ -12,6 +12,7 @@ vitest.config.mjs
 *.so
 
 tmp/*
+tmp*.txt
 
 # Distribution / packaging
 .Python
