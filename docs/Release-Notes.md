@@ -46,7 +46,7 @@ Ever took a quiz and had a few questions which you got wrong, and wished for a w
 Previously, anything more complicated than a quick edit meant copying the quiz into plain text and editing it manually. Well, those days are over! (Unless you're like me, creating 256-question quizzes, in which case . . . some surgery will be needed.)
 
 - **Add, delete, reorder, and navigate** with the new "Edit Questions" list under “Additional Settings” in the Question Editor.
-- Reorder with **style**: effortlessly **drag** questions where you want them to be; changes are **colour coded**, and as usual everything depends on your chosen colour scheme!
+- Reorder with **style**: effortlessly **drag** questions where you want them to be; chances are **colour coded**, and as usual everything depends on your chosen colour scheme!
 - Tested for **touch devices** (Android and iOS).
 
 #### Improvements to Copy / download
