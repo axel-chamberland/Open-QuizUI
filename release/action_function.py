@@ -5420,10 +5420,49 @@ var keyHandler = null;
 var sessionAddedIndexes = [];
 var draggedItems = /* @__PURE__ */ new Set();
 var dragCancel = null;
+var mouseDragScroll = null;
+var mouseDragY = null;
 var lastPointerType = "mouse";
-document.addEventListener("pointerdown", (event) => {
-  lastPointerType = event.pointerType;
-}, true);
+document.addEventListener(
+  "pointerdown",
+  (event) => {
+    lastPointerType = event.pointerType;
+  },
+  true
+);
+document.addEventListener(
+  "dragover",
+  (event) => {
+    if (mouseDragScroll === null) {
+      return;
+    }
+    event.preventDefault();
+    mouseDragY = event.clientY;
+    mouseDragScroll.track(mouseDragY);
+    highlightSlotUnderPointer(mouseDragY);
+  },
+  true
+);
+document.addEventListener(
+  "drop",
+  (event) => {
+    if (mouseDragScroll === null) {
+      return;
+    }
+    event.preventDefault();
+    dropMouseDrag(event.clientY ?? mouseDragY);
+  },
+  true
+);
+document.addEventListener(
+  "dragend",
+  () => {
+    if (mouseDragScroll !== null) {
+      stopMouseDrag();
+    }
+  },
+  true
+);
 function getQuestionSnippet(questionIndex) {
   const question = state.quiz.questions[questionIndex];
   if (!question) {
@@ -5439,10 +5478,10 @@ function getQuestionSnippet(questionIndex) {
 }
 function openOrderEditor() {
   dragCancel?.();
+  stopMouseDrag();
   originalOrder = state.questionOrder.slice();
   workingOrder = state.questionOrder.slice();
   sessionAddedIndexes = [];
-  dragIndex = null;
   draggedItems.clear();
   document.getElementById("order-editor").classList.remove("dragging");
   buildOrderList();
@@ -5489,6 +5528,7 @@ Unsaved changes to the current question will be lost.`,
 }
 function closeOrderEditor() {
   dragCancel?.();
+  stopMouseDrag();
   sessionAddedIndexes = [];
   document.getElementById("order-editor").classList.remove("visible");
   document.removeEventListener("keydown", keyHandler, true);
@@ -5594,31 +5634,13 @@ function startGripDrag(event, position) {
   const pointerId = event.pointerId;
   const row = list.querySelectorAll(".order-row")[position];
   let done = false;
-  let lastY = null;
-  let frame = null;
-  const stopScroll = () => {
-    if (frame !== null) {
-      cancelAnimationFrame(frame);
-      frame = null;
-    }
-  };
-  const scrollFrame = () => {
-    frame = null;
-    if (done || lastY === null) {
-      return;
-    }
-    if (scrollListOutsidePointer(lastY) === 0) {
-      return;
-    }
-    handlePointerDragOver(lastY);
-    frame = requestAnimationFrame(scrollFrame);
-  };
+  const scroll = createDragAutoScroll(handlePointerDragOver);
   const cleanup = () => {
     if (done) {
       return;
     }
     done = true;
-    stopScroll();
+    scroll.stop();
     overlay.classList.remove("dragging");
     document.removeEventListener("pointermove", onMove);
     document.removeEventListener("pointerup", onUp);
@@ -5637,11 +5659,8 @@ function startGripDrag(event, position) {
       return;
     }
     moveEvent.preventDefault();
-    lastY = moveEvent.clientY;
-    handlePointerDragOver(lastY);
-    if (frame === null) {
-      frame = requestAnimationFrame(scrollFrame);
-    }
+    scroll.track(moveEvent.clientY);
+    handlePointerDragOver(moveEvent.clientY);
   };
   const onUp = (upEvent) => {
     if (upEvent.pointerId === pointerId) {
@@ -5664,14 +5683,58 @@ function startGripDrag(event, position) {
   document.addEventListener("pointercancel", onUp);
   document.addEventListener("pointerdown", onOtherPointer, true);
 }
+function startMouseDrag(event, position, row) {
+  stopMouseDrag();
+  dragIndex = position;
+  mouseDragY = event.clientY;
+  row?.classList.add("order-dragging");
+  mouseDragScroll = createDragAutoScroll(highlightSlotUnderPointer);
+  mouseDragScroll.track(mouseDragY);
+}
+function stopMouseDrag() {
+  mouseDragScroll?.stop();
+  mouseDragScroll = null;
+  mouseDragY = null;
+  dragIndex = null;
+  document.querySelectorAll(
+    "#order-editor-list .order-dragging, #order-editor-list .order-drop-target"
+  ).forEach((row) => {
+    row.classList.remove("order-dragging", "order-drop-target");
+  });
+}
+function dropMouseDrag(pointerY) {
+  const from = dragIndex;
+  const { rows, target } = slotUnderPointer(pointerY);
+  stopMouseDrag();
+  if (from === null || rows.length === 0 || from === target) {
+    return;
+  }
+  const [item] = workingOrder.splice(from, 1);
+  workingOrder.splice(target, 0, item);
+  draggedItems.add(item);
+  buildOrderList();
+}
 function handlePointerDragOver(pointerY) {
   const list = document.getElementById("order-editor-list");
   const dragged = list.querySelector(".order-row.order-dragging");
   if (!dragged) {
     return;
   }
-  const rows = Array.from(list.querySelectorAll(".order-row"));
+  const { rows, target } = slotUnderPointer(pointerY);
   const from = rows.indexOf(dragged);
+  if (target === from) {
+    return;
+  }
+  const reference = target > from ? rows[target].nextSibling : rows[target];
+  list.insertBefore(dragged, reference);
+  const [item] = workingOrder.splice(from, 1);
+  workingOrder.splice(target, 0, item);
+  draggedItems.add(Number(dragged.dataset.questionIndex));
+  updateRowLabels();
+}
+function slotUnderPointer(pointerY) {
+  const list = document.getElementById("order-editor-list");
+  const rows = Array.from(list.querySelectorAll(".order-row"));
   let target = rows.length - 1;
   for (let index = 0; index < rows.length; index++) {
     const rect = rows[index].getBoundingClientRect();
@@ -5680,14 +5743,43 @@ function handlePointerDragOver(pointerY) {
       break;
     }
   }
-  if (target !== from) {
-    const reference = target > from ? rows[target].nextSibling : rows[target];
-    list.insertBefore(dragged, reference);
-    const [item] = workingOrder.splice(from, 1);
-    workingOrder.splice(target, 0, item);
-    draggedItems.add(Number(dragged.dataset.questionIndex));
-    updateRowLabels();
-  }
+  return { rows, target };
+}
+function highlightSlotUnderPointer(pointerY) {
+  const { rows, target } = slotUnderPointer(pointerY);
+  rows.forEach((row, index) => {
+    row.classList.toggle(
+      "order-drop-target",
+      index === target && !row.classList.contains("order-dragging")
+    );
+  });
+}
+function createDragAutoScroll(onScroll) {
+  let frame = null;
+  let pointerY = null;
+  const step = () => {
+    frame = null;
+    if (pointerY === null || scrollListOutsidePointer(pointerY) === 0) {
+      return;
+    }
+    onScroll?.(pointerY);
+    frame = requestAnimationFrame(step);
+  };
+  return {
+    track(position) {
+      pointerY = position;
+      if (frame === null) {
+        frame = requestAnimationFrame(step);
+      }
+    },
+    stop() {
+      if (frame !== null) {
+        cancelAnimationFrame(frame);
+      }
+      frame = null;
+      pointerY = null;
+    }
+  };
 }
 function scrollListOutsidePointer(pointerY) {
   const list = document.getElementById("order-editor-list");
@@ -5704,10 +5796,7 @@ function scrollListOutsidePointer(pointerY) {
     return 0;
   }
   const cap = Math.max(40, list.scrollHeight / 40);
-  const speed = Math.min(
-    cap,
-    2 + distance / 4 + distance * distance / 700
-  );
+  const speed = Math.min(cap, 2 + distance / 4 + distance * distance / 700);
   const step = Math.round(speed) * direction;
   const before = list.scrollTop;
   list.scrollTop = before + step;
@@ -5761,11 +5850,15 @@ function buildOrderList() {
       }
       startGripDrag(event, currentPosition());
     });
-    handle.addEventListener("touchstart", (event) => {
-      if (event.touches.length === 1) {
-        event.preventDefault();
-      }
-    }, { passive: false });
+    handle.addEventListener(
+      "touchstart",
+      (event) => {
+        if (event.touches.length === 1) {
+          event.preventDefault();
+        }
+      },
+      { passive: false }
+    );
     row.appendChild(handle);
     row.appendChild(number);
     row.appendChild(caption);
@@ -5774,37 +5867,7 @@ function buildOrderList() {
         event.preventDefault();
         return;
       }
-      dragIndex = currentPosition();
-      row.classList.add("order-dragging");
-    });
-    row.addEventListener("dragend", () => {
-      dragIndex = null;
-      row.classList.remove("order-dragging");
-    });
-    row.addEventListener("dragover", (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-      if (dragIndex === null || dragIndex === currentPosition()) {
-        return;
-      }
-      row.classList.add("order-drop-target");
-    });
-    row.addEventListener("dragleave", () => {
-      row.classList.remove("order-drop-target");
-    });
-    row.addEventListener("drop", (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-      row.classList.remove("order-drop-target");
-      const position2 = currentPosition();
-      if (dragIndex === null || dragIndex === position2) {
-        return;
-      }
-      const [item] = workingOrder.splice(dragIndex, 1);
-      workingOrder.splice(position2, 0, item);
-      dragIndex = null;
-      draggedItems.add(item);
-      buildOrderList();
+      startMouseDrag(event, currentPosition(), row);
     });
     row.addEventListener("click", () => selectQuestion(questionIndex));
     list.appendChild(row);

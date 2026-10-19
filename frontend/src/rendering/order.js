@@ -44,14 +44,81 @@ const draggedItems = new Set();
 let dragCancel = null;
 
 /**
+ * Auto-scroll and last pointer position of the mouse drag in progress,
+ * if any.
+ *
+ * The native drag reports the pointer only when it moves, so a drag
+ * held past the list stopped scrolling the moment the mouse did (the
+ * browser's own auto-scroll has the same flaw, which is why most apps
+ * jerk their way down a list). The position is remembered instead and
+ * the scroll runs in animation frames; see createDragAutoScroll.
+ */
+let mouseDragScroll = null;
+let mouseDragY = null;
+
+/**
  * Pointer type of the most recent pointer down, so a native HTML5
  * drag (mouse only) can be told apart from touch.
  */
 let lastPointerType = "mouse";
 
-document.addEventListener("pointerdown", (event) => {
-  lastPointerType = event.pointerType;
-}, true);
+document.addEventListener(
+  "pointerdown",
+  (event) => {
+    lastPointerType = event.pointerType;
+  },
+  true,
+);
+
+/*
+ * The mouse drag's own drag events, on the document rather than on the
+ * rows: the rows are rebuilt when a drop lands, and the drag outlives
+ * them. They also stand in for the browser's drop target feedback,
+ * which cannot keep up while the list scrolls under a still pointer.
+ */
+document.addEventListener(
+  "dragover",
+  (event) => {
+    if (mouseDragScroll === null) {
+      return;
+    }
+
+    // Everything accepts the drop, so a row can be dropped past the
+    // list - the very place the auto-scroll happens.
+    event.preventDefault();
+
+    mouseDragY = event.clientY;
+
+    mouseDragScroll.track(mouseDragY);
+
+    highlightSlotUnderPointer(mouseDragY);
+  },
+  true,
+);
+
+document.addEventListener(
+  "drop",
+  (event) => {
+    if (mouseDragScroll === null) {
+      return;
+    }
+
+    event.preventDefault();
+
+    dropMouseDrag(event.clientY ?? mouseDragY);
+  },
+  true,
+);
+
+document.addEventListener(
+  "dragend",
+  () => {
+    if (mouseDragScroll !== null) {
+      stopMouseDrag();
+    }
+  },
+  true,
+);
 
 /**
  * Returns a single-line plain-text snippet of a question, for the
@@ -92,6 +159,7 @@ function getQuestionSnippet(questionIndex) {
 export function openOrderEditor() {
   // Never inherit a drag from a previous session.
   dragCancel?.();
+  stopMouseDrag();
 
   originalOrder = state.questionOrder.slice();
   workingOrder = state.questionOrder.slice();
@@ -99,7 +167,6 @@ export function openOrderEditor() {
   // Questions added from a previous session belong to the quiz now.
   sessionAddedIndexes = [];
 
-  dragIndex = null;
   draggedItems.clear();
   document.getElementById("order-editor").classList.remove("dragging");
 
@@ -197,6 +264,7 @@ export function closeOrderEditor() {
   // Never leave a half-finished drag behind: it would keep its
   // listeners attached and break the next time the editor is used.
   dragCancel?.();
+  stopMouseDrag();
 
   sessionAddedIndexes = [];
 
@@ -446,38 +514,12 @@ function startGripDrag(event, position) {
 
   let done = false;
 
-  // Last pointer position, and the pending auto-scroll frame.
-  let lastY = null;
-  let frame = null;
-
-  const stopScroll = () => {
-    if (frame !== null) {
-      cancelAnimationFrame(frame);
-      frame = null;
-    }
-  };
-
   /*
-   * Auto-scroll runs in animation frames rather than per pointermove,
-   * so holding the finger past the list keeps scrolling, and it stops
-   * the moment the pointer is back over the list (or the list ends).
+   * The scroll is driven by animation frames rather than by pointer
+   * events: a finger held still sends none, and that is exactly when
+   * the list has to keep scrolling.
    */
-  const scrollFrame = () => {
-    frame = null;
-
-    if (done || lastY === null) {
-      return;
-    }
-
-    if (scrollListOutsidePointer(lastY) === 0) {
-      return;
-    }
-
-    // The scroll moved the rows: re-check which slot is under the pointer.
-    handlePointerDragOver(lastY);
-
-    frame = requestAnimationFrame(scrollFrame);
-  };
+  const scroll = createDragAutoScroll(handlePointerDragOver);
 
   const cleanup = () => {
     if (done) {
@@ -486,7 +528,7 @@ function startGripDrag(event, position) {
 
     done = true;
 
-    stopScroll();
+    scroll.stop();
 
     overlay.classList.remove("dragging");
     document.removeEventListener("pointermove", onMove);
@@ -517,13 +559,9 @@ function startGripDrag(event, position) {
 
     moveEvent.preventDefault();
 
-    lastY = moveEvent.clientY;
+    scroll.track(moveEvent.clientY);
 
-    handlePointerDragOver(lastY);
-
-    if (frame === null) {
-      frame = requestAnimationFrame(scrollFrame);
-    }
+    handlePointerDragOver(moveEvent.clientY);
   };
 
   const onUp = (upEvent) => {
@@ -555,6 +593,81 @@ function startGripDrag(event, position) {
 }
 
 /**
+ * Starts a mouse drag from a row: the native HTML5 drag.
+ *
+ * The row is only moved when the drop lands, so a drag abandoned with
+ * Escape leaves the order as it was.
+ *
+ * @param {DragEvent} event Drag start event.
+ * @param {number} position Row position at drag start.
+ * @param {HTMLElement} row Row element that is being dragged.
+ * @returns {void}
+ */
+function startMouseDrag(event, position, row) {
+  // A previous drag that never ended must not keep its scroll running.
+  stopMouseDrag();
+
+  dragIndex = position;
+  mouseDragY = event.clientY;
+
+  row?.classList.add("order-dragging");
+
+  mouseDragScroll = createDragAutoScroll(highlightSlotUnderPointer);
+  mouseDragScroll.track(mouseDragY);
+}
+
+/**
+ * Ends a mouse drag: stops its auto-scroll and clears the marks it put
+ * on the list.
+ *
+ * @returns {void}
+ */
+function stopMouseDrag() {
+  mouseDragScroll?.stop();
+
+  mouseDragScroll = null;
+  mouseDragY = null;
+  dragIndex = null;
+
+  document
+    .querySelectorAll(
+      "#order-editor-list .order-dragging, #order-editor-list .order-drop-target",
+    )
+    .forEach((row) => {
+      row.classList.remove("order-dragging", "order-drop-target");
+    });
+}
+
+/**
+ * Drops the dragged row into the slot the pointer is over.
+ *
+ * The slot is taken from the pointer rather than from the row the
+ * browser reports under it: the list scrolls on without the mouse, so
+ * that row is stale by the time the drop arrives - and past the list it
+ * is not a row at all.
+ *
+ * @param {number} pointerY Pointer client Y coordinate.
+ * @returns {void}
+ */
+function dropMouseDrag(pointerY) {
+  const from = dragIndex;
+  const { rows, target } = slotUnderPointer(pointerY);
+
+  stopMouseDrag();
+
+  if (from === null || rows.length === 0 || from === target) {
+    return;
+  }
+
+  const [item] = workingOrder.splice(from, 1);
+  workingOrder.splice(target, 0, item);
+
+  draggedItems.add(item);
+
+  buildOrderList();
+}
+
+/**
  * Reorders the list so the dragged question sits at the position the
  * pointer is over.
  *
@@ -572,8 +685,35 @@ function handlePointerDragOver(pointerY) {
     return;
   }
 
-  const rows = Array.from(list.querySelectorAll(".order-row"));
+  const { rows, target } = slotUnderPointer(pointerY);
   const from = rows.indexOf(dragged);
+
+  if (target === from) {
+    return;
+  }
+
+  const reference = target > from ? rows[target].nextSibling : rows[target];
+
+  list.insertBefore(dragged, reference);
+
+  const [item] = workingOrder.splice(from, 1);
+  workingOrder.splice(target, 0, item);
+
+  draggedItems.add(Number(dragged.dataset.questionIndex));
+
+  updateRowLabels();
+}
+
+/**
+ * Resolves the slot the pointer is over: the first row whose midpoint is
+ * below the pointer, or the end of the list when there is none.
+ *
+ * @param {number} pointerY Pointer client Y coordinate.
+ * @returns {{rows: HTMLElement[], target: number}} Rows, and the slot.
+ */
+function slotUnderPointer(pointerY) {
+  const list = document.getElementById("order-editor-list");
+  const rows = Array.from(list.querySelectorAll(".order-row"));
 
   // The insertion point is the first row whose midpoint is below the
   // pointer; with no such row, the end of the list.
@@ -588,18 +728,75 @@ function handlePointerDragOver(pointerY) {
     }
   }
 
-  if (target !== from) {
-    const reference = target > from ? rows[target].nextSibling : rows[target];
+  return { rows, target };
+}
 
-    list.insertBefore(dragged, reference);
+/**
+ * Marks the slot the pointer is over, for a drag that moves its row on
+ * the drop rather than while dragging (the mouse one). The browser marks
+ * that row itself, but not while the list scrolls under a still pointer.
+ *
+ * @param {number} pointerY Pointer client Y coordinate.
+ * @returns {void}
+ */
+function highlightSlotUnderPointer(pointerY) {
+  const { rows, target } = slotUnderPointer(pointerY);
 
-    const [item] = workingOrder.splice(from, 1);
-    workingOrder.splice(target, 0, item);
+  rows.forEach((row, index) => {
+    row.classList.toggle(
+      "order-drop-target",
+      index === target && !row.classList.contains("order-dragging"),
+    );
+  });
+}
 
-    draggedItems.add(Number(dragged.dataset.questionIndex));
+/**
+ * Runs a drag's auto-scroll in animation frames.
+ *
+ * The step is driven by frames rather than by the drag's own events: a
+ * pointer that is held still sends none, which is exactly when the list
+ * has to keep scrolling. It runs while the pointer is past the list, and
+ * stops on its own once the list is at its end.
+ *
+ * @param {(pointerY: number) => void} [onScroll] Called after each
+ *   scroll step to re-check what is under the pointer.
+ * @returns {{track: (pointerY: number) => void, stop: () => void}} The
+ *   scroll, fed the pointer position as it moves.
+ */
+function createDragAutoScroll(onScroll) {
+  let frame = null;
+  let pointerY = null;
 
-    updateRowLabels();
-  }
+  const step = () => {
+    frame = null;
+
+    if (pointerY === null || scrollListOutsidePointer(pointerY) === 0) {
+      return;
+    }
+
+    // The scroll moved the list: re-check what is under the pointer.
+    onScroll?.(pointerY);
+
+    frame = requestAnimationFrame(step);
+  };
+
+  return {
+    track(position) {
+      pointerY = position;
+
+      if (frame === null) {
+        frame = requestAnimationFrame(step);
+      }
+    },
+    stop() {
+      if (frame !== null) {
+        cancelAnimationFrame(frame);
+      }
+
+      frame = null;
+      pointerY = null;
+    },
+  };
 }
 
 /**
@@ -640,10 +837,7 @@ function scrollListOutsidePointer(pointerY) {
   }
 
   const cap = Math.max(40, list.scrollHeight / 40);
-  const speed = Math.min(
-    cap,
-    2 + distance / 4 + (distance * distance) / 700,
-  );
+  const speed = Math.min(cap, 2 + distance / 4 + (distance * distance) / 700);
   const step = Math.round(speed) * direction;
 
   const before = list.scrollTop;
@@ -772,11 +966,15 @@ function buildOrderList() {
      * callout) on the handle. Safe here, unlike on the row body: the
      * handle does not scroll, so canceling touchstart costs nothing.
      */
-    handle.addEventListener("touchstart", (event) => {
-      if (event.touches.length === 1) {
-        event.preventDefault();
-      }
-    }, { passive: false });
+    handle.addEventListener(
+      "touchstart",
+      (event) => {
+        if (event.touches.length === 1) {
+          event.preventDefault();
+        }
+      },
+      { passive: false },
+    );
 
     row.appendChild(handle);
     row.appendChild(number);
@@ -794,49 +992,7 @@ function buildOrderList() {
         return;
       }
 
-      dragIndex = currentPosition();
-      row.classList.add("order-dragging");
-    });
-
-    row.addEventListener("dragend", () => {
-      dragIndex = null;
-      row.classList.remove("order-dragging");
-    });
-
-    row.addEventListener("dragover", (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-
-      if (dragIndex === null || dragIndex === currentPosition()) {
-        return;
-      }
-
-      row.classList.add("order-drop-target");
-    });
-
-    row.addEventListener("dragleave", () => {
-      row.classList.remove("order-drop-target");
-    });
-
-    row.addEventListener("drop", (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-
-      row.classList.remove("order-drop-target");
-
-      const position = currentPosition();
-
-      if (dragIndex === null || dragIndex === position) {
-        return;
-      }
-
-      const [item] = workingOrder.splice(dragIndex, 1);
-      workingOrder.splice(position, 0, item);
-      dragIndex = null;
-
-      draggedItems.add(item);
-
-      buildOrderList();
+      startMouseDrag(event, currentPosition(), row);
     });
 
     /*
@@ -850,7 +1006,9 @@ function buildOrderList() {
   });
 }
 
-document.getElementById("order-editor-save").addEventListener("click", saveOrder);
+document
+  .getElementById("order-editor-save")
+  .addEventListener("click", saveOrder);
 document
   .getElementById("order-editor-cancel")
   .addEventListener("click", cancelOrderEditor);

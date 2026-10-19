@@ -139,6 +139,29 @@ const flashcardData = {
 
 const flashcardHtml = generateHTML(flashcardData);
 
+/*
+ * The question list only scrolls once it overflows the 60vh it tops out
+ * at, so the auto-scroll checks below need a quiz longer than the list.
+ */
+const longQuizData = {
+  enableMathJax: false,
+  mode: "mcq",
+  srsQueueSize: 20,
+  requestRetention: 0.9,
+  srsOnLoad: false,
+  quiz: {
+    title: "Browser smoke long quiz",
+    questions: Array.from({ length: 40 }, (_, index) => ({
+      question: `Question ${index + 1}?`,
+      options: ["right", "wrong"],
+      correct_index: 0,
+      explanation: `${index + 1}`,
+    })),
+  },
+};
+
+const longHtml = generateHTML(longQuizData);
+
 const browser = await chromium.launch();
 const errors = [];
 
@@ -193,6 +216,26 @@ async function visible(selector, label) {
     .catch(() => {
       throw new Error(`Not visible: ${label} (${selector})`);
     });
+}
+
+/**
+ * Opens the question list on a page, through the app's own menu.
+ *
+ * @param {string} file Path of the rendered page to load.
+ * @returns {Promise<void>}
+ */
+async function openQuestionList(file) {
+  await page.goto(`file://${file}`);
+  await visible("#question", "question box");
+
+  await page.click("#mcq-menu-button");
+  await page.click("#mcq-dropdown-menu .editor-button");
+  await visible("#editor", "editor page");
+
+  /* "Edit Questions" lives inside the collapsible settings fold. */
+  await page.click("#editor-additional-settings summary");
+  await page.click("#order-editor-open-button");
+  await visible("#order-editor-list", "question list");
 }
 
 describe("browser smoke", () => {
@@ -376,6 +419,182 @@ describe("browser smoke", () => {
       ).toContain("✗");
 
       expect(errors).toEqual([]);
+    },
+    60_000,
+  );
+
+  /*
+   * A drag only keeps scrolling when something drives it while the
+   * pointer is held still: neither a mouse drag nor a finger sends
+   * events then, and the browser's own auto-scroll waits for the next
+   * mouse move (which is why the list used to stall until it was
+   * jerked). Both drags below are left alone after one move, so only
+   * the list's own auto-scroll can be moving them.
+   *
+   * They are driven with the events a real drag produces rather than
+   * with Playwright's mouse, which reaches a headless browser as plain
+   * mouse input and never starts a native drag.
+   */
+  it(
+    "keeps the list scrolling while a mouse drag is held past it",
+    async () => {
+      const directory = mkdtempSync(join(tmpdir(), "openquizui-order-mouse-"));
+
+      writeFileSync(join(directory, "long.html"), longHtml);
+
+      await openQuestionList(join(directory, "long.html"));
+
+      /* Drag the first row, put the pointer 24px below the list, and
+         send nothing else, the way a held mouse does. */
+      const pointer = await page.evaluate(() => {
+        const row = document.querySelector("#order-editor-list .order-row");
+        const list = document.getElementById("order-editor-list");
+        const rowBox = row.getBoundingClientRect();
+        const box = list.getBoundingClientRect();
+        const event = (type, x, y) =>
+          new DragEvent(type, {
+            bubbles: true,
+            cancelable: true,
+            clientX: x,
+            clientY: y,
+          });
+
+        row.dispatchEvent(
+          event("dragstart", rowBox.x + 20, rowBox.y + rowBox.height / 2),
+        );
+        list.dispatchEvent(event("dragover", box.x + 20, box.bottom + 24));
+
+        return { x: box.x + 20, y: box.bottom + 24 };
+      });
+
+      await page.waitForTimeout(600);
+
+      expect(
+        await page.evaluate(
+          () => document.getElementById("order-editor-list").scrollTop,
+        ),
+      ).toBeGreaterThan(100);
+
+      /* The slot the pointer is over stays marked while the list scrolls
+         under it, which the browser cannot do without mouse movement. */
+      expect(
+        await page.locator("#order-editor-list .order-drop-target").count(),
+      ).toBe(1);
+
+      /* Releasing there drops the row where the pointer is, not where
+         the row under it was when it was last reported. */
+      await page.evaluate((drop) => {
+        document.getElementById("order-editor-list").dispatchEvent(
+          new DragEvent("drop", {
+            bubbles: true,
+            cancelable: true,
+            clientX: drop.x,
+            clientY: drop.y,
+          }),
+        );
+      }, pointer);
+
+      const order = await page.evaluate(() =>
+        [...document.querySelectorAll("#order-editor-list .order-row")].map(
+          (row) => row.dataset.questionIndex,
+        ),
+      );
+
+      expect(order).toHaveLength(40);
+      expect(order[0]).not.toBe("0");
+      expect(order.indexOf("0")).toBeGreaterThan(0);
+      expect(order.filter((index) => index === "0")).toHaveLength(1);
+      expect(
+        await page.locator("#order-editor-list .order-dragging").count(),
+      ).toBe(0);
+    },
+    60_000,
+  );
+
+  it(
+    "keeps the list scrolling while a touch drag is held past it",
+    async () => {
+      const directory = mkdtempSync(join(tmpdir(), "openquizui-order-touch-"));
+
+      writeFileSync(join(directory, "long.html"), longHtml);
+
+      await openQuestionList(join(directory, "long.html"));
+
+      /* The grip starts the drag; a single move past the list follows,
+         and then nothing, the way a held finger sends nothing. */
+      await page.evaluate(() => {
+        const handle = document.querySelector(
+          "#order-editor-list .order-handle",
+        );
+        const list = document.getElementById("order-editor-list");
+        const handleBox = handle.getBoundingClientRect();
+        const box = list.getBoundingClientRect();
+        const event = (type, x, y) =>
+          new PointerEvent(type, {
+            bubbles: true,
+            cancelable: true,
+            pointerId: 1,
+            pointerType: "touch",
+            isPrimary: true,
+            clientX: x,
+            clientY: y,
+          });
+
+        handle.dispatchEvent(
+          event(
+            "pointerdown",
+            handleBox.x + 5,
+            handleBox.y + handleBox.height / 2,
+          ),
+        );
+        document.dispatchEvent(event("pointermove", box.x + 20, box.bottom + 24));
+      });
+
+      await page.waitForTimeout(600);
+
+      expect(
+        await page.evaluate(
+          () => document.getElementById("order-editor-list").scrollTop,
+        ),
+      ).toBeGreaterThan(100);
+
+      /* The dragged row follows the pointer down the list as it
+         scrolls. */
+      const order = await page.evaluate(() =>
+        [...document.querySelectorAll("#order-editor-list .order-row")].map(
+          (row) => row.dataset.questionIndex,
+        ),
+      );
+
+      expect(order).toHaveLength(40);
+      expect(order[0]).not.toBe("0");
+      expect(order.indexOf("0")).toBeGreaterThan(0);
+
+      /* Lifting the finger ends the drag where it stands. */
+      await page.evaluate(() => {
+        document.dispatchEvent(
+          new PointerEvent("pointerup", {
+            bubbles: true,
+            cancelable: true,
+            pointerId: 1,
+            pointerType: "touch",
+            isPrimary: true,
+            clientX: 400,
+            clientY: 800,
+          }),
+        );
+      });
+
+      expect(
+        await page.locator("#order-editor-list .order-dragging").count(),
+      ).toBe(0);
+      expect(
+        await page.evaluate(() =>
+          [...document.querySelectorAll("#order-editor-list .order-row")].map(
+            (row) => row.dataset.questionIndex,
+          ),
+        ),
+      ).toEqual(order);
     },
     60_000,
   );
