@@ -1349,6 +1349,9 @@ body.embedded #results-scroll {
 }
 
 #stats-chart {
+  /* The results column is the scroller in fullscreen: a shrinkable
+     chart would be squeezed by the correction sheet below it. */
+  flex: 0 0 auto;
   height: min(50vh, 500px);
   align-self: center;
 }
