@@ -73,5 +73,6 @@ More detailed documentation is available in the [`docs/`](docs/) directory:
 - [Formatting](docs/Formatting.md)
 - [Customization](docs/Customization.md)
 - [Troubleshooting](docs/Troubleshooting.md)
+- [Release Notes](docs/Release-Notes.md)
 - [Development](docs/Development.md)
 - [Contributing](docs/Contributing.md)

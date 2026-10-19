@@ -20,5 +20,6 @@ Open QuizUI can be used as either a Tool or an Action.
 - [Formatting](Formatting.md)
 - [Customization](Customization.md)
 - [Troubleshooting](Troubleshooting.md)
+- [Release Notes](Release-Notes.md)
 - [Development](Development.md)
 - [Contributing](Contributing.md)
