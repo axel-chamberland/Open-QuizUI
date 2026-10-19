@@ -76,6 +76,8 @@ Your mode, review state and settings are saved per quiz and restored when the pa
 
 Most bug fixes were entirely in the scope of the dev branch, as release was already stable as of 2.2.1.
 
+- The results page no longer takes all the height it needs: a long list of corrections **scrolls inside the message** instead of stretching the chat page. This one slipped in with a refactor back in September, so 2.2.1 has it too; re-importing the function fixes it there as well.
+
 ### Under the hood
 
 The **test suite grew a lot**, including a headless-browser end-to-end test of the page Open WebUI actually serves, and CI runs both suites through npm.
