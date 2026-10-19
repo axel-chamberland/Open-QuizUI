@@ -1,17 +1,24 @@
 import { initializeState } from "./state.js";
 import { initializeEvents } from "./ui/events.js";
-import { loadQuizEdits } from "./persistence/quiz_edits.js";
+import { loadAppData } from "./persistence/app_data.js";
 import { loadStats } from "./persistence/stats.js";
 import { loadMathJax } from "./shared/mathjax.js";
-import { renderQuiz } from "./rendering/mcq.js";
 import { state } from "./state.js";
 import { initHeightReporting } from "./ui/reportHeight.js";
-import { setQuizTitle } from "./quiz.js";
+import {
+  setMode,
+  goTo,
+  setQuizTitle,
+  updateQuestionCounts,
+  updateQuestionNumbers,
+  toggleSRS,
+} from "./quiz.js";
 
-const appData = JSON.parse(document.getElementById("app-data").textContent);
+const appData = loadAppData();
 
 export const ENABLE_MATHJAX = appData.enableMathJax;
 export const quiz = appData.quiz;
+export const mode = appData.mode;
 
 // In case the iframe was reset while in fullscreen, reload the page to reset affected elements
 // This mainly happens when you call the action function on another device while being in pseudo-fullscreen,
@@ -27,18 +34,24 @@ try {
 }
 
 initializeState(quiz);
+
+state.srsQueueSize = appData.srsQueueSize;
+
+/*
+ * FSRS scheduler parameters.
+ *
+ * Per-quiz overrides (already merged into appData) carry the config
+ * set in the editor; requestRetention in the embedded payload remains
+ * the fallback when no editor config exists.
+ */
+Object.assign(state.srsConfig, appData.srsConfig ?? {});
+if (appData.srsConfig === undefined) {
+  state.srsConfig.request_retention = appData.requestRetention;
+}
+
 loadStats();
-loadQuizEdits(state);
 
-// Update max question count
-const questionCount = document.getElementById("question-count");
-questionCount.textContent = quiz.questions.length;
-
-// Update current question count
-const questionNumber = document.getElementById("question-number");
-questionNumber.value = state.currentQuestionIndex + 1;
-
-async function initializeQuiz() {
+async function initializeApp() {
   await loadMathJax(ENABLE_MATHJAX);
 
   if (state.mathReady && window.MathJax?.startup?.promise) {
@@ -46,14 +59,23 @@ async function initializeQuiz() {
   }
 
   setQuizTitle(quiz.title);
-  renderQuiz();
   initializeEvents();
   initHeightReporting();
+  updateQuestionCounts();
+  updateQuestionNumbers();
+
+  setMode(appData.mode);
+  goTo(state.currentQuestionIndex);
+
+  // Enable spaced repetition on startup if requested (via the app data)
+  if (appData.srsOnLoad) {
+    await toggleSRS();
+  }
 }
 
 if (document.readyState === "loading") {
-  window.addEventListener("load", initializeQuiz, { once: true });
+  window.addEventListener("load", initializeApp, { once: true });
 } else {
-  initializeQuiz();
+  initializeApp();
   document.body.classList.remove("app-loading");
 }

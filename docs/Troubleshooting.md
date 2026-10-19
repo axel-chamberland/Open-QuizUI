@@ -18,6 +18,7 @@ If the quiz isn't appearing, check the following:
 - A small formatting difference may prevent a question from being recognized.
 - If the formatting appears correct but the question still isn't detected, consider [opening an issue](https://github.com/axel-chamberland/Open-QuizUI) with the message that caused the problem.
 - If the format isn't currently supported, the example can help add support for that formatting in a future update.
+- A message without answer choices is read as [flashcards](Usage.md#flashcards). Every question then needs an answer below it: a labelled line (`R: <Answer>`) or the paragraph right after the question. Questions without an answer are skipped.
 
 ## Math isn't rendering
 

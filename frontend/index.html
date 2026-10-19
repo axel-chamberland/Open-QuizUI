@@ -68,6 +68,22 @@
       </symbol>
 
       <symbol
+        id="icon-table"
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        class="lucide lucide-table preview-icon"
+      >
+        <path d="M12 3v18" />
+        <rect width="18" height="18" x="3" y="3" rx="2" />
+        <path d="M3 9h18" />
+        <path d="M3 15h18" />
+      </symbol>
+      <symbol
         id="icon-save"
         viewBox="0 0 24 24"
         fill="none"
@@ -111,31 +127,276 @@
         <circle cx="12" cy="5" r="1" />
         <circle cx="12" cy="19" r="1" />
       </symbol>
+      <symbol
+        id="switch-mode"
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        class="lucide lucide-arrow-left-right preview-icon"
+      >
+        <path d="M8 3 4 7l4 4" />
+        <path d="M4 7h16" />
+        <path d="m16 21 4-4-4-4" />
+        <path d="M20 17H4" />
+      </symbol>
+      <symbol
+        id="icon-srs"
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        class="lucide lucide-list-restart preview-icon"
+      >
+        <path d="M21 5H3" />
+        <path d="M7 12H3" />
+        <path d="M7 19H3" />
+        <path
+          d="M12 18a5 5 0 0 0 9-3 4.5 4.5 0 0 0-4.5-4.5c-1.33 0-2.54.54-3.41 1.41L11 14"
+        />
+        <path d="M11 10v4h4" />
+      </symbol>
+      <symbol
+        id="icon-chevron-right"
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        class="lucide lucide-chevron-right"
+      >
+        <path d="m9 18 6-6-6-6" />
+      </symbol>
+      <symbol id="icon-docs" viewBox="0 0 24 24">
+        <path
+          d="M12 7C10.4 5.4 8.3 4.8 4.5 4.8v12.4c3.8 0 5.9.6 7.5 2.2 1.6-1.6 3.7-2.2 7.5-2.2V4.8C15.7 4.8 13.6 5.4 12 7z"
+        />
+        <path d="M12 7v12.4" />
+      </symbol>
     </svg>
-    <div class="question-box">
+    <div id="rating-indicator" aria-hidden="true"></div>
+    <div id="global-prompt" class="global-prompt">
+      <p id="global-prompt-message"></p>
+      <div class="button-row">
+        <button id="global-prompt-yes">yes</button>
+        <button id="global-prompt-no">no</button>
+      </div>
+    </div>
+    <div id="order-editor" class="global-prompt order-editor">
+      <p><strong>Questions</strong></p>
+      <div class="order-actions">
+        <button id="order-editor-add" class="order-add-button">
+          + Add question
+        </button>
+        <div class="order-action-row">
+          <button
+            id="order-editor-add-before"
+            title="Add a new question before the current one"
+          >
+            Add before
+          </button>
+          <button
+            id="order-editor-add-after"
+            title="Add a new question after the current one"
+          >
+            Add after
+          </button>
+          <button
+            id="order-editor-delete"
+            class="order-delete-button"
+            title="Delete the current question"
+          >
+            Delete question
+          </button>
+        </div>
+      </div>
+      <div id="order-editor-list"></div>
+      <div class="button-row">
+        <button id="order-editor-cancel">Cancel</button>
+        <button id="order-editor-save">Save</button>
+      </div>
+    </div>
+    <div id="question-box" class="page" style="display: none">
       <div class="title-bar">
-        <h1 id="title">Quiz</h1>
-        <span id="timer">00:00</span>
+        <h1 class="title">Quiz</h1>
+        <span class="timer">00:00</span>
       </div>
       <div class="navigation-scroll">
-        <div id="navigation">
-          <button id="prev-button" aria-label="Previous question">&lt;</button>
+        <div class="navigation">
+          <button class="prev-button" aria-label="Previous question">
+            &lt;
+          </button>
 
-          <div id="question-selector">
+          <div class="question-selector">
             <input
-              id="question-number"
+              class="question-number"
               type="text"
               inputmode="numeric"
               value="1"
             />
             <span class="separator">/</span>
-            <span id="question-count">1</span>
+            <span class="question-count">1</span>
           </div>
-
-          <button id="next-button" aria-label="Next question">&gt;</button>
+          <div class="srs-selector">
+            <span class="srs-due-count" title="Due"></span>
+            <span class="srs-review-count" title="Reviewing"></span>
+            <span class="srs-completed-count" title="Completed"></span>
+          </div>
+          <button class="next-button" aria-label="Next question">&gt;</button>
 
           <button
-            id="reveal-button"
+            class="reveal-button"
+            title="Reveal answer"
+            aria-label="Reveal answer"
+          >
+            <svg><use href="#icon-reveal"></use></svg>
+          </button>
+          <button
+            class="timer-toggle-button"
+            title="Toggle timer"
+            aria-label="Toggle timer"
+          >
+            <svg><use href="#icon-timer"></use></svg>
+          </button>
+          <button
+            class="mode-button"
+            title="Switch to Flashcards mode"
+            aria-label="Switch to Flashcards mode"
+          >
+            <svg><use href="#switch-mode"></use></svg>
+          </button>
+          <button
+            class="maximize-button"
+            title="Toggle Fullscreen"
+            aria-label="Fullscreen"
+          >
+            <svg><use href="#icon-fullscreen"></use></svg>
+          </button>
+          <button
+            class="copy-question-button"
+            title="Copy question"
+            aria-label="Copy question"
+          >
+            <svg><use href="#icon-copy"></use></svg>
+          </button>
+          <button class="dropdown-trigger" id="mcq-menu-button">
+            <svg><use href="#icon-more"></use></svg>
+          </button>
+        </div>
+      </div>
+      <div class="dropdown-menu" id="mcq-dropdown-menu">
+        <button
+          class="editor-button"
+          title="Edit Question"
+          aria-label="Edit Question"
+        >
+          <svg><use href="#icon-editor"></use></svg>
+          Edit Question
+        </button>
+        <button
+          class="toggle-srs-button"
+          title="Toggle spaced repetition (FSRS)"
+          aria-label="Toggle spaced repetition (FSRS)"
+        >
+          <svg><use href="#icon-srs"></use></svg>
+          Toggle Repetition
+        </button>
+        <button
+          class="download-button"
+          title="Download as HTML"
+          aria-label="Download as HTML"
+        >
+          <svg><use href="#icon-download"></use></svg>
+          Download HTML
+        </button>
+        <button
+          class="copy-all-button"
+          title="Copy quiz"
+          aria-label="Copy quiz"
+        >
+          <svg><use href="#icon-copy-all"></use></svg>Copy Quiz
+        </button>
+        <button
+          class="copy-flashcards-button"
+          title="Copy as flashcards"
+          aria-label="Copy as flashcards"
+        >
+          <svg><use href="#icon-table"></use></svg>
+          Copy as Flashcards
+        </button>
+        <a
+          class="docs-link"
+          href="https://github.com/axel-chamberland/Open-QuizUI/blob/main/docs/Usage.md#taking-a-quiz"
+          target="_blank"
+          rel="noopener noreferrer"
+          title="Documentation"
+          aria-label="Documentation"
+        >
+          <svg><use href="#icon-docs"></use></svg>
+          Documentation
+        </a>
+      </div>
+      <div id="question-scroll">
+        <p id="question"></p>
+        <div id="options"></div>
+        <div id="explanation"></div>
+      </div>
+      <div class="fsrs-rating button-row">
+        <button class="fsrs-rating-button again-button" data-rating="1">
+          Again
+        </button>
+        <button class="fsrs-rating-button hard-button" data-rating="2">
+          Hard
+        </button>
+        <button class="fsrs-rating-button good-button" data-rating="3">
+          Good
+        </button>
+        <button class="fsrs-rating-button easy-button" data-rating="4">
+          Easy
+        </button>
+      </div>
+    </div>
+
+    <div id="flashcard-box" class="page" style="display: none">
+      <div class="title-bar">
+        <h1 class="title">Flashcards</h1>
+        <span class="timer">00:00</span>
+      </div>
+
+      <div class="navigation-scroll">
+        <div class="navigation">
+          <button class="prev-button" aria-label="Previous question">
+            &lt;
+          </button>
+
+          <div class="question-selector">
+            <input
+              class="question-number"
+              type="text"
+              inputmode="numeric"
+              value="1"
+            />
+            <span class="separator">/</span>
+            <span class="question-count">1</span>
+          </div>
+          <div class="srs-selector">
+            <span class="srs-due-count" title="Due"></span>
+            <span class="srs-review-count" title="Reviewing"></span>
+            <span class="srs-completed-count" title="Completed"></span>
+          </div>
+
+          <button class="next-button" aria-label="Next question">&gt;</button>
+
+          <button
+            class="reveal-button"
             title="Reveal answer"
             aria-label="Reveal answer"
           >
@@ -143,59 +404,121 @@
           </button>
 
           <button
-            id="maximize-button"
-            title="Toggle Fullscreen"
-            aria-label="Fullscreen"
-          >
-            <svg><use href="#icon-fullscreen"></use></svg>
-          </button>
-
-          <button
-            id="download-button"
-            title="Download quiz"
-            aria-label="Download quiz"
-          >
-            <svg><use href="#icon-download"></use></svg>
-          </button>
-
-          <button
-            id="timer-toggle"
+            class="timer-toggle-button"
             title="Toggle timer"
             aria-label="Toggle timer"
           >
             <svg><use href="#icon-timer"></use></svg>
           </button>
-
-          <button id="copy-all-button" title="Copy quiz" aria-label="Copy quiz">
-            <svg><use href="#icon-copy-all"></use></svg>
-          </button>
-
           <button
-            id="copy-question-button"
+            class="mode-button"
+            title="Switch to MCQ mode"
+            aria-label="Switch to MCQ mode"
+          >
+            <svg><use href="#switch-mode"></use></svg>
+          </button>
+          <button
+            class="maximize-button"
+            title="Toggle Fullscreen"
+            aria-label="Fullscreen"
+          >
+            <svg><use href="#icon-fullscreen"></use></svg>
+          </button>
+          <button
+            class="copy-question-button"
             title="Copy question"
             aria-label="Copy question"
           >
             <svg><use href="#icon-copy"></use></svg>
           </button>
-          <button
-            id="editor-button"
-            title="Edit question"
-            aria-label="Edit question"
-          >
-            <svg><use href="#icon-editor"></use></svg>
+          <button class="dropdown-trigger" id="flashcard-menu-button">
+            <svg><use href="#icon-more"></use></svg>
           </button>
         </div>
       </div>
-      <div id="question-scroll">
-        <p id="question"></p>
-        <div id="options"></div>
-        <div id="explanation"></div>
+      <div class="dropdown-menu" id="flashcard-dropdown-menu">
+        <button
+          class="editor-button"
+          title="Edit Question"
+          aria-label="Edit Question"
+        >
+          <svg><use href="#icon-editor"></use></svg>
+          Edit Question
+        </button>
+        <button
+          class="toggle-srs-button"
+          title="Toggle spaced repetition (FSRS)"
+          aria-label="Toggle spaced repetition (FSRS)"
+        >
+          <svg><use href="#icon-srs"></use></svg>
+          Toggle Repetition
+        </button>
+        <button
+          class="download-button"
+          title="Download as HTML"
+          aria-label="Download as HTML"
+        >
+          <svg><use href="#icon-download"></use></svg>
+          Download HTML
+        </button>
+        <button
+          class="copy-all-button"
+          title="Copy quiz"
+          aria-label="Copy quiz"
+        >
+          <svg><use href="#icon-copy-all"></use></svg>Copy Quiz
+        </button>
+        <button
+          class="copy-flashcards-button"
+          title="Copy as flashcards"
+          aria-label="Copy as flashcards"
+        >
+          <svg><use href="#icon-table"></use></svg>
+          Copy as Flashcards
+        </button>
+        <a
+          class="docs-link"
+          href="https://github.com/axel-chamberland/Open-QuizUI/blob/main/docs/Usage.md#flashcards"
+          target="_blank"
+          rel="noopener noreferrer"
+          title="Documentation"
+          aria-label="Documentation"
+        >
+          <svg><use href="#icon-docs"></use></svg>
+          Documentation
+        </a>
+      </div>
+
+      <div id="flashcard-scroll">
+        <p class="flashcard-question"></p>
+        <div class="flashcard-answer"></div>
+        <div class="flashcard-explanation"></div>
+      </div>
+
+      <div id="flashcard-rating" class="button-row">
+        <button class="flashcard-rating-button unknown-button">✗</button>
+        <button class="flashcard-rating-button known-button">✓</button>
+      </div>
+
+      <div class="fsrs-rating button-row">
+        <button class="fsrs-rating-button again-button" data-rating="1">
+          Again
+        </button>
+        <button class="fsrs-rating-button hard-button" data-rating="2">
+          Hard
+        </button>
+        <button class="fsrs-rating-button good-button" data-rating="3">
+          Good
+        </button>
+        <button class="fsrs-rating-button easy-button" data-rating="4">
+          Easy
+        </button>
       </div>
     </div>
 
-    <div id="results" style="display: none">
+    <div id="results" class="page" style="display: none">
       <div class="navigation-scroll">
-        <div id="results-navigation">
+        <div id="results-navigation" class="navigation">
           <button
             id="results-back-button"
             title="Back to quiz"
@@ -205,7 +528,7 @@
           </button>
 
           <button
-            id="results-maximize-button"
+            class="maximize-button"
             title="Toggle Fullscreen"
             aria-label="Fullscreen"
           >
@@ -213,15 +536,15 @@
           </button>
 
           <button
-            id="results-download-button"
-            title="Download quiz"
-            aria-label="Download quiz"
+            class="download-button"
+            title="Download as HTML"
+            aria-label="Download as HTML"
           >
             <svg><use href="#icon-download"></use></svg>
           </button>
 
           <button
-            id="results-copy-all-button"
+            class="copy-all-button"
             title="Copy quiz"
             aria-label="Copy quiz"
           >
@@ -247,13 +570,14 @@
           <div id="accuracy"></div>
         </div>
 
-        <div id="statsChart"></div>
+        <div id="stats-chart"></div>
 
         <button id="restart-button" aria-label="Restart quiz">
           Restart Quiz
         </button>
-        <div id="restart-confirm" style="display: none">
-          <span>Restart quiz?</span>
+
+        <div id="restart-confirm">
+          <span>Restart quiz? <i>Your results will be reset.</i></span>
           <button id="confirm-restart-button" aria-label="Confirm restart">
             Yes
           </button>
@@ -269,60 +593,53 @@
       </div>
     </div>
 
-    <div id="editor" style="display: none">
+    <div id="editor" class="page" style="display: none">
       <h1>Question Editor</h1>
-
-      <div class="navigation-scroll" id="editor-navigation">
-        <button
-          id="editor-save-button"
-          title="Save changes"
-          aria-label="Save changes"
-          data-tooltip="Save changes"
-        >
-          <svg><use href="#icon-save"></use></svg>
-        </button>
-        <button
-          id="editor-copy-all-button"
-          title="Copy quiz"
-          aria-label="Copy quiz"
-        >
-          <svg><use href="#icon-copy-all"></use></svg>
-        </button>
-        <button
-          id="editor-copy-question-button"
-          title="Copy question"
-          aria-label="Copy question"
-        >
-          <svg><use href="#icon-copy"></use></svg>
-        </button>
-        <button
-          id="editor-maximize-button"
-          title="Fullscreen"
-          aria-label="Fullscreen"
-        >
-          <svg><use href="#icon-fullscreen"></use></svg>
-        </button>
-        <button class="dropdown-trigger" id="actions-button">
-          <svg><use href="#icon-more"></use></svg>
-        </button>
-        <button
-          id="editor-close-button"
-          title="Close editor"
-          aria-label="Close editor"
-          data-tooltip="Close editor"
-        >
-          <svg><use href="#icon-close"></use></svg>
-        </button>
-      </div>
-      <div id="editor-close" class="editor-prompt">
-        <p id="editor-prompt-message"></p>
-        <div class="button-row">
-          <button id="editor-prompt-yes">yes</button>
-          <button id="editor-prompt-no">no</button>
+      <div class="navigation-scroll">
+        <div id="editor-navigation" class="navigation">
+          <button
+            id="editor-save-button"
+            title="Save changes"
+            aria-label="Save changes"
+            data-tooltip="Save changes"
+          >
+            <svg><use href="#icon-save"></use></svg>
+          </button>
+          <button
+            class="copy-all-button"
+            title="Copy quiz"
+            aria-label="Copy quiz"
+          >
+            <svg><use href="#icon-copy-all"></use></svg>
+          </button>
+          <button
+            class="copy-question-button"
+            title="Copy question"
+            aria-label="Copy question"
+          >
+            <svg><use href="#icon-copy"></use></svg>
+          </button>
+          <button
+            class="maximize-button"
+            title="Fullscreen"
+            aria-label="Fullscreen"
+          >
+            <svg><use href="#icon-fullscreen"></use></svg>
+          </button>
+          <button class="dropdown-trigger" id="editor-menu-button">
+            <svg><use href="#icon-more"></use></svg>
+          </button>
+          <button
+            id="editor-close-button"
+            title="Close editor"
+            aria-label="Close editor"
+            data-tooltip="Close editor"
+          >
+            <svg><use href="#icon-close"></use></svg>
+          </button>
         </div>
       </div>
-
-      <div class="dropdown-menu" id="dropdown-menu">
+      <div class="dropdown-menu" id="editor-dropdown-menu">
         <button
           id="reset-quiz-button"
           title="Reset all questions"
@@ -339,6 +656,17 @@
         >
           Reset Question
         </button>
+        <a
+          class="docs-link"
+          href="https://github.com/axel-chamberland/Open-QuizUI/blob/main/docs/Usage.md#editing-a-quiz"
+          target="_blank"
+          rel="noopener noreferrer"
+          title="Documentation"
+          aria-label="Documentation"
+        >
+          <svg><use href="#icon-docs"></use></svg>
+          Documentation
+        </a>
       </div>
       <p>
         <strong>Limitation:</strong>
@@ -347,8 +675,63 @@
         permanently.
       </p>
       <div id="editor-scroll">
+        <p id="editor-question-number"></p>
         <p><strong>Title:</strong></p>
         <div id="editor-title"></div>
+        <details id="editor-additional-settings">
+          <summary>
+            <svg><use href="#icon-chevron-right"></use></svg>
+            Additional Settings
+          </summary>
+          <div class="editor-section">
+            <p class="editor-section-title">Review Scheduling (FSRS)</p>
+            <div class="editor-settings">
+              <label>
+                <span>Spaced repetition queue size:</span>
+                <input
+                  type="number"
+                  id="editor-srs-queue-size"
+                  min="1"
+                  step="1"
+                />
+              </label>
+              <label>
+                <span>Request retention:</span>
+                <input
+                  type="number"
+                  id="editor-fsrs-request-retention"
+                  min="0.01"
+                  max="0.99"
+                  step="0.01"
+                />
+              </label>
+              <label>
+                <span>Maximum interval (days):</span>
+                <input
+                  type="number"
+                  id="editor-fsrs-maximum-interval"
+                  min="1"
+                  step="1"
+                />
+              </label>
+              <label class="editor-settings-toggle">
+                <span>Enable fuzz:</span>
+                <input type="checkbox" id="editor-fsrs-enable-fuzz" />
+              </label>
+              <label class="editor-settings-toggle">
+                <span>Enable short-term scheduling:</span>
+                <input type="checkbox" id="editor-fsrs-enable-short-term" />
+              </label>
+            </div>
+          </div>
+          <div class="editor-section">
+            <p class="editor-section-title">Questions</p>
+            <p class="editor-section-hint">
+              Select, add, remove or reorder questions.
+            </p>
+            <button id="order-editor-open-button">Edit Questions</button>
+          </div>
+        </details>
         <p><strong>Question:</strong></p>
         <div id="editor-question"></div>
         <div class="answer-position">
@@ -364,7 +747,11 @@
 
     <script id="app-data" type="application/json">
       {
+        "mode": "mcq",
         "enableMathJax": true,
+        "srsQueueSize": 20,
+        "requestRetention": 0.9,
+        "srsOnLoad": false,
         "quiz": {
           "title": "Open-QuizUI Feature Showcase",
           "questions": [

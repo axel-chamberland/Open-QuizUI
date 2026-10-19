@@ -1,0 +1,22 @@
+{
+  "content": "## Question 1\n\nCapital of France?\n\nParis\n\n## Question 2\n\nCapital of Japan?\n\nTokyo\n",
+  "expected": [
+    "Quiz",
+    [
+      {
+        "question": "<p>Capital of France?</p>",
+        "options": [
+          "<p>Paris</p>"
+        ],
+        "correct_index": 0
+      },
+      {
+        "question": "<p>Capital of Japan?</p>",
+        "options": [
+          "<p>Tokyo</p>"
+        ],
+        "correct_index": 0
+      }
+    ]
+  ]
+}

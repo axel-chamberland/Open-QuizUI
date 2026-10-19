@@ -2,8 +2,8 @@
 title: QuizUI
 author: Axel Chamberland
 git_url: https://github.com/axel-chamberland/OpenQuizUI
-description: Converts a multiple-choice quiz message into an interactive HTML quiz.
-version: 2.2.1
+description: Converts a multiple-choice quiz or flashcard message into an interactive HTML quiz.
+version: 3.0
 """
 
 import random
@@ -15,96 +15,7 @@ import regex
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, Field
 
-# =========================
-# THEME -- Feel free to add your own theme or modify presets
-# =========================
-"""
-OpenWebUI default color scheme:
-    --color-gray-50: oklch(98% 0 0);
-    --color-gray-100: oklch(94% 0 0);
-    --color-gray-200: oklch(92% 0 0);
-    --color-gray-300: oklch(85% 0 0);
-    --color-gray-400: oklch(77% 0 0);
-    --color-gray-500: oklch(69% 0 0);
-    --color-gray-600: oklch(51% 0 0);
-    --color-gray-700: oklch(42% 0 0);
-    --color-gray-800: oklch(32% 0 0);
-    --color-gray-900: oklch(20% 0 0);
-    --color-gray-950: oklch(16% 0 0);
-"""
-
-THEMES = {
-    "default_light": """
---bg: oklch(100% 0 0);
---btn: oklch(94% 0 0);
---text: oklch(20% 0 0);
---border: oklch(85% 0 0);
-
---success: #0fff93;
---danger: #ff4545;
---skipped: #ffb800;
---unanswered: #8a8a8a;
-
---correct_bg: color-mix(in srgb, var(--success) 30%, var(--btn));
---wrong_bg: color-mix(in srgb, var(--danger) 30%, var(--btn));
-""",
-    "default_dark": """
---bg: oklch(20% 0 0);
---btn: oklch(24% 0 0);
---text: oklch(94% 0 0);
---border: oklch(85% 0 0);
-
---success: #00ff00;
---danger: #ff0000;
---skipped: #ffcc00;
---unanswered: #999999;
-
---correct_bg: color-mix(in srgb, var(--success) 30%, var(--btn));
---wrong_bg: color-mix(in srgb, var(--danger) 30%, var(--btn));
-""",
-    "tokyonight": """
---bg: #1a1b26;
---btn: #242b42;
---text: #c0caf5;
---border: #7aa2f7;
-
---success: #1abc9c;
---danger: #ff007c;
---skipped: #e0af68;
---unanswered: #565f89;
-
---correct_bg: color-mix(in srgb, var(--success) 30%, var(--btn));
---wrong_bg: color-mix(in srgb, var(--danger) 30%, var(--btn));
-""",
-    "high_contrast": """
---bg: #000000;
---btn: #111111;
---text: #ffffff;
---border: #ffffff;
-
---success: #00ff00;
---danger: #ff0000;
---skipped: #ffff00;
---unanswered: #00ffff;
-
---correct_bg: color-mix(in srgb, var(--success) 40%, var(--btn));
---wrong_bg: color-mix(in srgb, var(--danger) 40%, var(--btn));
-""",
-    "soft_pastel": """
---bg: #fdf6f0;
---btn: #f2e9e4;
---text: #4a4a4a;
---border: #d8cfc4;
-
---success: #6bbf59;
---danger: #e07a5f;
---skipped: #e6b566;
---unanswered: #a8998e;
-
---correct_bg: color-mix(in srgb, var(--success) 25%, var(--btn));
---wrong_bg: color-mix(in srgb, var(--danger) 25%, var(--btn));
-""",
-}
+from backend.build import THEMES
 
 
 class Action:
@@ -118,7 +29,7 @@ class Action:
         enable_mathjax: bool = Field(
             default=False,
             description=(
-                "Disabled by default for privacy. Enable LaTeX/math rendering with MathJax."
+                "Disabled by default for privacy. Enable LaTeX/math rendering with MathJax. "
                 "Requires Internet access to load the MathJax library from a CDN. When disabled or"
                 "offline, LaTeX expressions are displayed as plain text."
             ),
@@ -139,6 +50,34 @@ class Action:
             description=(
                 "LLMs will sometimes give the answer inline in [brackets]"
                 "or a hint that gives off the answer. This may interfere with some questions."
+            ),
+        )
+
+        quiz_mode: Literal["multiple-choice questions", "flashcards"] = Field(
+            default="multiple-choice questions",
+            description=(
+                "Default mode to start the quiz in. This does not affect the parsing; "
+                "use parse_mode for that."
+            ),
+        )
+
+        parse_mode: Literal["auto", "multiple-choice questions", "flashcards"] = Field(
+            default="auto",
+            description=(
+                "How to parse the message. 'auto' tries multiple-choice questions first "
+                "and falls back to flashcards when the message holds no choices; the other "
+                "values force one format. Forcing flashcards on a quiz with choices shows "
+                "it as cards, using the correct choice as the answer."
+            ),
+        )
+
+        flashcard_format: Literal["auto", "table", "question labels"] = Field(
+            default="auto",
+            description=(
+                "Which part of a flashcard message holds the cards. 'auto' reads a markdown "
+                "table first, since a table is the clearer signal, and question labels only "
+                "when the message holds no table. The other values read that part alone, "
+                "without falling back to the other one."
             ),
         )
 
@@ -187,15 +126,198 @@ class Action:
                 "Separate multiple patterns with |."
             ),
         )
+        request_retention: float = Field(
+            default=0.9,
+            ge=0.0,
+            le=1.0,
+            description=(
+                "Target probability of recalling a card when it is scheduled for review "
+                "in spaced repetition mode. "
+                "Higher values generally result in shorter review intervals and more "
+                "frequent reviews; lower values generally result in longer intervals "
+                "and less frequent reviews."
+            ),
+        )
+        spaced_repetition_queue_size: int = Field(
+            default=20,
+            ge=1,
+            description=(
+                "Number of questions available at a time in spaced repetition mode. "
+                "Larger values provide a larger pool of questions to review before "
+                "the queue needs to be replenished."
+            ),
+        )
+        enable_spaced_repetition: bool = Field(
+            default=False,
+            description="Enable spaced repetition mode when the quiz loads.",
+        )
+
+    # Settings each user changes for themselves, in the Valves section of
+    # the chat's Controls panel: the Controls button, then Valves, then the
+    # Functions tab. Every field here also exists in Valves above: whatever
+    # the user leaves alone follows the admin's value, so a user who never
+    # opens the panel gets the quiz as the admin set it up.
+    class UserValves(BaseModel):
+        shuffle_choices: bool = Field(
+            default=True,
+            description="Shuffle the order of choices",
+        )
+        enable_mathjax: bool = Field(
+            default=False,
+            description=(
+                "Disabled by default for privacy. Enable LaTeX/math rendering with MathJax. "
+                "Requires Internet access to load the MathJax library from a CDN. When disabled or"
+                "offline, LaTeX expressions are displayed as plain text."
+            ),
+        )
+
+        enable_explanations: bool = Field(
+            default=True,
+            description="Attempt to include an explanation for each question if one exists",
+        )
+
+        strip_references: bool = Field(
+            default=True,
+            description="Remove reference-style link definitions: [id]: url",
+        )
+
+        strip_ending_brackets: bool = Field(
+            default=True,
+            description=(
+                "LLMs will sometimes give the answer inline in [brackets]"
+                "or a hint that gives off the answer. This may interfere with some questions."
+            ),
+        )
+
+        quiz_mode: Literal["multiple-choice questions", "flashcards"] = Field(
+            default="multiple-choice questions",
+            description=(
+                "Default mode to start the quiz in. This does not affect the parsing; "
+                "use parse_mode for that."
+            ),
+        )
+
+        parse_mode: Literal["auto", "multiple-choice questions", "flashcards"] = Field(
+            default="auto",
+            description=(
+                "How to parse the message. 'auto' tries multiple-choice questions first "
+                "and falls back to flashcards when the message holds no choices; the other "
+                "values force one format. Forcing flashcards on a quiz with choices shows "
+                "it as cards, using the correct choice as the answer."
+            ),
+        )
+
+        flashcard_format: Literal["auto", "table", "question labels"] = Field(
+            default="auto",
+            description=(
+                "Which part of a flashcard message holds the cards. 'auto' reads a markdown "
+                "table first, since a table is the clearer signal, and question labels only "
+                "when the message holds no table. The other values read that part alone, "
+                "without falling back to the other one."
+            ),
+        )
+
+        theme_mode: Literal["browser", "light", "dark"] = Field(
+            default="browser",
+        )
+
+        light_theme: Literal[tuple(THEMES)] = Field(
+            default="default_light",
+            description=(
+                "Change the light mode theme. "
+                "To define a new theme, add it to the THEMES dictionary at the top of the code. "
+            ),
+        )
+        dark_theme: Literal[tuple(THEMES)] = Field(
+            default="default_dark",
+            description=(
+                "Change the dark mode theme. "
+                "To define a new theme, add it to the THEMES dictionary at the top of the code. "
+            ),
+        )
+
+        question_pattern: str = Field(
+            default=r"question|bonus|q(?!\p{L})",
+            description="Regex pattern for detecting question labels; use | for OR.",
+        )
+        answer_pattern: str = Field(
+            default="answer|correct answer|réponse|bonne réponse|réponse correcte|r|a",
+            description="Regex pattern for detecting answer labels; use | for OR.",
+        )
+        choice_pattern: str = Field(
+            default=r"\p{L}",
+            description="Regex for the multiple-choice option identifier.",
+        )
+        prevent_reference_shuffle: bool = Field(
+            default=True,
+            description=(
+                "Prevent shuffling choices when a choice refers to another "
+                "answer choice or it is a true/false question."
+            ),
+        )
+        choice_reference_patterns: str = Field(
+            default="",
+            description=(
+                "Additional regex patterns for detecting when a choice should not be shuffled."
+                "Separate multiple patterns with |."
+            ),
+        )
+        request_retention: float = Field(
+            default=0.9,
+            ge=0.0,
+            le=1.0,
+            description=(
+                "Target probability of recalling a card when it is scheduled for review "
+                "in spaced repetition mode. "
+                "Higher values generally result in shorter review intervals and more "
+                "frequent reviews; lower values generally result in longer intervals "
+                "and less frequent reviews."
+            ),
+        )
+        spaced_repetition_queue_size: int = Field(
+            default=20,
+            ge=1,
+            description=(
+                "Number of questions available at a time in spaced repetition mode. "
+                "Larger values provide a larger pool of questions to review before "
+                "the queue needs to be replenished."
+            ),
+        )
+        enable_spaced_repetition: bool = Field(
+            default=False,
+            description="Enable spaced repetition mode when the quiz loads.",
+        )
 
     def __init__(self):
         self.valves = self.Valves()
+
+    def effective_valves(self, __user__):
+        """The admin's valves with this user's own settings applied on top.
+
+        Open WebUI hands the user's saved settings over as a UserValves
+        instance that holds only the fields that user has set, so any
+        other field keeps following the admin's Valves.
+
+        Returns:
+            The Valves to run with: the user's where they have their own
+            value, the admin's everywhere else.
+        """
+
+        user_valves = (__user__ or {}).get("valves")
+
+        if not isinstance(user_valves, self.UserValves):
+            return self.valves
+
+        return self.valves.model_copy(update=user_valves.model_dump(exclude_unset=True))
 
     async def action(
         self, body: dict, __event_emitter__, __event_call__=None, __user__=None
     ):
 
         try:
+            # The user's own settings, everywhere they have them.
+            valves = self.effective_valves(__user__)
+
             # Take latest message.
             # Contrary to the API endpoint which has output field, the body element only contains
             # the raw content with reasoning blocks included.
@@ -226,31 +348,61 @@ class Action:
 
             # Remove HTML tags, reasoning blocks and other artifacts
             text = clean_message(
-                text, self.valves.strip_references, self.valves.strip_ending_brackets
+                text, valves.strip_references, valves.strip_ending_brackets
             )
 
             if not text:
                 raise ValueError("No content received")
 
-            title, questions = parse_quiz(
-                text,
-                self.valves.enable_explanations,
-                self.valves.question_pattern,
-                self.valves.answer_pattern,
-                self.valves.choice_pattern,
-            )
+            parse_mode = valves.parse_mode
+
+            try:
+                title, questions = parse_quiz(
+                    text,
+                    valves.enable_explanations,
+                    valves.question_pattern,
+                    valves.answer_pattern,
+                    valves.choice_pattern,
+                )
+            except NoQuestionsFound as error:
+                if parse_mode == "multiple-choice questions":
+                    raise
+
+                # No choices: it may be flashcards as they are. A parse
+                # with choices comes first because it carries more of
+                # the message, so only a message that holds none of them
+                # gets read as flashcards.
+                try:
+                    title, questions = parse_flashcards(
+                        text,
+                        valves.enable_explanations,
+                        valves.question_pattern,
+                        valves.answer_pattern,
+                        valves.flashcard_format,
+                    )
+                except NoQuestionsFound:
+                    if parse_mode == "flashcards":
+                        raise
+
+                    raise NoQuestionsFound(
+                        f"{error}\nNo flashcards were parsed either."
+                    ) from None
+            else:
+                if parse_mode == "flashcards":
+                    # Forced: show the quiz with choices as cards.
+                    questions = flashcards_from_questions(questions)
 
             choice_reference_patterns = [
                 pattern.strip()
-                for pattern in self.valves.choice_reference_patterns.split("|")
+                for pattern in valves.choice_reference_patterns.split("|")
                 if pattern.strip()
             ]
 
-            if self.valves.shuffle_choices:
+            if valves.shuffle_choices:
                 shuffle_options(
                     questions,
-                    self.valves.prevent_reference_shuffle,
-                    self.valves.choice_pattern,
+                    valves.prevent_reference_shuffle,
+                    valves.choice_pattern,
                     choice_reference_patterns,
                 )
 
@@ -258,12 +410,12 @@ class Action:
 
             # Modify Theme
 
-            option_dark = self.valves.dark_theme
-            option_light = self.valves.light_theme
+            option_dark = valves.dark_theme
+            option_light = valves.light_theme
 
-            if self.valves.theme_mode == "light":
+            if valves.theme_mode == "light":
                 option_dark = option_light
-            elif self.valves.theme_mode == "dark":
+            elif valves.theme_mode == "dark":
                 option_light = option_dark
 
             dark_theme = THEMES.get(option_dark, THEMES["default_dark"])
@@ -271,7 +423,16 @@ class Action:
 
             # Generate quiz
             content = wrap_html(
-                quiz, self.valves.enable_mathjax, light_theme, dark_theme
+                quiz,
+                valves.enable_mathjax,
+                light_theme,
+                dark_theme,
+                "mcq"
+                if valves.quiz_mode == "multiple-choice questions"
+                else "flashcard",
+                valves.request_retention,
+                valves.spaced_repetition_queue_size,
+                valves.enable_spaced_repetition,
             )
 
             return HTMLResponse(
@@ -291,6 +452,16 @@ class Action:
     # =========================
     # PARSER
     # =========================
+
+
+class NoQuestionsFound(ValueError):
+    """
+    Raised when a message holds no questions in the parsed format.
+
+    Kept apart from the other parse failures so 'auto' can tell an
+    unusable format (try the other parser) from a formatting mistake
+    inside a recognized one (report the mistake).
+    """
 
 
 # Use various degrees of detection for the answer keys (harder to detect than question keys).
@@ -316,7 +487,7 @@ ANSWER_PATTERNS = [
     # Adding a space as option:
     r"\b\d+\s*\*{0,2}\s*[-.):\s]\s*\*{0,2}\s*({CHOICE_PATTERN})\s*\)?(?=\s*(?:\||,|$|\s+\d+\s*[-.):\s]))",
     # In Table
-    r"^\|\s*\*{0,2}\d+\*{0,2}\s*\|\s*\*{0,2}({CHOICE_PATTERN})\*{0,2}(?=\s*\|)",
+    r"^\|\s*\*{0,2}\d+\*{0,2}\s*\|\s*\*{0,2}({CHOICE_PATTERN})\*{0,2}[^|\n]*(?=\|)",
     # Numbered list with trailing text: 1. **B** (Vertices and edges) [1]
     # Excludes numbered questions containing '?'
     r"^\s*\*{0,2}\d+\s*\*{0,2}\s*[\.\):-]\s*\*{0,2}({CHOICE_PATTERN})\*{0,2}(?=\s+[^?\n]+$)",
@@ -365,6 +536,30 @@ def parse_quiz(
     return title, questions
 
 
+def question_regex(question_pattern=r"question|bonus|q(?!\p{L})"):
+    """
+    Build the regex that detects a question and captures its text.
+
+    Both parsers consider a line a new question when this matches, so
+    the same question labels apply to either format.
+
+    @returns {regex.Pattern} The compiled pattern; group 3 holds the text
+    following the question label.
+    """
+    return regex.compile(
+        (
+            r"(?:#{1,6}\s*)?"  # Optional Markdown Header (#)
+            r"(?:\*\*)?"  # Optional bold question (**)
+            # The Label/Number
+            r"(?:(?:{QUESTION_LABELS})\s*([0-9]+)?|([0-9]+)(?=\*{0,2}(?:[\s.:\)\-]|$)))"
+            r"\s*[:.\-]?\s*"  # Separator (: . -)
+            r"(?:\*\*)?"  # Skip bold end of question, if it exists
+            r"(.*?)(?:\*\*)?$"  # actual question text, excluding ** if it exists
+        ).replace("{QUESTION_LABELS}", question_pattern),
+        regex.IGNORECASE,
+    )
+
+
 def question_parser(
     lines, question_pattern=r"question|bonus|q(?!\p{L})", choice_pattern=r"\p{L}"
 ) -> tuple[list[dict], list[int]]:
@@ -381,18 +576,7 @@ def question_parser(
     Supports if description is on following lines
     """
 
-    question_re = regex.compile(
-        (
-            r"(?:#{1,6}\s*)?"  # Optional Markdown Header (#)
-            r"(?:\*\*)?"  # Optional bold question (**)
-            # The Label/Number
-            r"(?:(?:{QUESTION_LABELS})\s*([0-9]+)?|([0-9]+)(?=\*{0,2}(?:[\s.:\)\-]|$)))"
-            r"\s*[:.\-]?\s*"  # Separator (: . -)
-            r"(?:\*\*)?"  # Skip bold end of question, if it exists
-            r"(.*?)(?:\*\*)?$"  # actual question text, excluding ** if it exists
-        ).replace("{QUESTION_LABELS}", question_pattern),
-        regex.IGNORECASE,
-    )
+    question_re = question_regex(question_pattern)
 
     choice_re = regex.compile(
         (r"^\s*[-*•]?\s*({CHOICE_PATTERN})[\)\.\-]\s*(.+)$").replace(
@@ -403,19 +587,33 @@ def question_parser(
 
     questions = []
     question_lines = []
+    rejected_questions = []
 
     current_question = None
     current_question_line = None
+
+    def finish_question():
+        if current_question is None:
+            return
+
+        current_question["question"] = current_question["question"].rstrip("\n")
+
+        if len(current_question["options"]) >= 2:
+            questions.append(current_question)
+            question_lines.append(current_question_line)
+        else:
+            rejected_questions.append(
+                f"Line {current_question_line + 1}: "
+                f"question has only {len(current_question['options'])} "
+                f"option(s) (need >= 2)."
+            )
 
     for line_no, line in enumerate(lines):
         question_match = question_re.match(line) if line else None
 
         if question_match:
             # Finish the previous question.
-            if current_question and len(current_question["options"]) >= 2:
-                current_question["question"] = current_question["question"].rstrip("\n")
-                questions.append(current_question)
-                question_lines.append(current_question_line)
+            finish_question()
 
             # Start the new question.
             current_question = {
@@ -433,10 +631,7 @@ def question_parser(
         choice_match = choice_re.match(line)
 
         if choice_match:
-            value = choice_match.group(2)
-
-            value = clean_text(value, False)
-
+            value = clean_text(choice_match.group(2), False)
             current_question["options"].append(value)
 
             # Fallback only.
@@ -452,10 +647,15 @@ def question_parser(
             current_question["question"] += line
 
     # Finish the final question.
-    if current_question and len(current_question["options"]) >= 2:
-        current_question["question"] = current_question["question"].rstrip("\n")
-        questions.append(current_question)
-        question_lines.append(current_question_line)
+    finish_question()
+
+    if not questions:
+        message = "question_parser_standard: no valid questions were parsed."
+
+        if rejected_questions:
+            message += "\n" + "\n".join(f"  - {e}" for e in rejected_questions)
+
+        raise NoQuestionsFound(message)
 
     _verify_questions(questions)
 
@@ -470,7 +670,7 @@ def _verify_questions(questions):
     errors = []
 
     if not questions:
-        raise ValueError(
+        raise NoQuestionsFound(
             "question_parser_standard: no questions were parsed from the input."
         )
 
@@ -497,6 +697,407 @@ def _verify_questions(questions):
             f"{len(errors)} issue(s) while verifying parsed questions:\n"
             + "\n".join(f"  - {e}" for e in errors)
         )
+
+
+def parse_flashcards(
+    text: str,
+    explanations: bool,
+    question_pattern=r"question|bonus|q(?!\p{L})",
+    answer_pattern="answer|correct answer|réponse|bonne réponse|réponse correcte|r|a",
+    flashcard_format="auto",
+) -> tuple[str, list[dict]]:
+    """
+    Parse a flashcard quiz: questions that hold one answer instead of choices.
+
+    The table format is read first, since a markdown table is the clearer
+    signal; a message without one is read from its question labels instead.
+    flashcard_format decides which one is read: "auto" reads both in that
+    order, while "table" and "question labels" read that part alone.
+
+    Table - questions, answers and explanations in a markdown table:
+        | Question | Answer | Explanation |
+        | --- | --- | --- |
+        | Which planet is the largest? | Jupiter | About 139,820 km |
+
+    Question labels - the answer below each question:
+        ## Question 1: Which planet is the largest?
+
+        Jupiter
+
+        Its diameter is about 139,820 km.
+
+    With question labels the answer may carry a label from the
+    answer_pattern valve ("A:", "R:", "Réponse:"); without one, the first
+    paragraph below the question is the answer. Everything after the
+    answer, up to the next question, is the explanation when explanations
+    are enabled, as is a table's third column.
+
+    @returns {tuple[str, list[dict]]} The inferred title and the
+    questions, each with a single option holding its answer.
+    """
+
+    lines = [line.strip() for line in text.split("\n")]
+
+    questions = []
+    question_lines = []
+
+    if flashcard_format in ("auto", "table"):
+        questions, question_lines = flashcard_table_parser(lines, explanations)
+
+    if not questions and flashcard_format in ("auto", "question labels"):
+        questions, question_lines = flashcard_question_parser(
+            lines, question_pattern, answer_pattern, explanations
+        )
+
+    _verify_flashcards(questions)
+
+    title: str = infer_title(lines, question_lines[0])
+
+    for q in questions:
+        q["question"] = _markdown_to_html(q.get("question", ""))
+        q["options"] = [_markdown_to_html(opt) for opt in q.get("options", [])]
+        if "explanation" in q:
+            q["explanation"] = _markdown_to_html(q["explanation"])
+
+    return title, questions
+
+
+def flashcard_question_parser(
+    lines, question_pattern, answer_pattern, explanations
+) -> tuple[list[dict], list[int]]:
+    """
+    Parse the labelled format of a flashcard quiz.
+
+    Each detected question keeps the lines below it until the next
+    question; build_flashcard() turns that block into one card.
+
+    @returns {tuple[list[dict], list[int]]} The questions and the line
+    number each one starts on.
+    """
+
+    question_re = question_regex(question_pattern)
+    label_re = answer_label_regex(answer_pattern)
+
+    blocks = []  # (heading text, body lines, starting line)
+    heading = None
+    body = []
+    start_line = None
+
+    for line_no, line in enumerate(lines):
+        question_match = question_re.match(line) if line else None
+
+        if question_match:
+            if heading is not None:
+                blocks.append((heading, body, start_line))
+
+            heading = question_match.group(3).strip(" :-")
+            body = []
+            start_line = line_no
+            continue
+
+        if heading is None:
+            continue
+
+        body.append(line)
+
+    if heading is not None:
+        blocks.append((heading, body, start_line))
+
+    questions = []
+    question_lines = []
+
+    for heading, body, start_line in blocks:
+        card = build_flashcard(heading, body, label_re, explanations)
+
+        if card is None:
+            continue
+
+        questions.append(card)
+        question_lines.append(start_line)
+
+    return questions, question_lines
+
+
+def answer_label_regex(answer_pattern):
+    """
+    Build the regex for a line that labels an answer and holds it.
+
+    Only a label followed by a separator counts, so an answer that is
+    plain text ("Jupiter") or a choice ("A. Jupiter") is not mistaken
+    for one.
+
+    @returns {regex.Pattern} The compiled pattern; group 1 holds the
+    answer text.
+    """
+    return regex.compile(
+        (
+            r"^\s*\*{0,2}(?:{ANSWER_PATTERN})\b\s*\*{0,2}"  # The label
+            r"\s*[:\-=]\s*"  # Separator (: - =)
+            r"\*{0,2}\s*(.+?)\s*\*{0,2}$"  # The answer text
+        ).replace("{ANSWER_PATTERN}", answer_pattern),
+        regex.IGNORECASE,
+    )
+
+
+def build_flashcard(heading, body, label_re, explanations=True):
+    """
+    Turn one detected question block into a flashcard.
+
+    The question is the label text plus whatever sits above the answer,
+    which is either the labelled line or, without one, the first
+    paragraph below the question.
+
+    @returns {dict|None} The question, or None when the block holds no
+    answer (the verifier reports it when nothing parses at all).
+    """
+
+    for i, line in enumerate(body):
+        label_match = label_re.match(line)
+
+        if not label_match:
+            continue
+
+        answer = clean_text(label_match.group(1), False)
+
+        if not answer:
+            return None
+
+        question = "\n".join([heading, *body[:i]]).strip()
+
+        if not question:
+            return None
+
+        card = {
+            "question": question,
+            "options": [answer],
+            "correct_index": 0,
+        }
+
+        explanation = "\n".join(body[i + 1 :]).strip()
+
+        if explanations and explanation:
+            explanation = clean_text(explanation)
+
+            if explanation:
+                card["explanation"] = explanation
+
+        return card
+
+    # Without a label, the question and answer are paragraphs.
+    paragraphs = [
+        paragraph
+        for paragraph in regex.split(r"\n\s*\n", "\n".join(body))
+        if paragraph.strip()
+    ]
+
+    if heading:
+        question = heading
+        answer = paragraphs[0] if paragraphs else ""
+        rest = paragraphs[1:]
+    else:
+        question = paragraphs[0] if paragraphs else ""
+        answer = paragraphs[1] if len(paragraphs) > 1 else ""
+        rest = paragraphs[2:]
+
+    answer = clean_text(answer, False)
+
+    question = question.strip()
+
+    if not answer or not question:
+        return None
+
+    card = {
+        "question": question,
+        "options": [answer],
+        "correct_index": 0,
+    }
+
+    if explanations and rest:
+        explanation = clean_text("\n\n".join(rest))
+
+        if explanation:
+            card["explanation"] = explanation
+
+    return card
+
+
+def flashcard_table_parser(lines, explanations=True):
+    """
+    Parse a markdown table as flashcards.
+
+    The first column holds the questions, the second the answers and an
+    optional third the explanations. Header and separator rows are
+    dropped; a table that holds no card is skipped, so an unrelated table
+    above the cards does not hide them.
+
+    @returns {tuple[list[dict], list[int]]} The questions and the line
+    the table starts on, which is what infer_title() looks above.
+    """
+
+    tables = []
+    current = None
+
+    for line_no, line in enumerate(lines):
+        if regex.match(r"^\s*\|.*\|\s*$", line):
+            if current is None:
+                current = (line_no, [])
+
+            current[1].append(line)
+            continue
+
+        if current is not None:
+            tables.append(current)
+            current = None
+
+    if current is not None:
+        tables.append(current)
+
+    for start_line, table in tables:
+        rows = [split_table_row(line) for line in table]
+
+        # A real table has a separator row under its header.
+        separator = next(
+            (i for i, row in enumerate(rows) if is_table_separator(row)),
+            None,
+        )
+
+        if separator is None or separator == 0 or len(rows) <= separator + 1:
+            continue
+
+        questions = []
+
+        for row in rows[separator + 1 :]:
+            if len(row) < 2:
+                continue
+
+            question = row[0].strip()
+            answer = clean_text(row[1], False)
+
+            if not question or not answer:
+                continue
+
+            card = {
+                "question": question,
+                "options": [answer],
+                "correct_index": 0,
+            }
+
+            if explanations and len(row) > 2:
+                explanation = clean_text(row[2])
+
+                if explanation:
+                    card["explanation"] = explanation
+
+            questions.append(card)
+
+        if questions:
+            # Nothing inside the table is a title: look above it.
+            return questions, [start_line]
+
+    return [], []
+
+
+def split_table_row(line: str) -> list[str]:
+    """
+    Split one markdown table row into its cells.
+
+    Escaped pipes (\\|) stay inside their cell, as markdown renders them,
+    and an empty cell in the middle of the row stays where it is: only the
+    pipes delimiting the row are dropped.
+
+    @returns {list[str]} The cell texts, trimmed.
+    """
+
+    row = line.strip()
+
+    if row.startswith("|"):
+        row = row[1:]
+
+    if row.endswith("|"):
+        row = row[:-1]
+
+    cells = regex.split(r"(?<!\\)\|", row)
+
+    return [cell.replace(r"\|", "|").strip() for cell in cells]
+
+
+def is_table_separator(cells: list[str]) -> bool:
+    """
+    Whether a table row is the separator under its header ("| --- | :-: |").
+
+    @returns {bool} Whether every cell is a separator cell.
+    """
+
+    if not cells:
+        return False
+
+    return all(regex.fullmatch(r":?-+:?", cell) for cell in cells)
+
+
+def _verify_flashcards(questions):
+    """
+    Sanity-check parsed flashcards and raise ValueError listing every
+    problem found, rather than silently returning bad data.
+    """
+    errors = []
+
+    if not questions:
+        raise NoQuestionsFound(
+            "flashcard_parser: no flashcards were parsed from the input."
+        )
+
+    for i, question in enumerate(questions, start=1):
+        label = f"Flashcard {i}"
+
+        question_text = question.get("question", "")
+        if not question_text or not question_text.strip():
+            errors.append(f"{label}: empty question text.")
+
+        options = question.get("options", [])
+        if len(options) != 1 or not options[0].strip():
+            errors.append(f"{label}: expected exactly one answer.")
+
+    if errors:
+        raise ValueError(
+            "flashcard_parser: found "
+            f"{len(errors)} issue(s) while verifying parsed flashcards:\n"
+            + "\n".join(f"  - {e}" for e in errors)
+        )
+
+
+def flashcards_from_questions(questions: list[dict]) -> list[dict]:
+    """
+    Show a multiple-choice quiz as flashcards.
+
+    Each card keeps its question and explanation, with the correct choice
+    as the single answer.
+
+    @returns {list[dict]} The questions, as flashcards.
+    """
+
+    flashcards = []
+
+    for question in questions:
+        options = question.get("options", [])
+        correct_index = question.get("correct_index")
+
+        if isinstance(correct_index, int) and 0 <= correct_index < len(options):
+            answer = options[correct_index]
+        else:
+            answer = options[0] if options else ""
+
+        card = {
+            "question": question.get("question", ""),
+            "options": [answer],
+            "correct_index": 0,
+        }
+
+        if "explanation" in question:
+            card["explanation"] = question["explanation"]
+
+        flashcards.append(card)
+
+    return flashcards
 
 
 def infer_title(lines, before_line):
@@ -1168,6 +1769,13 @@ def refers_to_other_options(
 
 
 def wrap_html(
-    quiz, enable_mathjax: bool, light_theme="default_light", dark_theme="default_dark"
+    quiz,
+    enable_mathjax: bool,
+    light_theme="default_light",
+    dark_theme="default_dark",
+    default_mode="mcq",
+    request_retention=0.9,
+    spaced_repetition_queue_size=20,
+    enable_spaced_repetition: bool = False,
 ):
     return "__HTML_PLACEHOLDER__"

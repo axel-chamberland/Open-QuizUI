@@ -26,13 +26,12 @@ body {
   overflow: hidden;
 }
 
-:is(:fullscreen, .pseudo-fullscreen-active) .question-box,
-:is(:fullscreen, .pseudo-fullscreen-active) #results,
-:is(:fullscreen, .pseudo-fullscreen-active) #editor {
+:is(:fullscreen, .pseudo-fullscreen-active) .page {
   flex: 1;
   min-height: 0;
   display: flex;
   flex-direction: column;
+  padding: 0 8px 8px;
 }
 
 :is(:fullscreen, .pseudo-fullscreen-active) .navigation-scroll {
@@ -55,9 +54,11 @@ h1 {
   margin: 0;
 }
 
-.question-box,
-#results,
-#editor {
+:is(:fullscreen, .pseudo-fullscreen-active) .title {
+  display: none;
+}
+
+.page {
   display: flex;
   flex-direction: column;
   color: var(--text);
@@ -67,20 +68,21 @@ h1 {
 }
 
 #question {
-  margin-bottom: 2em;
   font-size: 1.1rem;
 }
 
-#question-scroll {
+#question-scroll,
+#flashcard-scroll {
   display: flex;
   flex-direction: column;
-  overflow-y: auto;
   min-height: 0;
 }
 
-:is(:fullscreen, .pseudo-fullscreen-active) #question-scroll {
+:is(:fullscreen, .pseudo-fullscreen-active)
+  :is(#question-scroll, #flashcard-scroll) {
   flex: 1;
   order: 0;
+  overflow-y: auto;
 }
 
 #options {
@@ -103,7 +105,8 @@ button {
   justify-content: center;
 }
 
-button svg {
+button svg,
+.dropdown-menu a svg {
   width: 1em;
   height: 1em;
   fill: none;
@@ -158,12 +161,109 @@ button:disabled {
   font-weight: bold;
 }
 
-#explanation {
+.flashcard-answer {
+  visibility: hidden;
+  display: block;
+
+  margin-top: 1rem;
+  padding: clamp(1.5rem, 8vw, 5rem);
+
+  border-top: 1px solid var(--border);
+
+  background: var(--btn);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+
+  text-align: center;
+  font-size: 1.1rem;
+}
+
+.answer-revealed .flashcard-answer {
+  visibility: visible;
+}
+
+.flashcard-question {
+  padding: clamp(1.5rem, 8vw, 5rem);
+  margin: 0;
+
+  background: var(--btn);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+
+  text-align: center;
+  font-size: 1.1rem;
+}
+
+.flashcard-explanation {
+  visibility: hidden;
+  display: block;
+  margin-top: 1rem;
+  padding: 0.75rem;
+
+  background: var(--btn);
+
+  border-radius: 0.5rem;
+  font-size: 1em;
+  opacity: 0.8;
+}
+.answer-revealed .flashcard-explanation {
+  visibility: visible;
+}
+.flashcard-explanation:empty {
   display: none;
+}
+
+#flashcard-rating,
+.fsrs-rating {
+  visibility: hidden;
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  padding: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.answer-revealed #flashcard-rating {
+  visibility: visible;
+}
+
+.flashcard-rating-button {
+  width: 3rem;
+  height: 3rem;
+
+  font-size: 1.5rem;
+  line-height: 1;
+
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  background: var(--btn);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.known-button {
+  color: var(--success);
+}
+
+.unknown-button {
+  color: var(--danger);
+}
+#explanation {
+  visibility: hidden;
+  display: block;
   margin-top: 1rem;
   padding: 0.75rem;
   background: var(--btn);
   border-radius: 0.5rem;
+  opacity: 0.8;
+}
+
+#explanation:empty {
+  display: none;
+}
+
+.answer-revealed #explanation {
+  visibility: visible;
 }
 
 .navigation-scroll {
@@ -171,9 +271,7 @@ button:disabled {
   overflow-y: hidden;
 }
 
-#navigation,
-#results-navigation,
-#editor-navigation {
+.navigation {
   display: flex;
   flex-wrap: nowrap;
   padding: 0.75rem;
@@ -190,45 +288,36 @@ button:disabled {
   -webkit-user-select: none;
 }
 
-#navigation button,
-#results-navigation button,
-#editor-navigation button {
+.navigation button {
   font-size: 2rem;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-:is(:fullscreen, .pseudo-fullscreen-active) #navigation,
-:is(:fullscreen, .pseudo-fullscreen-active) #results-navigation,
-:is(:fullscreen, .pseudo-fullscreen-active) #editor-navigation {
+:is(:fullscreen, .pseudo-fullscreen-active) .navigation {
   margin: 0;
   border: 0;
   border-top: 1px solid var(--border);
 }
 
-#navigation button,
-#results-navigation button,
-#editor-navigation button {
-  font-size: 2rem;
-}
-
-#reveal-button,
-#maximize-button,
-#download-button,
-#question-selector {
+.reveal-button,
+.maximize-button,
+.download-button,
+.question-selector,
+.srs-selector {
   flex: 0 0 auto;
   min-width: 2rem;
 }
 
-#prev-button,
-#next-button {
+.prev-button,
+.next-button {
   flex: 1;
   font-size: clamp(1.5rem, 5vw, 2rem);
   max-width: 4rem;
 }
 
-#question-selector {
+.question-selector {
   display: flex;
   align-items: center;
   white-space: nowrap;
@@ -244,7 +333,152 @@ button:disabled {
   gap: 0.2rem;
 }
 
-#question-number {
+.srs-mode .question-selector {
+  display: none;
+}
+
+.srs-mode .next-button {
+  display: none;
+}
+
+.srs-mode .srs-selector {
+  display: flex;
+}
+
+.srs-selector {
+  display: none;
+  align-items: center;
+  white-space: nowrap;
+
+  background: var(--btn);
+  color: var(--text);
+
+  border: 1px solid var(--border);
+  border-radius: 0.25rem;
+
+  font-size: 1.1rem;
+
+  gap: 0.7rem;
+  padding: 0 0.6rem;
+}
+
+.srs-mode #flashcard-rating {
+  display: none;
+}
+
+:is(:fullscreen, .pseudo-fullscreen-active) #flashcard-rating,
+:is(:fullscreen, .pseudo-fullscreen-active) .fsrs-rating {
+  display: none;
+}
+
+:is(:fullscreen, .pseudo-fullscreen-active) .answer-revealed #flashcard-rating {
+  display: flex;
+}
+
+:is(:fullscreen, .pseudo-fullscreen-active)
+  .srs-mode.answer-revealed
+  #flashcard-rating {
+  display: none;
+}
+
+:is(:fullscreen, .pseudo-fullscreen-active)
+  .srs-mode.answer-revealed
+  .fsrs-rating {
+  display: flex;
+}
+
+.fsrs-rating-button {
+  width: 4.5rem;
+  height: 3rem;
+
+  font-size: 1.1rem;
+  line-height: 1;
+
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  background: var(--btn);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.fsrs-rating-button.again-button {
+  background: var(--wrong_bg);
+}
+
+.fsrs-rating-button.hard-button {
+  background: color-mix(in srgb, var(--skipped) 30%, var(--btn));
+}
+
+.fsrs-rating-button.good-button {
+  background: var(--correct_bg);
+}
+
+.fsrs-rating-button.easy-button {
+  background: color-mix(in srgb, var(--success) 45%, var(--btn));
+}
+
+/* The rating of the card just rated, in the corner of the page. */
+#rating-indicator {
+  position: fixed;
+  top: 8px;
+  right: 8px;
+  z-index: 1500;
+
+  font-size: 1.5rem;
+  line-height: 1;
+
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity 0.4s ease,
+    visibility 0.4s;
+}
+
+#rating-indicator.visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+#rating-indicator.again {
+  color: var(--danger);
+}
+
+#rating-indicator.hard {
+  color: var(--skipped);
+}
+
+#rating-indicator.good,
+#rating-indicator.easy {
+  color: var(--success);
+}
+.srs-mode.answer-revealed .fsrs-rating {
+  visibility: visible;
+}
+
+.srs-selector > span {
+  font-variant-numeric: tabular-nums;
+  cursor: default;
+}
+
+.srs-due-count {
+  color: var(--skipped);
+}
+
+.srs-review-count {
+  color: var(--danger);
+}
+
+.srs-completed-count {
+  color: var(--success);
+}
+
+.srs-selector .current {
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
+.question-number {
   width: 3ch;
   text-align: center;
   font-size: 1.1rem;
@@ -259,12 +493,12 @@ button:disabled {
   outline: none;
 }
 
-#question-number:focus {
+.question-number:focus {
   outline: none;
   border: none;
 }
 
-#question-count {
+.question-count {
   margin-right: 0.3em;
 }
 
@@ -275,7 +509,7 @@ mjx-container {
 }
 
 /* Hide timer by default */
-#timer {
+.timer {
   display: none;
   min-width: 4rem;
   font-size: 1.1rem;
@@ -283,23 +517,27 @@ mjx-container {
   font-variant-numeric: tabular-nums;
 }
 
-#timer.visible {
+.timer.visible {
   display: inline-block;
 }
 
-#correct {
+#correct,
+#results .correct {
   color: var(--success);
 }
 
-#wrong {
+#wrong,
+#results .wrong {
   color: var(--danger);
 }
 
-#unanswered {
+#unanswered,
+#results .unanswered {
   color: var(--unanswered);
 }
 
-#skipped {
+#skipped,
+#results .skipped {
   color: var(--skipped);
 }
 
@@ -324,9 +562,25 @@ mjx-container {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  margin: 0 auto;
   text-align: center;
   overflow-y: auto;
+}
+
+#restart-confirm {
+  display: none;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--btn);
+}
+
+#restart-confirm button {
+  padding: 0.25rem 0.75rem;
+}
+
+#confirm-restart-button {
+  color: var(--danger);
+  border-color: var(--danger);
 }
 
 /* When embedded in an iframe */
@@ -354,7 +608,10 @@ body.embedded #results-scroll {
   background: var(--btn);
 }
 
-#statsChart {
+#stats-chart {
+  /* The results column is the scroller in fullscreen: a shrinkable
+     chart would be squeezed by the correction sheet below it. */
+  flex: 0 0 auto;
   height: min(50vh, 500px);
   align-self: center;
 }
@@ -430,19 +687,6 @@ textarea:focus {
   display: none;
 }
 
-.editor-prompt {
-  display: none;
-}
-
-.editor-prompt.visible {
-  display: block;
-}
-
-.editor-prompt .button-row {
-  display: flex;
-  gap: 0.5rem;
-}
-
 .answer-position {
   display: flex;
   align-items: center;
@@ -464,41 +708,349 @@ textarea:focus {
   text-align: center;
 }
 
-#actions-button {
-  anchor-name: --actions-button;
+#editor-additional-settings {
+  margin: 0.5rem 0;
+}
+
+#editor-additional-settings summary {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  cursor: pointer;
+  user-select: none;
+
+  /* The chevron below stands in for the native marker. */
+  list-style: none;
+}
+
+#editor-additional-settings summary::-webkit-details-marker {
+  display: none;
+}
+
+#editor-additional-settings summary svg {
+  flex: 0 0 auto;
+
+  width: 1em;
+  height: 1em;
+
+  transition: transform 0.15s ease;
+}
+
+#editor-additional-settings[open] summary svg {
+  transform: rotate(90deg);
+}
+
+.editor-section {
+  padding-top: 0.75rem;
+}
+
+.editor-section + .editor-section {
+  margin-top: 0.75rem;
+  border-top: 1px solid var(--border);
+}
+
+.editor-section-title {
+  margin: 0 0 0.5rem 0;
+
+  font-weight: bold;
+}
+
+#editor-additional-settings .editor-settings {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: 0 1.5rem;
+  margin-top: 0.75rem;
+}
+
+#editor-additional-settings label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+
+  padding: 0.4rem 0;
+}
+
+#editor-additional-settings label > span {
+  flex: 1;
+  text-align: right;
+}
+
+#editor-additional-settings input[type="number"] {
+  width: 6ch;
+  field-sizing: content;
+
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  font-size: 1rem;
+  text-align: center;
+}
+
+#editor-additional-settings input[type="checkbox"] {
+  accent-color: var(--success);
+}
+
+.editor-section-hint {
+  margin: 0 0 0.5rem 0;
+
+  color: var(--unanswered);
+}
+
+/* Question order overlay */
+.order-editor {
+  width: min(28rem, calc(100vw - 2rem));
+  max-width: calc(100vw - 2rem);
+  box-sizing: border-box;
+}
+
+.order-editor .order-actions {
+  display: grid;
+  gap: 0.35rem;
+
+  margin-top: 0.75rem;
+}
+
+.order-editor .order-add-button {
+  width: 100%;
+  padding: 0.35rem 0.5rem;
+  font-size: 1rem;
+}
+
+/* The row of buttons acting on the question the editor is on */
+.order-editor .order-action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.order-editor .order-action-row button {
+  flex: 1 1 6rem;
+  padding: 0.3rem 0.4rem;
+  font-size: 0.9rem;
+}
+
+.order-editor .order-delete-button {
+  color: var(--danger);
+}
+
+.order-editor #order-editor-list {
+  display: grid;
+  gap: 0.25rem;
+
+  overflow: auto;
+  overscroll-behavior: contain;
+
+  max-height: 60vh;
+  margin: 0.75rem 0;
+}
+
+.order-editor .order-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  min-width: max-content;
+  padding: 0.35rem 0.5rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 0.35rem;
+
+  /* The row is picked with a tap; dragging starts from its handle. */
+  cursor: pointer;
+
+  /*
+   * The browser owns pan and pinch zoom here: touch scrolling is
+   * native (smooth, both axes) and pinch zoom works. Reordering is
+   * started from the row's grip handle, which claims its own gesture
+   * (touch-action: none), so scrolling and dragging never conflict.
+   */
+  touch-action: pan-x pan-y pinch-zoom;
+
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Touch drag in progress: suppress text selection and callouts */
+#order-editor.dragging {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.order-editor .order-row:active {
+  cursor: grabbing;
+}
+
+/*
+ * The question that is picked: it is the one the editor is on, and the
+ * one the buttons in the list act on. Marked with an inset bar and a
+ * bold number rather than a border or a background, so the drag colors
+ * below can still show.
+ */
+.order-editor .order-row.order-current {
+  box-shadow: inset 3px 0 0 var(--text);
+}
+
+.order-editor .order-row.order-current .order-number {
+  font-weight: 700;
+}
+
+/*
+ * Visual feedback for reordered slots. The danger color marks the rows
+ * the user actually dragged; the softer tint below only marks rows
+ * that shifted because a neighbour was dragged past them.
+ */
+.order-editor .order-row.order-dragged {
+  border-color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 18%, var(--bg));
+}
+
+.order-editor .order-row.order-changed {
+  border-color: var(--skipped);
+  background: color-mix(in srgb, var(--skipped) 18%, var(--bg));
+}
+
+.order-editor .order-row.order-dragging {
+  opacity: 0.5;
+}
+
+.order-editor .order-row.order-drop-target {
+  border-color: var(--success);
+}
+
+.order-editor .order-number {
+  min-width: 2.5ch;
+  text-align: right;
+}
+
+/*
+ * Touch drag grip, at the left of every row. touch-action: none hands
+ * it the whole gesture, so a drag started here can never lose to
+ * scrolling or a native long press (the browser cannot pan a
+ * touch-action: none element at all). The row body keeps native
+ * scrolling and pinch zoom. It sticks to the left edge so it stays
+ * reachable when a long question makes the row scroll horizontally.
+ */
+.order-editor .order-handle {
+  flex: none;
+  position: sticky;
+  left: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  min-width: 2.25rem;
+  padding: 0.2rem 0.3rem;
+  margin-left: -0.25rem;
+  border-radius: 0.25rem;
+  background: color-mix(in srgb, var(--border) 30%, var(--bg));
+  color: var(--text);
+  cursor: grab;
+  font-size: 1.1em;
+  line-height: 1;
+
+  touch-action: none;
+
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.order-editor .order-handle:active {
+  cursor: grabbing;
+}
+
+.order-editor .order-caption {
+  white-space: nowrap;
 }
 
 .dropdown-menu {
   position: fixed;
-  position-anchor: --actions-button;
-
-  left: anchor(left);
-  top: anchor(bottom);
 
   display: none;
   z-index: 2000;
+  width: max-content;
 
   border: 1px solid var(--border);
   background: var(--bg);
+}
+
+.dropdown-menu :is(button, a) {
+  display: grid;
+  grid-template-columns: 1em 1fr;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  border: none;
+  border-radius: 0;
+  text-align: left;
+  white-space: nowrap;
+  padding: 0.5rem;
+}
+
+/* Links carry their own look; the menu styles them like its buttons. */
+.dropdown-menu a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.dropdown-menu :is(button, a) svg {
+  width: 1em;
+  height: 1em;
+}
+
+.dropdown-menu :is(button, a):not(:has(svg)) {
+  grid-template-columns: 1fr;
 }
 
 .dropdown-menu.show {
   display: block;
 }
 
-.dropdown-menu button {
-  display: block;
-  width: 100%;
-  border: none;
-  border-radius: 0;
-}
-.dropdown-menu button + button {
+.dropdown-menu > * + * {
   border-top: 1px solid var(--border);
 }
 
-:is(:fullscreen, .pseudo-fullscreen-active) .dropdown-menu {
-  top: auto;
-  bottom: anchor(top);
+.global-prompt {
+  display: none;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 9999;
+
+  padding: 1rem;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  width: fit-content;
+  filter: drop-shadow(0 0 0.5rem var(--border));
+}
+
+.global-prompt.visible {
+  display: block;
+}
+
+/*
+ * A prompt can be raised from inside the order editor overlay (adding
+ * or cancelling a question), and both are .global-prompt positioned
+ * elements. The prompt has to stack above the overlay, not with it.
+ */
+#global-prompt {
+  z-index: 10000;
+}
+
+.global-prompt .button-row {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
 }
 
 /* image and embedded styles */

@@ -1,25 +1,40 @@
 import { setStoredQuestionIndex } from "../persistence/progress.js";
+import { resetQuestionSRSState } from "../persistence/question_order.js";
+import { updateQuestionNumbers } from "../quiz.js";
 import { formatTime } from "../shared/formatting.js";
 import { renderMarkdown } from "../shared/markdown.js";
+import { typesetMath } from "../shared/mathjax.js";
+import { initSRS } from "../srs.js";
 import { UNANSWERED, WRONG, CORRECT, SKIPPED, state } from "../state.js";
 import { saveTimer, updateTimer } from "../timer.js";
-import { renderQuiz } from "./mcq.js";
+import { renderFlashcard } from "./flashcards.js";
+import { renderMCQ } from "./mcq.js";
 
 export async function renderResults() {
-  const questionBox = document.querySelector(".question-box");
   const results = document.getElementById("results");
 
+  // Hide current page
+  const flashcardBox = document.getElementById("flashcard-box");
+  flashcardBox.style.display = "none";
+  const questionBox = document.getElementById("question-box");
   questionBox.style.display = "none";
+
   results.style.display = "";
 
-  const correct = state.questionResults.filter((x) => x === CORRECT).length;
-  const wrong = state.questionResults.filter((x) => x === WRONG).length;
-  const unanswered = state.questionResults.filter(
-    (x) => x === UNANSWERED,
-  ).length;
-  const skipped = state.questionResults.filter((x) => x === SKIPPED).length;
+  /*
+   * Count only the questions that are still in the quiz: the results
+   * of a question deleted in the editor are left behind with it.
+   */
+  const ordered = state.questionOrder.map(
+    (index) => state.questionResults[index],
+  );
 
-  const total = state.quiz.questions.length;
+  const correct = ordered.filter((x) => x === CORRECT).length;
+  const wrong = ordered.filter((x) => x === WRONG).length;
+  const unanswered = ordered.filter((x) => x === UNANSWERED).length;
+  const skipped = ordered.filter((x) => x === SKIPPED).length;
+
+  const total = state.questionOrder.length;
   const answered = correct + wrong;
 
   const accuracy = answered > 0 ? (correct / answered) * 100 : 0;
@@ -63,18 +78,10 @@ export async function renderResults() {
   document.getElementById("averageTime").textContent =
     `Average time per question: ${formatTime(Math.floor(elapsed / total))}`;
 
-  createDonutChart(document.getElementById("statsChart"), chartData);
+  createDonutChart(document.getElementById("stats-chart"), chartData);
   showCorrectionSheet();
 
-  if (state.mathReady && window.MathJax) {
-    try {
-      await MathJax.typesetPromise([
-        document.getElementById("question-corrections"),
-      ]);
-    } catch (err) {
-      console.error("MathJax typesetting failed:", err);
-    }
-  }
+  await typesetMath();
 }
 
 function createDonutChart(container, data) {
@@ -124,30 +131,70 @@ transform="rotate(-90 ${center} ${center})"
 `;
 }
 
+/**
+ * Reads the "Your answer" line of a correction.
+ *
+ * A flashcard is rated rather than picked, so it shows the checkmark
+ * convention. A multiple-choice question shows the option that was
+ * picked, and one answered by rating it - spaced repetition review,
+ * where the rating is the verdict - shows the same checkmarks instead
+ * of reading as unanswered.
+ *
+ * @param {number} index Index of the question in state.quiz.questions.
+ * @param {object} question The question at that index.
+ * @returns {string} What the correction shows as the user's answer.
+ */
+function describeUserAnswer(index, question) {
+  const result = state.questionResults[index];
+
+  if (state.mode === "flashcard") {
+    return result === CORRECT ? "✓" : result === WRONG ? "✗" : "Unanswered";
+  }
+
+  if (result === SKIPPED) {
+    return "Skipped";
+  }
+
+  const userIndex = state.questionAnswers[index];
+
+  if (userIndex !== null) {
+    return question.options[userIndex];
+  }
+
+  return result === CORRECT ? "✓" : result === WRONG ? "✗" : "Unanswered";
+}
+
 function showCorrectionSheet() {
   const container = document.getElementById("question-corrections");
   const questions = state.quiz.questions;
 
   container.innerHTML = "";
 
-  for (let index = 0; index < questions.length; index++) {
+  const resultClass = {
+    [CORRECT]: "correct",
+    [WRONG]: "wrong",
+    [UNANSWERED]: "unanswered",
+    [SKIPPED]: "skipped",
+  };
+
+  for (
+    let orderIndex = 0;
+    orderIndex < state.questionOrder.length;
+    orderIndex++
+  ) {
+    const index = state.questionOrder[orderIndex];
     const question = questions[index];
 
     const correctAnswer = question.options[question.correct_index];
 
-    const userIndex = state.questionAnswers[index];
-
-    const userAnswer =
-      state.questionResults[index] === SKIPPED
-        ? "Skipped"
-        : userIndex !== null
-          ? question.options[userIndex]
-          : "Unanswered";
+    const userAnswer = describeUserAnswer(index, question);
 
     const article = document.createElement("article");
 
+    const currentClass = resultClass[state.questionResults[index]];
+
     article.innerHTML = `
-<h3>Question ${index + 1}</h3>
+<h3 class="${currentClass}">Question ${orderIndex + 1}</h3>
 
 <p>${renderMarkdown(question.question, state.mathReady)}</p>
 
@@ -177,12 +224,10 @@ ${
   }
 }
 
-const questionNumber = document.getElementById("question-number");
-
-export function restartQuiz() {
+export async function restartQuiz() {
   // Reset question state
-  state.currentQuestionIndex = 0;
-  questionNumber.value = 1;
+  state.currentQuestionIndex = state.questionOrder[0];
+  updateQuestionNumbers();
   state.answerRevealed = false;
   state.wrongAnswerCount = 0;
 
@@ -201,26 +246,52 @@ export function restartQuiz() {
   state.timer.start = state.timer.visible ? Date.now() : null;
   state.defaultStartDate = Date.now();
 
-  const timerElement = document.getElementById("timer");
+  const timerElements = document.querySelectorAll(".timer");
+
   if (state.timer.visible) {
     updateTimer();
     state.timer.interval = setInterval(updateTimer, 1000);
   } else {
-    timerElement.textContent = formatTime(0);
+    timerElements.forEach((timerElement) => {
+      timerElement.textContent = formatTime(0);
+    });
   }
   saveTimer();
 
   // Reset stored question
-  setStoredQuestionIndex(state.quizStorageKey, 0);
+  setStoredQuestionIndex(state.quizStorageKey, state.currentQuestionIndex);
+
+  // Reset SRS
+  resetQuestionSRSState(state.quizStorageKey);
+  if (state.srs) {
+    await initSRS(state.quizStorageKey, state.currentQuestionIndex);
+  }
 
   // Return to quiz
   const results = document.getElementById("results");
-  const questionBox = document.querySelector(".question-box");
 
   results.style.display = "none";
-  questionBox.style.display = "";
 
   document.getElementById("restart-confirm").style.display = "none";
 
-  renderQuiz();
+  if (state.mode === "flashcard") {
+    const flashcardBox = document.getElementById("flashcard-box");
+    flashcardBox.style.display = "";
+    renderFlashcard();
+    return;
+  }
+
+  const questionBox = document.getElementById("question-box");
+  questionBox.style.display = "";
+  document.getElementById("restart-confirm").style.display = "none";
+
+  renderMCQ();
+}
+
+export function confirmRestart() {
+  document.getElementById("restart-confirm").style.display = "flex";
+}
+
+export function cancelRestart() {
+  document.getElementById("restart-confirm").style.display = "none";
 }

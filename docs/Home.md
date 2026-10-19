@@ -10,8 +10,8 @@ Open QuizUI can be used as either a Tool or an Action.
 
 | Type   | Pros                                                                                                                                      | Cons                                                                                                                                  |
 | ------ | ----------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| Tool   | Automatic — the model decides when to display a quiz. The structured output makes the quiz predictable and easy for Open-QuizUI to parse. | Less user control; depends on the model choosing to call it. Strict JSON formatting makes generation more demanding for small models. |
-| Action | User has direct control over when to display a quiz, can modify the message, and regenerate the quiz as needed.                           | Requires manually triggering it from the message actions. The quiz format may not be recognized                                       |
+| Tool   | Automatic — the model decides when to display a quiz. The structured output makes the quiz predictable and easy for Open QuizUI to parse. | Less user control; depends on the model choosing to call it. Strict JSON formatting makes generation more demanding for small models. |
+| Action | User has direct control over when to display a quiz, can modify the message, and regenerate the quiz as needed.                           | Requires manually triggering it from the message actions. The quiz format may not be recognized.                                      |
 
 ## Pages
 
@@ -20,5 +20,6 @@ Open QuizUI can be used as either a Tool or an Action.
 - [Formatting](Formatting.md)
 - [Customization](Customization.md)
 - [Troubleshooting](Troubleshooting.md)
+- [Release Notes](Release-Notes.md)
 - [Development](Development.md)
 - [Contributing](Contributing.md)

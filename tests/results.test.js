@@ -1,0 +1,173 @@
+/**
+ * @vitest-environment jsdom
+ */
+
+import { beforeEach, describe, expect, vi, it } from "vitest";
+import { renderResults } from "../frontend/src/rendering/results";
+import {
+  CORRECT,
+  WRONG,
+  SKIPPED,
+  UNANSWERED,
+  state,
+} from "../frontend/src/state";
+
+vi.mock("../frontend/src/persistence/progress.js", () => ({
+  setStoredQuestionIndex: vi.fn(),
+}));
+
+vi.mock("../frontend/src/shared/formatting.js", () => ({
+  formatTime: vi.fn((seconds) => `TIME:${seconds}`),
+}));
+
+vi.mock("../frontend/src/shared/markdown.js", () => ({
+  renderMarkdown: vi.fn((text) => text),
+}));
+
+vi.mock("../frontend/src/timer.js", () => ({
+  saveTimer: vi.fn(),
+  updateTimer: vi.fn(),
+}));
+
+vi.mock("../frontend/src/rendering/mcq.js", () => ({
+  renderQuiz: vi.fn(),
+}));
+
+/**
+ * The "Your answer" of each correction, in the order they are shown.
+ *
+ * The template's newlines and indentation are collapsed first, so the
+ * value can be read between its label and the next one.
+ */
+const correctionAnswers = () =>
+  [...document.querySelectorAll("#question-corrections article")].map(
+    (article) =>
+      article.textContent
+        .replace(/\s+/g, " ")
+        .match(/Your answer: (.*?) Correct answer: /)?.[1],
+  );
+
+describe("renderResults", () => {
+  beforeEach(() => {
+    document.body.innerHTML = `
+<div id="results"></div>
+<div id="flashcard-box"></div>
+<div id="question-box"></div>
+
+<div id="score"></div>
+<div id="accuracy"></div>
+<div id="correct"></div>
+<div id="wrong"></div>
+<div id="unanswered"></div>
+<div id="skipped"></div>
+<div id="time"></div>
+<div id="averageTime"></div>
+
+<div id="stats-chart"></div>
+<div id="question-corrections"></div>
+
+`;
+
+    state.quiz = {
+      questions: [
+        {
+          question: "Q1",
+          options: ["A", "B"],
+          correct_index: 0,
+          explanation: "Explanation",
+        },
+        {
+          question: "Q2",
+          options: ["A", "B"],
+          correct_index: 1,
+        },
+        {
+          question: "Q3",
+          options: ["A", "B"],
+          correct_index: 0,
+        },
+        {
+          question: "Q4",
+          options: ["A", "B"],
+          correct_index: 1,
+        },
+      ],
+    };
+
+    state.questionResults = [CORRECT, WRONG, UNANSWERED, SKIPPED];
+
+    state.questionAnswers = [0, 0, null, null];
+    state.questionOrder = [0, 1, 2, 3];
+
+    state.mode = "mcq";
+
+    state.timer.visible = false;
+    state.defaultStartDate = Date.now();
+
+    vi.clearAllMocks();
+  });
+
+  it("displays the results", async () => {
+    await renderResults();
+
+    expect(document.getElementById("question-box").style.display).toBe("none");
+
+    expect(document.getElementById("results").style.display).toBe("");
+  });
+
+  it("calculates and displays the score", async () => {
+    await renderResults();
+
+    expect(document.getElementById("score").textContent).toBe("Score: 1/2");
+
+    expect(document.getElementById("accuracy").textContent).toBe(
+      "Accuracy: 50.0%",
+    );
+
+    expect(document.getElementById("correct").textContent).toBe("Correct: 1");
+
+    expect(document.getElementById("wrong").textContent).toBe("Wrong: 1");
+
+    expect(document.getElementById("unanswered").textContent).toBe(
+      "Unanswered: 1",
+    );
+
+    expect(document.getElementById("skipped").textContent).toBe("Skipped: 1");
+  });
+
+  it("shows the correction sheet", async () => {
+    await renderResults();
+
+    const corrections = document.getElementById("question-corrections");
+
+    expect(corrections.querySelectorAll("article")).toHaveLength(4);
+    expect(corrections.textContent).toContain("Question 1");
+    expect(corrections.textContent).toContain("Your answer:");
+    expect(corrections.textContent).toContain("Correct answer:");
+    expect(corrections.textContent).toContain("Explanation");
+  });
+
+  it("tells the picked option from a skip and from no answer", async () => {
+    await renderResults();
+
+    expect(correctionAnswers()).toEqual(["A", "A", "Unanswered", "Skipped"]);
+  });
+
+  it("shows the rating of a question that was rated, not picked", async () => {
+    // Rating a question in spaced repetition mode answers it without
+    // picking an option.
+    state.questionAnswers = [null, null, null, null];
+
+    await renderResults();
+
+    expect(correctionAnswers()).toEqual(["✓", "✗", "Unanswered", "Skipped"]);
+  });
+
+  it("shows the checkmarks a flashcard is rated with", async () => {
+    state.mode = "flashcard";
+
+    await renderResults();
+
+    expect(correctionAnswers()).toEqual(["✓", "✗", "Unanswered", "Unanswered"]);
+  });
+});

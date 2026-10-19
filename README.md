@@ -1,6 +1,6 @@
 # Open QuizUI
 
-Open QuizUI is a tool / action function for displaying interactive multiple-choice quizzes inside Open WebUI using rich UI element embedding.
+Open QuizUI is a tool / action function for displaying interactive multiple-choice quizzes and flashcards inside Open WebUI using rich UI element embedding.
 
 ## Features
 
@@ -9,8 +9,10 @@ Open QuizUI is a tool / action function for displaying interactive multiple-choi
 - Render MathJax for LaTeX expressions¹
 - Full-screen / focus mode²
 - Separate light/dark themes
-- Save a quiz and share it as an HTML file (works outside Open WebUI)
-- Edit any question after quiz generation using the editor
+- Multiple-choice quizzes or flashcards, parsed from one message
+- Optional spaced repetition review (FSRS)
+- Save a quiz as an HTML file, or copy it back out as text to keep and reuse (works outside Open WebUI)
+- Add, remove, reorder and edit questions after generation, from the quiz page
 - Embed anything with HTML (images, videos, iframes, etc.)
 - Results/stats page at the end with corrections
 - Use one of many colour schemes or make your own
@@ -58,7 +60,7 @@ If you encounter a format that should be supported but isn't, please submit a bu
 
 - Any model will work. However, small models such as Qwen3.5 9B can fail heavy tool calls or break the action function by making formatting mistakes or doubting themselves outside a think block. Gemma usually has better formatting.
 - For the recommended question and answer format for the action function, see the [Recommended Format](docs/Usage.md#recommended-format) documentation.
-- The action function currently looks for French and English keywords such as `Question`, `Answer`, `A`, `Réponse`, and `R`, as well as numbered questions. If you use another language, you can modify add custom keywords in the settings or adjust your prompt.
+- The action function currently looks for French and English keywords such as `Question`, `Answer`, `A`, `Réponse`, and `R`, as well as numbered questions. If you use another language, you can add custom keywords in the settings or adjust your prompt.
 - The questions and answers must be in the **same message** for the action function to parse them. If the LLM provides them in separate messages, you can edit the first message and paste the answer key into it.
 
 ## Documentation
@@ -70,5 +72,6 @@ More detailed documentation is available in the [`docs/`](docs/) directory:
 - [Formatting](docs/Formatting.md)
 - [Customization](docs/Customization.md)
 - [Troubleshooting](docs/Troubleshooting.md)
+- [Release Notes](docs/Release-Notes.md)
 - [Development](docs/Development.md)
 - [Contributing](docs/Contributing.md)

@@ -1,11 +1,24 @@
 import { state } from "../state.js";
-import { renderQuiz } from "./mcq.js";
+import { setSRSConfig, initSRS } from "../srs.js";
 import {
   removeAllLocalEdits,
   removeLocalEdit,
   saveLocalEdit,
 } from "../persistence/quiz_edits.js";
-import { setQuizTitle } from "../quiz.js";
+import { saveAppDataOverrides } from "../persistence/app_data.js";
+import {
+  loadQuestionOrder,
+  clearQuestionOrder,
+} from "../persistence/question_order.js";
+import { clearQuestionRemovals } from "../persistence/question_removals.js";
+import {
+  goTo,
+  removeAddedQuestion,
+  setQuizTitle,
+  updateSRSCounts,
+} from "../quiz.js";
+import { closeOrderEditor, openOrderEditor } from "./order.js";
+import { showAlert, showPrompt } from "../ui/alert.js";
 
 document
   .getElementById("editor-answer-number")
@@ -13,22 +26,33 @@ document
     e.target.value = e.target.value.replace(/\D/g, "");
   });
 
-export function confirmRestart() {
-  document.getElementById("restart-confirm").style.display = "flex";
-}
+/**
+ * Updates the "Question X of Y" line above the title field.
+ *
+ * The position is the question's place in the saved navigation order,
+ * and the total is the number of questions that are left, so the line
+ * is only rewritten when an order is actually saved - a drag that has
+ * not been saved yet does not move it.
+ *
+ * @returns {void}
+ */
+export function updateEditorQuestionNumber() {
+  const orderIndex = state.questionOrder.indexOf(state.currentQuestionIndex);
+  const questionPosition =
+    orderIndex === -1 ? state.currentQuestionIndex + 1 : orderIndex + 1;
 
-export function cancelRestart() {
-  document.getElementById("restart-confirm").style.display = "none";
+  document.getElementById("editor-question-number").textContent =
+    `Question ${questionPosition} of ${state.questionOrder.length}`;
 }
 
 export function openEditor() {
-  const questionBox = document.querySelector(".question-box");
   const editor = document.getElementById("editor");
-  const prompt = document.getElementById("editor-close");
 
-  prompt.classList.remove("visible");
+  // Hide current page
+  document.getElementById("flashcard-box").style.display = "none";
+  document.getElementById("question-box").style.display = "none";
 
-  questionBox.style.display = "none";
+  // Show editor page
   editor.style.display = "";
 
   const titleField = document.getElementById("editor-title");
@@ -38,6 +62,8 @@ export function openEditor() {
   const optionsContainer = document.getElementById("editor-distractors");
 
   const question = state.quiz.questions[state.currentQuestionIndex];
+
+  updateEditorQuestionNumber();
 
   // Set initial values
   titleField.innerHTML = `<textarea></textarea>`;
@@ -56,6 +82,172 @@ export function openEditor() {
   question.options.forEach((option) => {
     optionsContainer.appendChild(addEditorOption(option));
   });
+
+  loadAdditionalSettings();
+
+  rememberEditorValues();
+}
+
+/**
+ * Controller for the additional settings fields.
+ *
+ * Keeps a snapshot of the values the editor was opened with, so
+ * unchanged settings are not persisted as app data overrides.
+ */
+let additionalSettingsSnapshot = null;
+
+/**
+ * Reads the additional settings fields as state values.
+ *
+ * @returns {object} The FSRS config and SRS queue size from the fields.
+ */
+function getEditorSettingsValues() {
+  const edit = (id) => document.getElementById(id);
+
+  return {
+    srsQueueSize: parseInt(edit("editor-srs-queue-size").value, 10),
+    srsConfig: {
+      request_retention: parseFloat(
+        edit("editor-fsrs-request-retention").value,
+      ),
+      maximum_interval: parseInt(
+        edit("editor-fsrs-maximum-interval").value,
+        10,
+      ),
+      enable_fuzz: edit("editor-fsrs-enable-fuzz").checked,
+      enable_short_term: edit("editor-fsrs-enable-short-term").checked,
+    },
+  };
+}
+
+/**
+ * Fills the additional settings fields with the current FSRS values.
+ *
+ * @returns {void}
+ */
+function loadAdditionalSettings() {
+  const config = state.srsConfig;
+
+  document.getElementById("editor-srs-queue-size").value = state.srsQueueSize;
+  document.getElementById("editor-fsrs-request-retention").value =
+    config.request_retention;
+  document.getElementById("editor-fsrs-maximum-interval").value =
+    config.maximum_interval;
+  document.getElementById("editor-fsrs-enable-fuzz").checked =
+    config.enable_fuzz;
+  document.getElementById("editor-fsrs-enable-short-term").checked =
+    config.enable_short_term;
+
+  additionalSettingsSnapshot = JSON.stringify(getEditorSettingsValues());
+}
+
+/**
+ * Snapshot of the editor's fields, taken when the editor is opened or
+ * saved, to tell later whether anything in it was changed.
+ */
+let editorSnapshot = null;
+
+/**
+ * Reads the question fields of the editor as values.
+ *
+ * @returns {object} Title, question, answer position, options and
+ *   explanation, as they currently read.
+ */
+function getEditorQuestionValues() {
+  const field = (id) => document.querySelector(`#${id} textarea`)?.value ?? "";
+
+  const optionsContainer = document.getElementById("editor-distractors");
+
+  return {
+    title: field("editor-title"),
+    question: field("editor-question"),
+    explanation: field("editor-explanation"),
+    answer: document.getElementById("editor-answer-number").value,
+    options: Array.from(optionsContainer.querySelectorAll("textarea")).map(
+      (textarea) => textarea.value,
+    ),
+  };
+}
+
+/**
+ * Remembers the editor's fields as the saved state.
+ *
+ * @returns {void}
+ */
+function rememberEditorValues() {
+  editorSnapshot = JSON.stringify([
+    getEditorQuestionValues(),
+    getEditorSettingsValues(),
+  ]);
+}
+
+/**
+ * Whether the editor holds changes that have not been saved.
+ *
+ * The question list asks before switching the editor to another
+ * question, which would drop whatever is in these fields.
+ *
+ * @returns {boolean} Whether there is anything unsaved.
+ */
+export function hasUnsavedEditorChanges() {
+  if (editorSnapshot === null) {
+    return false;
+  }
+
+  return (
+    JSON.stringify([getEditorQuestionValues(), getEditorSettingsValues()]) !==
+    editorSnapshot
+  );
+}
+
+document
+  .getElementById("order-editor-open-button")
+  .addEventListener("click", openOrderEditor);
+
+/**
+ * Validates the additional settings fields.
+ *
+ * @returns {boolean} Whether all additional settings are valid.
+ */
+function validateAdditionalSettings() {
+  const retentionInput = document.getElementById(
+    "editor-fsrs-request-retention",
+  );
+  const intervalInput = document.getElementById("editor-fsrs-maximum-interval");
+  const queueInput = document.getElementById("editor-srs-queue-size");
+
+  const retention = parseFloat(retentionInput.value);
+  const maximumInterval = parseInt(intervalInput.value, 10);
+  const queueSize = parseInt(queueInput.value, 10);
+
+  let valid = true;
+
+  const check = (input, condition) => {
+    input.classList.remove("input-error");
+
+    if (!condition) {
+      input.classList.add("input-error");
+      valid = false;
+    }
+  };
+
+  check(
+    retentionInput,
+    !Number.isNaN(retention) && retention > 0 && retention < 1,
+  );
+  check(
+    intervalInput,
+    Number.isInteger(maximumInterval) && maximumInterval >= 1,
+  );
+  check(queueInput, Number.isInteger(queueSize) && queueSize >= 1);
+
+  if (!valid) {
+    showAlert(
+      "Invalid Additional Settings: request retention must be between 0 and 1, and the other values must be positive integers.",
+    );
+  }
+
+  return valid;
 }
 
 function addEditorOption(value) {
@@ -101,49 +293,6 @@ function addEditorOption(value) {
   return article;
 }
 
-function showEditorPrompt(
-  message,
-  onYes = null,
-  onNo = null,
-  yesText = "yes",
-  noText = "no",
-) {
-  const prompt = document.getElementById("editor-close");
-  const messageElement = document.getElementById("editor-prompt-message");
-  const yesButton = document.getElementById("editor-prompt-yes");
-  const noButton = document.getElementById("editor-prompt-no");
-  messageElement.textContent = message;
-  yesButton.textContent = yesText;
-  noButton.textContent = noText;
-  yesButton.style.display = "";
-  noButton.style.display = "";
-  yesButton.onclick = () => {
-    prompt.classList.remove("visible");
-    if (onYes) onYes();
-  };
-  noButton.onclick = () => {
-    prompt.classList.remove("visible");
-    if (onNo) onNo();
-  };
-  prompt.classList.add("visible");
-}
-
-// Alerts don't work in iframes, so we use a custom alert div
-function showEditorAlert(message) {
-  const prompt = document.getElementById("editor-close");
-  const messageElement = document.getElementById("editor-prompt-message");
-  const yesButton = document.getElementById("editor-prompt-yes");
-  const noButton = document.getElementById("editor-prompt-no");
-  messageElement.textContent = message;
-  yesButton.textContent = "OK";
-  yesButton.style.display = "";
-  noButton.style.display = "none";
-  yesButton.onclick = () => {
-    prompt.classList.remove("visible");
-  };
-  prompt.classList.add("visible");
-}
-
 // Returns false if the selected answer index does not exist in the DOM anymore
 function validateAnswerIndex() {
   const answerInput = document.querySelector("#editor-answer-number");
@@ -155,7 +304,7 @@ function validateAnswerIndex() {
 
   if (val < 0 || val >= options.length) {
     answerInput.classList.add("input-error");
-    showEditorAlert("Invalid Index: The selected option no longer exists.");
+    showAlert("Invalid Index: The selected option no longer exists.");
     return false;
   }
 
@@ -163,7 +312,7 @@ function validateAnswerIndex() {
 }
 
 export function closeEditorConfirm() {
-  showEditorPrompt(
+  showPrompt(
     "Exit? Unsaved changes will be lost.",
     closeEditor,
     null,
@@ -172,8 +321,8 @@ export function closeEditorConfirm() {
   );
 }
 
-export function saveEdit() {
-  if (!validateAnswerIndex()) {
+export async function saveEdit() {
+  if (!validateAnswerIndex() || !validateAdditionalSettings()) {
     return;
   }
 
@@ -206,18 +355,63 @@ export function saveEdit() {
   state.quiz.questions[state.currentQuestionIndex].explanation =
     newExplanationText;
 
+  // Apply additional (FSRS) settings
+  const settingsChanged = applyAdditionalSettings();
+
   // Persist the actual changes (locally)
-  if (saveLocalEdit(state.currentQuestionIndex, titleChanged)) {
-    showEditorAlert("Changes saved.");
+  const questionSaved = saveLocalEdit(state.currentQuestionIndex, titleChanged);
+
+  if (questionSaved || settingsChanged) {
+    showAlert("Changes saved.");
+  }
+
+  // What is in the fields is the saved state now.
+  rememberEditorValues();
+
+  /*
+   * A changed queue size only reaches the SRS queue when it is filled,
+   * which happens at initialization. Re-run the initialization so the
+   * new size applies right away; with SRS off there is no queue and the
+   * next initialization picks the size up.
+   */
+  if (settingsChanged && state.srs) {
+    await initSRS(state.quizStorageKey, state.currentQuestionIndex);
+
+    updateSRSCounts();
   }
 }
 
-function closeEditor() {
-  const questionBox = document.querySelector(".question-box");
-  const editor = document.getElementById("editor");
-  const prompt = document.getElementById("editor-close");
+/**
+ * Applies the additional settings fields to the runtime state and
+ * persists them as app data overrides so they survive a refresh.
+ *
+ * Unchanged fields (matching what the editor was opened with) are not
+ * persisted.
+ *
+ * @returns {boolean} Whether any setting differs from what the editor
+ *   was opened with.
+ */
+function applyAdditionalSettings() {
+  const values = getEditorSettingsValues();
 
-  prompt.classList.remove("visible");
+  const settingsChanged = JSON.stringify(values) !== additionalSettingsSnapshot;
+
+  setSRSConfig(values.srsConfig);
+
+  state.srsQueueSize = values.srsQueueSize;
+
+  if (settingsChanged) {
+    saveAppDataOverrides(state.quizStorageKey, {
+      srsConfig: { ...state.srsConfig },
+      srsQueueSize: state.srsQueueSize,
+    });
+  }
+
+  return settingsChanged;
+}
+
+function closeEditor() {
+  const editor = document.getElementById("editor");
 
   editor.style.display = "none";
 
@@ -225,13 +419,24 @@ function closeEditor() {
   const options = document.getElementById("editor-distractors");
   options.innerHTML = "";
 
-  questionBox.style.display = "";
+  /*
+   * Anything the editor opened goes with it: the question list is not
+   * modal (it has no backdrop), so the editor can be closed from
+   * behind it.
+   */
+  closeOrderEditor();
 
-  renderQuiz();
+  /*
+   * Leave the quiz on the question the editor was showing - it can
+   * have moved there, e.g. to a question added in the order editor -
+   * so the question, the navigation field and the stored position all
+   * agree again, in both navigation modes.
+   */
+  goTo(state.currentQuestionIndex);
 }
 
 export function restoreQuizToDefault() {
-  showEditorPrompt(
+  showPrompt(
     "Restore the quiz to its original state?\nAll local edits will be discarded.",
     () => {
       // Update using app-data from last download
@@ -242,11 +447,21 @@ export function restoreQuizToDefault() {
       state.quiz = structuredClone(appData.quiz);
       setQuizTitle(state.quiz.title);
 
+      // Reset the question order to the natural sequence, and bring
+      // back the questions deleted locally.
+      clearQuestionOrder(state.quizStorageKey);
+      clearQuestionRemovals(state.quizStorageKey);
+      state.removedQuestions = new Set();
+      state.questionOrder = loadQuestionOrder(
+        state.quizStorageKey,
+        state.quiz.questions.length,
+      );
+
       // Remove local storage edits
       removeAllLocalEdits();
 
       openEditor();
-      showEditorAlert("Quiz restored to default.");
+      showAlert("Quiz restored to default.");
     },
     null,
     "Yes",
@@ -255,15 +470,39 @@ export function restoreQuizToDefault() {
 }
 
 export function restoreQuestionToDefault() {
-  showEditorPrompt(
+  const appData = JSON.parse(document.getElementById("app-data").textContent);
+
+  const index = state.currentQuestionIndex;
+
+  /*
+   * A question added in the editor has no original to restore: it only
+   * exists locally, so resetting it means removing it again.
+   */
+  if (index >= appData.quiz.questions.length) {
+    showPrompt(
+      "Remove this added question?\nIt will be deleted from the quiz.",
+      () => {
+        removeAddedQuestion(index);
+
+        state.currentQuestionIndex = Math.min(
+          index,
+          state.quiz.questions.length - 1,
+        );
+
+        openEditor();
+        showAlert("Added question removed.");
+      },
+      null,
+      "Yes",
+      "No",
+    );
+
+    return;
+  }
+
+  showPrompt(
     "Restore the current question to its original state?\nAll local edits will be discarded.",
     () => {
-      const appData = JSON.parse(
-        document.getElementById("app-data").textContent,
-      );
-
-      const index = state.currentQuestionIndex;
-
       state.quiz.questions[index] = structuredClone(
         appData.quiz.questions[index],
       );
@@ -271,7 +510,7 @@ export function restoreQuestionToDefault() {
       removeLocalEdit(index);
 
       openEditor();
-      showEditorAlert("Question restored to default.");
+      showAlert("Question restored to default.");
     },
     null,
     "Yes",

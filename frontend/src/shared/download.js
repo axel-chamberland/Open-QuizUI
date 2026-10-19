@@ -1,49 +1,89 @@
 import { state } from "../state.js";
 
-// Download as HTML.
+// Download the original HTML with the current app data.
 export function downloadQuizHTML() {
-    // quiz is the current runtime-modified quiz
-    const appData = {
-        enableMathJax: state.mathReady,
-        quiz: state.quiz,
-    };
+  /*
+   * The quiz's own questions are the baseline local edits are stored
+   * against, so deleted ones are still in the array; they are left out
+   * of the downloaded quiz, which has no use for them.
+   */
+  const questions = state.quiz.questions.filter(
+    (_, index) => !state.removedQuestions?.has(index),
+  );
 
-    const filename = state.quiz.title;
+  // quiz is the current runtime-modified quiz
+  const appData = {
+    mode: state.mode,
+    enableMathJax: state.mathReady,
+    quiz: { ...state.quiz, questions },
+    // srs appdata
+    srsOnLoad: state.srs,
+    srsQueueSize: state.srsQueueSize,
+    requestRetention: state.srsConfig.request_retention,
+    srsConfig: state.srsConfig,
+  };
 
-    // Clone the document so the live page is not modified.
-    const documentClone = document.documentElement.cloneNode(true);
+  const filename = state.quiz.title;
 
-    const questionScroll = documentClone.querySelector("#question-scroll");
+  // Clone the document so the live page is not modified.
+  const documentClone = document.documentElement.cloneNode(true);
 
-    // Empty current quiz
-    if (questionScroll) {
-        questionScroll.querySelector("#question").replaceChildren();
-        questionScroll.querySelector("#options").replaceChildren();
-        questionScroll.querySelector("#explanation").replaceChildren();
-    }
+  const questionScroll = documentClone.querySelector("#question-scroll");
 
-    // Replace the JSON payload in the cloned document.
-    const dataScript = documentClone.querySelector("#app-data");
+  // Empty current quiz
+  if (questionScroll) {
+    questionScroll.querySelector("#question")?.replaceChildren();
+    questionScroll.querySelector("#options")?.replaceChildren();
+    questionScroll.querySelector("#explanation")?.replaceChildren();
+  }
 
-    if (!dataScript) {
-        throw new Error("Could not find #app-data");
-    }
+  // Reset flashcard-rendered content.
+  const flashcardBox = documentClone.querySelector("#flashcard-box");
 
-    dataScript.textContent = JSON.stringify(appData, null, 2);
+  if (flashcardBox) {
+    flashcardBox.querySelector(".flashcard-question")?.replaceChildren();
+    flashcardBox.querySelector(".flashcard-answer")?.replaceChildren();
+    flashcardBox.querySelector(".flashcard-explanation")?.replaceChildren();
+  }
 
-    // Serialize the cloned document.
-    const html = "<!DOCTYPE html>\n" + documentClone.outerHTML;
+  // Reset Dropdown menus
+  documentClone.querySelectorAll(".dropdown-menu").forEach((menu) => {
+    menu.classList.remove("show");
+    menu.style.removeProperty("left");
+    menu.style.removeProperty("top");
+    menu.style.removeProperty("bottom");
+  });
 
-    const blob = new Blob([html], { type: "text/html" });
-    const url = URL.createObjectURL(blob);
+  // Reset the rating indicator, which is transient on the live page.
+  const ratingIndicator = documentClone.querySelector("#rating-indicator");
 
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename.endsWith(".html") ? filename : filename + ".html";
+  if (ratingIndicator) {
+    ratingIndicator.replaceChildren();
+    ratingIndicator.className = "";
+  }
 
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
+  // Replace the JSON payload in the cloned document.
+  const dataScript = documentClone.querySelector("#app-data");
 
-    URL.revokeObjectURL(url);
+  if (!dataScript) {
+    throw new Error("Could not find #app-data");
+  }
+
+  dataScript.textContent = JSON.stringify(appData, null, 2);
+
+  // Serialize the cloned document.
+  const html = "<!DOCTYPE html>\n" + documentClone.outerHTML;
+
+  const blob = new Blob([html], { type: "text/html" });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename.endsWith(".html") ? filename : filename + ".html";
+
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+
+  URL.revokeObjectURL(url);
 }

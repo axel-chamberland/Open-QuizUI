@@ -2,15 +2,15 @@
 title: QuizUI
 author: Axel Chamberland
 git_url: https://github.com/axel-chamberland/OpenQuizUI
-description: This tool allows large language models to generated interactive multiple-choice quizzes.
-version: 2.2.1
+description: This tool allows large language models to generate interactive multiple-choice quizzes and flashcards.
+version: 3.0
 licence: MIT
 """
 
 import random
 import re
-from difflib import SequenceMatcher
 from functools import wraps
+from textwrap import dedent
 from typing import Literal
 
 import markdown
@@ -18,78 +18,7 @@ import regex
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, Field
 
-THEMES = {
-    "default_light": """
---bg: oklch(100% 0 0);
---btn: oklch(94% 0 0);
---text: oklch(20% 0 0);
---border: oklch(85% 0 0);
-
---success: #0fff93;
---danger: #ff4545;
---skipped: #ffb800;
---unanswered: #8a8a8a;
-
---correct_bg: color-mix(in srgb, var(--success) 30%, var(--btn));
---wrong_bg: color-mix(in srgb, var(--danger) 30%, var(--btn));
-""",
-    "default_dark": """
---bg: oklch(20% 0 0);
---btn: oklch(24% 0 0);
---text: oklch(94% 0 0);
---border: oklch(85% 0 0);
-
---success: #00ff00;
---danger: #ff0000;
---skipped: #ffcc00;
---unanswered: #999999;
-
---correct_bg: color-mix(in srgb, var(--success) 30%, var(--btn));
---wrong_bg: color-mix(in srgb, var(--danger) 30%, var(--btn));
-""",
-    "tokyonight": """
---bg: #1a1b26;
---btn: #242b42;
---text: #c0caf5;
---border: #7aa2f7;
-
---success: #1abc9c;
---danger: #ff007c;
---skipped: #e0af68;
---unanswered: #565f89;
-
---correct_bg: color-mix(in srgb, var(--success) 30%, var(--btn));
---wrong_bg: color-mix(in srgb, var(--danger) 30%, var(--btn));
-""",
-    "high_contrast": """
---bg: #000000;
---btn: #111111;
---text: #ffffff;
---border: #ffffff;
-
---success: #00ff00;
---danger: #ff0000;
---skipped: #ffff00;
---unanswered: #00ffff;
-
---correct_bg: color-mix(in srgb, var(--success) 40%, var(--btn));
---wrong_bg: color-mix(in srgb, var(--danger) 40%, var(--btn));
-""",
-    "soft_pastel": """
---bg: #fdf6f0;
---btn: #f2e9e4;
---text: #4a4a4a;
---border: #d8cfc4;
-
---success: #6bbf59;
---danger: #e07a5f;
---skipped: #e6b566;
---unanswered: #a8998e;
-
---correct_bg: color-mix(in srgb, var(--success) 25%, var(--btn));
---wrong_bg: color-mix(in srgb, var(--danger) 25%, var(--btn));
-""",
-}
+from backend.build import THEMES
 
 
 class Tools:
@@ -101,7 +30,7 @@ class Tools:
         enable_mathjax: bool = Field(
             default=False,
             description=(
-                "Disabled by default for privacy. Enable LaTeX/math rendering with MathJax."
+                "Disabled by default for privacy. Enable LaTeX/math rendering with MathJax. "
                 "Requires Internet access to load the MathJax library from a CDN. When disabled or"
                 "offline, LaTeX expressions are displayed as plain text."
             ),
@@ -113,6 +42,17 @@ class Tools:
                 "Disabled by default as it requires the models to generate extra content."
             ),
         )
+
+        quiz_mode: Literal["multiple-choice questions", "flashcards"] = Field(
+            default="multiple-choice questions",
+            description=(
+                "Multiple-choice questions: users can toggle between MCQ "
+                "and flashcards using the same questions. "
+                "Flashcards: the model concentrates on generating flashcards "
+                "(no MCQ toggle)."
+            ),
+        )
+
         theme_mode: Literal["browser", "light", "dark"] = Field(
             default="browser",
         )
@@ -145,6 +85,31 @@ class Tools:
                 "Separate multiple patterns with |."
             ),
         )
+        request_retention: float = Field(
+            default=0.9,
+            ge=0.0,
+            le=1.0,
+            description=(
+                "Target probability of recalling a card when it is scheduled for review "
+                "in spaced repetition mode. "
+                "Higher values generally result in shorter review intervals and more "
+                "frequent reviews; lower values generally result in longer intervals "
+                "and less frequent reviews."
+            ),
+        )
+        spaced_repetition_queue_size: int = Field(
+            default=20,
+            ge=1,
+            description=(
+                "Number of questions available at a time in spaced repetition mode. "
+                "Larger values provide a larger pool of questions to review before "
+                "the queue needs to be replenished."
+            ),
+        )
+        enable_spaced_repetition: bool = Field(
+            default=False,
+            description="Enable spaced repetition mode when the quiz loads.",
+        )
 
     def __init__(self):
         self.valves = self.Valves()
@@ -162,14 +127,45 @@ class Tools:
                 return await original(*args, **kwargs)
 
             doc = original.__doc__ or ""
-            if valves.enable_explanations:
-                doc += """
 
-        Additional requirement:
-            Each question dict MUST also include an "explanation" (str) key —
-            a concise explanation of why the correct answer is correct, written
-            to teach the underlying concept.
-        """
+            if valves.quiz_mode == "flashcards":
+                doc = dedent("""
+            Generate a flashcard quiz and display it to the user.
+
+            Args:
+                title (str):
+                    The title of the quiz.
+
+                questions (list[dict]):
+                    A list of question objects. Each dictionary MUST contain
+                    these two keys:
+                        - "question" (str): The question text.
+                        - "answer"   (str): The single CORRECT answer,
+                                        written out in full.
+
+                    Example of one valid item:
+                        {
+                            "question": "What is the capital of France?",
+                            "answer": "Paris"
+                        }
+
+                    Write the answer only once, in "answer".
+                    Do not rename any key.
+                    Every item must follow this exact structure or the quiz
+                    will fail to generate.
+
+            Returns:
+                Generated quiz accessible to the user,
+                or an error message.
+            """)
+            if valves.enable_explanations:
+                doc += dedent("""
+
+            Additional requirement:
+                Each question dict MUST also include an "explanation" (str) key —
+                a concise explanation of why the correct answer is correct, written
+                to teach the underlying concept.
+            """)
             generate_quiz.__doc__ = doc
             return generate_quiz
 
@@ -210,17 +206,29 @@ class Tools:
             or an error message.
         """
         try:
-            questions_and_answers, warnings = normalize_questions(questions)
+            questions_and_answers, warnings = normalize_questions(
+                questions, self.valves.quiz_mode
+            )
 
             if not questions_and_answers:
                 error_report = "\n".join(f"- {w}" for w in warnings)
+                if self.valves.quiz_mode == "flashcards":
+                    requirements = (
+                        "Please regenerate the JSON. Each item needs 'question' "
+                        "(string) and 'answer' (string, the correct answer)."
+                    )
+                else:
+                    requirements = (
+                        "Please regenerate the JSON. Each item needs 'question' "
+                        "(string), 'answer' (string, the correct answer), and "
+                        "'distractors' (a list of at least 1 wrong answer)."
+                    )
+
                 return (
                     "The quiz could not be generated because no valid "
                     "questions could be recovered from 'questions':\n\n"
                     f"{error_report}\n\n"
-                    "Please regenerate the JSON. Each item needs 'question' "
-                    "(string), 'answer' (string, the correct answer), and "
-                    "'distractors' (a list of at least 1 wrong answer)."
+                    f"{requirements}"
                 )
 
             choice_reference_patterns = [
@@ -229,7 +237,7 @@ class Tools:
                 if pattern.strip()
             ]
 
-            if self.valves.shuffle_choices:
+            if self.valves.shuffle_choices and self.valves.quiz_mode != "flashcards":
                 shuffle_options(
                     questions_and_answers,
                     self.valves.prevent_reference_shuffle,
@@ -260,7 +268,16 @@ class Tools:
 
             # Generate quiz
             content = wrap_html(
-                quiz, self.valves.enable_mathjax, light_theme, dark_theme
+                quiz,
+                self.valves.enable_mathjax,
+                light_theme,
+                dark_theme,
+                "mcq"
+                if self.valves.quiz_mode == "multiple-choice questions"
+                else "flashcard",
+                self.valves.request_retention,
+                self.valves.spaced_repetition_queue_size,
+                self.valves.enable_spaced_repetition,
             )
             return HTMLResponse(
                 content=content,
@@ -285,8 +302,6 @@ _DISTRACTOR_KEYS = (
     "incorrect_answers",
     "wrong_options",
 )
-_OPTIONS_KEYS = ("options", "choices", "answers", "choices_list")
-_INDEX_KEYS = ("correct_index", "answer_index", "index", "correctIndex")
 _EXPLANATION_KEYS = ("explanation", "rationale", "why", "reason")
 
 
@@ -297,35 +312,6 @@ def _first_present(d: dict, keys, expected_type=None):
             if expected_type is None or isinstance(v, expected_type):
                 return v
     return None
-
-
-def _best_match_index(answer_text: str, options: list) -> int | None:
-    """Find which option the model's free-text answer refers to.
-
-    Tries exact (case-insensitive) match first, then substring match,
-    then falls back to the closest fuzzy match so small wording
-    differences ("Paris." vs "Paris") don't cause a hard failure.
-    """
-    if not isinstance(answer_text, str):
-        return None
-
-    norm_answer = answer_text.strip().lower().rstrip(".")
-    norm_options = [str(o).strip().lower().rstrip(".") for o in options]
-
-    if norm_answer in norm_options:
-        return norm_options.index(norm_answer)
-
-    for i, o in enumerate(norm_options):
-        if norm_answer in o or o in norm_answer:
-            return i
-
-    best_i, best_score = None, 0.0
-    for i, o in enumerate(norm_options):
-        score = SequenceMatcher(None, norm_answer, o).ratio()
-        if score > best_score:
-            best_i, best_score = i, score
-
-    return best_i if best_score >= 0.6 else None
 
 
 def _markdown_to_html(text):
@@ -344,7 +330,7 @@ def _markdown_to_html(text):
     return text
 
 
-def normalize_questions(questions) -> tuple[list[dict], list[str]]:
+def normalize_questions(questions, mode) -> tuple[list[dict], list[str]]:
     """
     Best-effort cleanup of whatever the model produced.
 
@@ -398,24 +384,38 @@ def normalize_questions(questions) -> tuple[list[dict], list[str]]:
 
         distractors = _first_present(q, _DISTRACTOR_KEYS, list)
 
-        if answer_text and distractors:
-            distractors = [str(d) for d in distractors if str(d).strip()]
-            # Guard against the model accidentally repeating the
-            # answer inside distractors too (ignoring case/punctuation
-            # so "Paris." doesn't slip past "Paris").
-            norm_answer = answer_text.strip().lower().rstrip(".")
-            distractors = [
-                d for d in distractors if d.strip().lower().rstrip(".") != norm_answer
-            ]
-            if distractors:
-                options = [answer_text] + distractors
+        if answer_text:
+            if mode == "flashcards":
+                options = [answer_text]
                 correct_index = 0
 
+            elif distractors:
+                distractors = [str(d) for d in distractors if str(d).strip()]
+
+                # Guard against the model accidentally repeating the
+                # answer inside distractors too (ignoring case/punctuation
+                # so "Paris." doesn't slip past "Paris").
+                norm_answer = answer_text.strip().lower().rstrip(".")
+                distractors = [
+                    d
+                    for d in distractors
+                    if d.strip().lower().rstrip(".") != norm_answer
+                ]
+                if distractors:
+                    options = [answer_text] + distractors
+                    correct_index = 0
+
         if options is None or correct_index is None:
-            warnings.append(
-                f"{label} ('{question_text[:40]}...') — could not determine "
-                f"a valid answer and distractors — skipped."
-            )
+            if mode == "flashcards":
+                warnings.append(
+                    f"{label} ('{question_text[:40]}...') — could not determine "
+                    f"a valid answer — skipped."
+                )
+            else:
+                warnings.append(
+                    f"{label} ('{question_text[:40]}...') — could not determine "
+                    f"a valid answer and distractors — skipped."
+                )
             continue
 
         explanation = _first_present(q, _EXPLANATION_KEYS)
@@ -594,6 +594,13 @@ def refers_to_other_options(
 
 
 def wrap_html(
-    quiz, enable_mathjax: bool, light_theme="default_light", dark_theme="default_dark"
+    quiz,
+    enable_mathjax: bool,
+    light_theme="default_light",
+    dark_theme="default_dark",
+    default_mode="mcq",
+    request_retention=0.9,
+    spaced_repetition_queue_size=20,
+    enable_spaced_repetition: bool = False,
 ):
     return "__HTML_PLACEHOLDER__"

@@ -1,83 +1,104 @@
 import {
-  goTo,
+  goToPosition,
   nextQuestion,
   prevQuestion,
   handleAnswer,
   revealAnswer,
+  switchMode,
+  toggleSRS,
+  rateFSRS,
 } from "../quiz.js";
 import { downloadQuizHTML } from "../shared/download.js";
 import { state } from "../state.js";
 import { toggleTimer } from "../timer.js";
-import { copyQuiz, copyQuestion } from "../shared/clipboard.js";
+import {
+  copyQuiz,
+  copyQuestion,
+  copyQuizAsFlashcards,
+} from "../shared/clipboard.js";
 import {
   closeEditorConfirm,
   openEditor,
   restoreQuestionToDefault,
   saveEdit,
 } from "../rendering/editor.js";
-import {
-  confirmRestart,
-  cancelRestart,
-  restoreQuizToDefault,
-} from "../rendering/editor.js";
+import { restoreQuizToDefault } from "../rendering/editor.js";
 import { toggleFullscreen } from "./fullscreen.js";
-import { restartQuiz } from "../rendering/results.js";
+import {
+  cancelRestart,
+  confirmRestart,
+  restartQuiz,
+} from "../rendering/results.js";
+import { rateFlashcard } from "../rendering/flashcards.js";
 
 export function initializeEvents() {
   // Quiz page
-  document
-    .getElementById("prev-button")
-    .addEventListener("click", prevQuestion);
+
+  document.querySelectorAll(".reveal-button").forEach((button) => {
+    button.addEventListener("click", revealAnswer);
+  });
+
+  document.querySelectorAll(".timer-toggle-button").forEach((button) => {
+    button.addEventListener("click", toggleTimer);
+  });
+
+  document.querySelectorAll(".prev-button").forEach((button) => {
+    button.addEventListener("click", prevQuestion);
+  });
+
+  document.querySelectorAll(".next-button").forEach((button) => {
+    button.addEventListener("click", nextQuestion);
+  });
+  document.querySelectorAll(".download-button").forEach((button) => {
+    button.addEventListener("click", downloadQuizHTML);
+  });
+  document.querySelectorAll(".maximize-button").forEach((button) => {
+    button.addEventListener("click", toggleFullscreen);
+  });
+
+  document.querySelectorAll(".copy-all-button").forEach((button) => {
+    button.addEventListener("click", copyQuiz);
+  });
+
+  document.querySelectorAll(".copy-flashcards-button").forEach((button) => {
+    button.addEventListener("click", copyQuizAsFlashcards);
+  });
+
+  document.querySelectorAll(".copy-question-button").forEach((button) => {
+    button.addEventListener("click", copyQuestion);
+  });
+
+  document.querySelectorAll(".editor-button").forEach((button) => {
+    button.addEventListener("click", openEditor);
+  });
+
+  document.querySelectorAll(".mode-button").forEach((button) => {
+    button.addEventListener("click", switchMode);
+  });
 
   document
-    .getElementById("next-button")
-    .addEventListener("click", nextQuestion);
+    .querySelector(".known-button")
+    .addEventListener("click", () => rateFlashcard(true));
 
   document
-    .getElementById("reveal-button")
-    .addEventListener("click", revealAnswer);
+    .querySelector(".unknown-button")
+    .addEventListener("click", () => rateFlashcard(false));
 
-  document
-    .getElementById("maximize-button")
-    .addEventListener("click", toggleFullscreen);
+  document.querySelectorAll(".fsrs-rating-button").forEach((button) => {
+    button.addEventListener("click", async () => {
+      await rateFSRS(Number(button.dataset.rating));
+      nextQuestion();
+    });
+  });
 
-  document
-    .getElementById("download-button")
-    .addEventListener("click", downloadQuizHTML);
-
-  document
-    .getElementById("timer-toggle")
-    .addEventListener("click", toggleTimer);
-
-  document
-    .getElementById("copy-all-button")
-    .addEventListener("click", copyQuiz);
-
-  document
-    .getElementById("copy-question-button")
-    .addEventListener("click", copyQuestion);
-
-  document
-    .getElementById("editor-button")
-    .addEventListener("click", openEditor);
-
+  document.querySelectorAll(".toggle-srs-button").forEach((button) => {
+    button.addEventListener("click", toggleSRS);
+  });
   // Results page
 
   document
     .getElementById("results-back-button")
     .addEventListener("click", prevQuestion);
-
-  document
-    .getElementById("results-maximize-button")
-    .addEventListener("click", toggleFullscreen);
-
-  document
-    .getElementById("results-download-button")
-    .addEventListener("click", downloadQuizHTML);
-
-  document
-    .getElementById("results-copy-all-button")
-    .addEventListener("click", copyQuiz);
 
   document
     .getElementById("restart-button")
@@ -98,18 +119,6 @@ export function initializeEvents() {
     .addEventListener("click", saveEdit);
 
   document
-    .getElementById("editor-copy-all-button")
-    .addEventListener("click", copyQuiz);
-
-  document
-    .getElementById("editor-copy-question-button")
-    .addEventListener("click", copyQuestion);
-
-  document
-    .getElementById("editor-maximize-button")
-    .addEventListener("click", toggleFullscreen);
-
-  document
     .getElementById("editor-close-button")
     .addEventListener("click", closeEditorConfirm);
 
@@ -121,27 +130,105 @@ export function initializeEvents() {
     .getElementById("reset-question-button")
     .addEventListener("click", restoreQuestionToDefault);
 
-  // Drop down menu
-  const trigger = document.getElementById("actions-button");
-  const menu = document.getElementById("dropdown-menu");
+  // Drop down menus
+  document.querySelectorAll(".dropdown-trigger").forEach((trigger) => {
+    const menuId = trigger.id.replace("-menu-button", "-dropdown-menu");
+    const menu = document.getElementById(menuId);
+    const navigation = trigger.closest(".navigation");
+    const navigationScroll = navigation.parentElement;
 
-  trigger.addEventListener("click", (e) => {
-    e.stopPropagation();
-    menu.classList.toggle("show");
+    const positionMenu = () => {
+      if (!menu.classList.contains("show")) return;
+
+      const rect = trigger.getBoundingClientRect();
+      const navRect = navigationScroll.getBoundingClientRect();
+
+      // Clamp to page width
+      menu.style.left = `${Math.min(
+        rect.right,
+        navRect.right - menu.offsetWidth,
+      )}px`;
+
+      // Orientation is different in fullscreen
+      if (
+        document.fullscreenElement ||
+        document.documentElement.classList.contains("pseudo-fullscreen-active")
+      ) {
+        // Orient up
+        menu.style.top = "auto";
+        menu.style.bottom = `${
+          document.documentElement.clientHeight - navRect.top
+        }px`;
+      } else {
+        // Orient down, below navbar
+        menu.style.top = `${rect.bottom}px`;
+        menu.style.bottom = "auto";
+      }
+    };
+
+    trigger.addEventListener("click", (e) => {
+      e.stopPropagation();
+
+      menu.classList.toggle("show");
+      positionMenu();
+    });
+
+    // Re-position on window resize
+    const observer = new ResizeObserver(positionMenu);
+    observer.observe(navigation);
+    window.addEventListener("scroll", positionMenu, true);
+
+    menu.querySelectorAll("button, a").forEach((item) => {
+      item.addEventListener("click", () => {
+        menu.classList.remove("show");
+      });
+    });
+
+    document.addEventListener("click", (e) => {
+      if (!e.target.closest(".dropdown-trigger, .dropdown-menu")) {
+        document.querySelectorAll(".dropdown-menu.show").forEach((menu) => {
+          menu.classList.remove("show");
+        });
+      }
+    });
   });
 
-  document.addEventListener("click", (e) => {
-    if (!menu.contains(e.target) && !trigger.contains(e.target)) {
-      menu.classList.remove("show");
-    }
-  });
+  // Quiz Keybinds
 
-  // Keybinds
-
-  document.addEventListener("keydown", (e) => {
+  document.addEventListener("keydown", async (e) => {
     if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
 
+    if (
+      document.getElementById("question-box")?.style.display === "none" &&
+      document.getElementById("flashcard-box")?.style.display === "none"
+    ) {
+      return;
+    }
+
     const key = e.key.toLowerCase();
+
+    // SRS rating
+
+    if (state.answerRevealed && state.srs) {
+      if (["1", "2", "3", "4"].includes(key)) {
+        await rateFSRS(Number(key));
+        nextQuestion();
+        return;
+      }
+    }
+
+    // Flashcard rating
+    if (state.mode === "flashcard") {
+      if (key === "1") {
+        rateFlashcard(false); // ✗ unknown
+        return;
+      }
+
+      if (key === "2") {
+        rateFlashcard(true); // ✓ known
+        return;
+      }
+    }
 
     // Number = choose
     let index = -1;
@@ -150,7 +237,11 @@ export function initializeEvents() {
       index = Number(key) - 1;
     }
 
-    if (index >= 0 && index < state.optionButtons.length) {
+    if (
+      index >= 0 &&
+      index < state.optionButtons.length &&
+      state.mode == "mcq"
+    ) {
       const button = state.optionButtons[index];
       if (!button.disabled) {
         handleAnswer(index, button);
@@ -164,6 +255,11 @@ export function initializeEvents() {
 
       if (!state.answerRevealed) {
         revealAnswer();
+      } else if (state.srs) {
+        await rateFSRS(3);
+        nextQuestion();
+      } else if (state.mode === "flashcard") {
+        rateFlashcard(true);
       } else {
         nextQuestion();
       }
@@ -186,44 +282,65 @@ export function initializeEvents() {
 
   // Tap or click to change question (touch control)
 
-  const questionBox = document.querySelector(".question-box");
+  const questionBox = document.getElementById("question-box");
 
-  questionBox.addEventListener("click", (e) => {
+  const flashcardBox = document.getElementById("flashcard-box");
+
+  async function handleBoxClick(e) {
     if (e.target.closest("button, input")) return;
 
     // Don't navigate if the user just made a text selection
     const selection = window.getSelection();
     if (selection && selection.toString().length > 0) return;
 
-    const rect = questionBox.getBoundingClientRect();
+    const box = e.currentTarget;
+    const rect = box.getBoundingClientRect();
     const x = e.clientX - rect.left;
     if (x > rect.width * 0.7) {
       if (!state.answerRevealed) {
         revealAnswer();
       } else {
+        if (state.srs) {
+          // Rate as "Good"
+          await rateFSRS(3);
+        }
         nextQuestion();
       }
     } else if (x < rect.width * 0.3) {
-      prevQuestion();
+      if (state.srs) {
+        if (state.answerRevealed) {
+          // Rate as "Again"
+          await rateFSRS(1);
+          nextQuestion();
+        }
+      } else {
+        prevQuestion();
+      }
     }
-  });
+  }
 
+  questionBox.addEventListener("click", handleBoxClick);
+  flashcardBox.addEventListener("click", handleBoxClick);
   // Change question directly
 
-  const questionSelector = document.getElementById("question-selector");
-  const questionNumber = document.getElementById("question-number");
+  document
+    .querySelectorAll(".question-selector")
+    .forEach((questionSelector) => {
+      const questionNumber = questionSelector.querySelector(".question-number");
 
-  questionSelector.addEventListener("click", () => {
-    questionNumber.focus();
-    questionNumber.select();
-  });
+      questionSelector.addEventListener("click", () => {
+        questionNumber.focus();
+        questionNumber.select();
+      });
 
-  questionNumber.addEventListener("input", () => {
-    questionNumber.value = questionNumber.value.replace(/\D/g, "");
-  });
-  questionNumber.addEventListener("change", () => {
-    if (!questionNumber.value) return;
+      questionNumber.addEventListener("input", () => {
+        questionNumber.value = questionNumber.value.replace(/\D/g, "");
+      });
 
-    goTo(Number(questionNumber.value) - 1);
-  });
+      questionNumber.addEventListener("change", () => {
+        if (!questionNumber.value) return;
+
+        goToPosition(Number(questionNumber.value));
+      });
+    });
 }

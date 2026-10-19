@@ -3,13 +3,16 @@ __pycache__/
 *.py[codz]
 *$py.class
 
-open_webui/
-temp.*
-open-webui/
+open-webui-official/
+AGENTS.local.md
+opencode.json
+vitest.config.js
+vitest.config.mjs
 # C extensions
 *.so
 
 tmp/*
+tmp*.txt
 
 # Distribution / packaging
 .Python

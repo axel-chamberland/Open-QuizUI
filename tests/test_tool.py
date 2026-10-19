@@ -1,4 +1,6 @@
 import importlib.util
+import json
+import re
 import sys
 from pathlib import Path
 
@@ -39,14 +41,44 @@ def quiz_tool(tool_class):
 
 @pytest.mark.asyncio
 async def test_generate_quiz_success(quiz_tool):
-    """Test that a valid quiz generates an HTMLResponse with the correct title."""
+    """Test that a valid MCQ quiz generates an HTMLResponse with the correct title."""
     title = "Test Quiz"
     questions = [{"question": "What is 2+2?", "answer": "4", "distractors": ["3", "5"]}]
+    quiz_tool.valves.quiz_mode = "multiple-choice questions"
 
     response = await quiz_tool.generate_quiz(title, questions)
 
     assert isinstance(response, HTMLResponse)
     assert title in response.body.decode("utf-8")
+
+
+@pytest.mark.asyncio
+async def test_generate_quiz_flashcard(quiz_tool):
+    """Test that a valid flashcard quiz generates an HTMLResponse without distractors."""
+    title = "Test Flashcards"
+    questions = [{"question": "What is 2+2?", "answer": "4"}]
+    quiz_tool.valves.quiz_mode = "flashcards"
+
+    response = await quiz_tool.generate_quiz(title, questions)
+
+    assert isinstance(response, HTMLResponse)
+
+    body = response.body.decode("utf-8")
+    assert title in body
+
+    match = re.search(
+        r'<script id="app-data" type="application/json">(.*?)</script>',
+        body,
+        re.DOTALL,
+    )
+    assert match is not None
+
+    app_data = json.loads(match.group(1))
+
+    assert app_data["mode"] == "flashcard"
+    assert app_data["quiz"]["questions"][0]["options"] == ["<p>4</p>"]
+    assert app_data["quiz"]["questions"][0]["question"] == "<p>What is 2+2?</p>"
+    assert app_data["quiz"]["questions"][0]["correct_index"] == 0
 
 
 @pytest.mark.asyncio
@@ -66,6 +98,7 @@ async def test_generate_quiz_missing_keys(quiz_tool):
     """Test that providing questions with missing keys returns an error message."""
     title = "Missing Keys Quiz"
     questions = [{"question": "Where is the answer?"}]
+    quiz_tool.valves.quiz_mode = "multiple-choice questions"
 
     response = await quiz_tool.generate_quiz(title, questions)
 
@@ -78,6 +111,7 @@ async def test_generate_quiz_theme_light(quiz_tool):
     """Test that setting dark_mode to light applies the light theme CSS."""
     title = "Light Mode Quiz"
     questions = [{"question": "Is it light?", "answer": "Yes", "distractors": ["No"]}]
+    quiz_tool.valves.quiz_mode = "multiple-choice questions"
     quiz_tool.valves.theme_mode = "light"
 
     response = await quiz_tool.generate_quiz(title, questions)
@@ -95,6 +129,7 @@ async def test_generate_quiz_theme_dark(quiz_tool):
     """Test that setting dark_mode to dark applies the dark theme CSS."""
     title = "Dark Mode Quiz"
     questions = [{"question": "Is it dark?", "answer": "Yes", "distractors": ["No"]}]
+    quiz_tool.valves.quiz_mode = "multiple-choice questions"
     quiz_tool.valves.theme_mode = "dark"
 
     response = await quiz_tool.generate_quiz(title, questions)
@@ -114,10 +149,13 @@ async def test_generate_mathjax(quiz_tool):
     questions = [
         {"question": "What is $x$?", "answer": "Variable", "distractors": ["Number"]}
     ]
+    quiz_tool.valves.quiz_mode = "multiple-choice questions"
     quiz_tool.valves.enable_mathjax = True
 
     response = await quiz_tool.generate_quiz(title, questions)
-    body = response.body.decode("utf-8")
 
     assert isinstance(response, HTMLResponse)
+
+    body = response.body.decode("utf-8")
+
     assert "https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" in body

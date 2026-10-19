@@ -1,18 +1,17 @@
 [project]
 name = "openquizui"
-version = "2.1.0"
-description = "A simple multiple choice questions tool/function for displaying quizzes with OpenWebUi. "
+version = "3.0.0"
+description = "This is a tool / action function for displaying multiple choice and flashcard quizzes inside Open WebUI."
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "pytest~=8.4.1",
-    "pytest-asyncio==1.4.0",
-    "pydantic==2.12.5",
-    "fastapi==0.135.1",
-    "pytest-asyncio==1.4.0",
-    "playwright==1.62.0",
-    "markdown==3.10.3",
-    "regex==2026.9.10",
+  "pytest~=8.4.1",
+  "pytest-asyncio==1.4.0",
+  "pydantic==2.12.5",
+  "fastapi==0.135.1",
+  "pytest-asyncio==1.4.0",
+  "markdown==3.10.3",
+  "regex==2026.9.10",
 ]
 
 [tool.setuptools.packages.find]

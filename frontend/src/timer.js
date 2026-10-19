@@ -1,7 +1,7 @@
 import { formatTime } from "./shared/formatting.js";
 import { state } from "./state.js";
 
-const timerElement = document.getElementById("timer");
+const timerElements = document.querySelectorAll(".timer");
 
 function getTimerKey(quizStorageKey) {
   return `quizTimer_${quizStorageKey}`;
@@ -39,13 +39,17 @@ export function updateTimer() {
   const elapsed =
     state.timer.elapsed + Math.floor((Date.now() - state.timer.start) / 1000);
 
-  timerElement.textContent = formatTime(elapsed);
+  timerElements.forEach((timerElement) => {
+    timerElement.textContent = formatTime(elapsed);
+  });
 }
 
 export function toggleTimer() {
   state.timer.visible = !state.timer.visible;
 
-  timerElement.classList.toggle("visible", state.timer.visible);
+  timerElements.forEach((timerElement) => {
+    timerElement.classList.toggle("visible", state.timer.visible);
+  });
 
   if (state.timer.visible) {
     loadTimer(state);
