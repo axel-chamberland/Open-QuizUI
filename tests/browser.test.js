@@ -63,17 +63,13 @@ const pythonExecutable = () => {
 const python = pythonExecutable();
 
 const generateHTML = (payload) => {
-  const document = execFileSync(
-    python,
-    ["tests/browser_page.py"],
-    {
-      // stdout can exceed Node's small default buffer.
-      cwd: root,
-      encoding: "utf8",
-      input: JSON.stringify(payload),
-      maxBuffer: 50 * 1024 * 1024,
-    },
-  );
+  const document = execFileSync(python, ["tests/browser_page.py"], {
+    // stdout can exceed Node's small default buffer.
+    cwd: root,
+    encoding: "utf8",
+    input: JSON.stringify(payload),
+    maxBuffer: 50 * 1024 * 1024,
+  });
 
   if (!document.trimEnd().endsWith("</html>")) {
     throw new Error("The renderer did not produce the full document");
@@ -239,189 +235,176 @@ async function openQuestionList(file) {
 }
 
 describe("browser smoke", () => {
-  it(
-    "answers, revisits, and manages questions without page errors",
-    async () => {
-      const directory = mkdtempSync(join(tmpdir(), "openquizui-smoke-"));
+  it("answers, revisits, and manages questions without page errors", async () => {
+    const directory = mkdtempSync(join(tmpdir(), "openquizui-smoke-"));
 
-      writeFileSync(join(directory, "quiz.html"), html);
+    writeFileSync(join(directory, "quiz.html"), html);
 
-      await page.goto(`file://${join(directory, "quiz.html")}`);
-      await visible("#question", "question box");
+    await page.goto(`file://${join(directory, "quiz.html")}`);
+    await visible("#question", "question box");
 
-      /* Answering correctly reveals the explanation. */
-      await page.click('#options button.option:has-text("right")');
-      await visible("#explanation", "explanation");
+    /* Answering correctly reveals the explanation. */
+    await page.click('#options button.option:has-text("right")');
+    await visible("#explanation", "explanation");
 
-      /* Next moves to the second question. */
-      await page.click("#question-box .next-button");
-      await page.waitForFunction(() =>
-        document.getElementById("question").textContent.includes("Second"),
-      );
+    /* Next moves to the second question. */
+    await page.click("#question-box .next-button");
+    await page.waitForFunction(() =>
+      document.getElementById("question").textContent.includes("Second"),
+    );
 
-      await page.click('#options button.option:has-text("right")');
-      await visible("#explanation", "explanation of the second question");
+    await page.click('#options button.option:has-text("right")');
+    await visible("#explanation", "explanation of the second question");
 
-      /* Next past the last question is the results page. */
-      await page.click("#question-box .next-button");
-      await visible("#results", "results page");
+    /* Next past the last question is the results page. */
+    await page.click("#question-box .next-button");
+    await visible("#results", "results page");
 
-      await page.click("#results-back-button");
-      await visible("#question-box", "question box again");
+    await page.click("#results-back-button");
+    await visible("#question-box", "question box again");
 
-      /* Copying as flashcards runs and closes the menu again. */
-      await page.click("#mcq-menu-button");
-      await page.click("#mcq-dropdown-menu .copy-flashcards-button");
-      await page
-        .locator("#mcq-dropdown-menu")
-        .waitFor({ state: "hidden", timeout: 5_000 });
+    /* Copying as flashcards runs and closes the menu again. */
+    await page.click("#mcq-menu-button");
+    await page.click("#mcq-dropdown-menu .copy-flashcards-button");
+    await page
+      .locator("#mcq-dropdown-menu")
+      .waitFor({ state: "hidden", timeout: 5_000 });
 
-      /* The editor opens through the page's own dropdown menu. */
-      await page.click("#mcq-menu-button");
-      await page.click("#mcq-dropdown-menu .editor-button");
-      await visible("#editor", "editor page");
-      expect(await page.textContent("#editor-question-number")).toContain("2");
+    /* The editor opens through the page's own dropdown menu. */
+    await page.click("#mcq-menu-button");
+    await page.click("#mcq-dropdown-menu .editor-button");
+    await visible("#editor", "editor page");
+    expect(await page.textContent("#editor-question-number")).toContain("2");
 
-      /* The question list lists both questions as rows. */
-      /* "Edit Questions" lives inside the collapsible settings fold. */
-      await page.click("#editor-additional-settings summary");
-      await page.click("#order-editor-open-button");
-      await visible("#order-editor-list", "question list");
+    /* The question list lists both questions as rows. */
+    /* "Edit Questions" lives inside the collapsible settings fold. */
+    await page.click("#editor-additional-settings summary");
+    await page.click("#order-editor-open-button");
+    await visible("#order-editor-list", "question list");
 
-      const rows = page.locator("#order-editor-list .order-row");
+    const rows = page.locator("#order-editor-list .order-row");
 
-      expect(await rows.count()).toBe(2);
+    expect(await rows.count()).toBe(2);
 
-      /* Picking a row moves the editor to that question; the list stays open. */
-      await page.click('.order-row[data-question-index="1"]');
-      await page.waitForFunction(
-        () =>
-          document.querySelector("#editor-question textarea").value.includes(
-            "Second",
-          ),
-        { timeout: 5_000 },
-      );
+    /* Picking a row moves the editor to that question; the list stays open. */
+    await page.click('.order-row[data-question-index="1"]');
+    await page.waitForFunction(
+      () =>
+        document
+          .querySelector("#editor-question textarea")
+          .value.includes("Second"),
+      { timeout: 5_000 },
+    );
 
-      /* Add a question before and one after the current row. */
-      await page.click("#order-editor-add-before");
-      await page.waitForFunction(
-        () =>
-          document.querySelectorAll("#order-editor-list .order-row").length ===
-          3,
-        { timeout: 5_000 },
-      );
+    /* Add a question before and one after the current row. */
+    await page.click("#order-editor-add-before");
+    await page.waitForFunction(
+      () =>
+        document.querySelectorAll("#order-editor-list .order-row").length === 3,
+      { timeout: 5_000 },
+    );
 
-      await page.click("#order-editor-add-after");
-      await page.waitForFunction(
-        () =>
-          document.querySelectorAll("#order-editor-list .order-row").length ===
-          4,
-        { timeout: 5_000 },
-      );
+    await page.click("#order-editor-add-after");
+    await page.waitForFunction(
+      () =>
+        document.querySelectorAll("#order-editor-list .order-row").length === 4,
+      { timeout: 5_000 },
+    );
 
-      /* Deleting is confirmed with a prompt. */
-      await page.click("#order-editor-delete");
-      await page.click("#global-prompt-yes");
-      await page.waitForFunction(
-        () =>
-          document.querySelectorAll("#order-editor-list .order-row").length ===
-          3,
-        { timeout: 5_000 },
-      );
+    /* Deleting is confirmed with a prompt. */
+    await page.click("#order-editor-delete");
+    await page.click("#global-prompt-yes");
+    await page.waitForFunction(
+      () =>
+        document.querySelectorAll("#order-editor-list .order-row").length === 3,
+      { timeout: 5_000 },
+    );
 
-      /* Save the staged order; the list closes with the editor open. */
-      await page.click("#order-editor-save");
-      await page
-        .locator("#order-editor")
-        .waitFor({ state: "hidden", timeout: 5_000 });
+    /* Save the staged order; the list closes with the editor open. */
+    await page.click("#order-editor-save");
+    await page
+      .locator("#order-editor")
+      .waitFor({ state: "hidden", timeout: 5_000 });
 
-      /*
-       * Save an edit so the alert for a saved change comes up, then
-       * close the editor - which also closes the question list.
-       */
-      await page.fill("#editor-question textarea", "Saved through a click.");
+    /*
+     * Save an edit so the alert for a saved change comes up, then
+     * close the editor - which also closes the question list.
+     */
+    await page.fill("#editor-question textarea", "Saved through a click.");
 
-      await page.click("#editor-save-button");
-      await visible(".global-prompt", "saved alert");
-      expect(await page.textContent("#global-prompt-message")).toBe(
-        "Changes saved.",
-      );
-      await page.click("#global-prompt-yes");
+    await page.click("#editor-save-button");
+    await visible(".global-prompt", "saved alert");
+    expect(await page.textContent("#global-prompt-message")).toBe(
+      "Changes saved.",
+    );
+    await page.click("#global-prompt-yes");
 
-      /* Closing the editor asks first, and also closes the list. */
-      await page.click("#editor-close-button");
-      await page.click("#global-prompt-yes");
-      await page
-        .locator("#editor")
-        .waitFor({ state: "hidden", timeout: 5_000 });
-      await page
-        .locator("#order-editor")
-        .waitFor({ state: "hidden", timeout: 5_000 });
+    /* Closing the editor asks first, and also closes the list. */
+    await page.click("#editor-close-button");
+    await page.click("#global-prompt-yes");
+    await page.locator("#editor").waitFor({ state: "hidden", timeout: 5_000 });
+    await page
+      .locator("#order-editor")
+      .waitFor({ state: "hidden", timeout: 5_000 });
 
-      expect(errors).toEqual([]);
-    },
-    60_000,
-  );
+    expect(errors).toEqual([]);
+  }, 60_000);
 
-  it(
-    "reveals and rates flashcards without page errors",
-    async () => {
-      const directory = mkdtempSync(join(tmpdir(), "openquizui-flashcards-"));
+  it("reveals and rates flashcards without page errors", async () => {
+    const directory = mkdtempSync(join(tmpdir(), "openquizui-flashcards-"));
 
-      writeFileSync(join(directory, "flashcards.html"), flashcardHtml);
+    writeFileSync(join(directory, "flashcards.html"), flashcardHtml);
 
-      await page.goto(`file://${join(directory, "flashcards.html")}`);
-      await visible("#flashcard-box", "flashcard box");
+    await page.goto(`file://${join(directory, "flashcards.html")}`);
+    await visible("#flashcard-box", "flashcard box");
 
-      expect(await page.textContent(".flashcard-question")).toContain(
-        "First card?",
-      );
+    expect(await page.textContent(".flashcard-question")).toContain(
+      "First card?",
+    );
 
-      /* The answer stays hidden until the card is revealed. */
-      expect(await page.locator(".flashcard-answer").isVisible()).toBe(false);
+    /* The answer stays hidden until the card is revealed. */
+    expect(await page.locator(".flashcard-answer").isVisible()).toBe(false);
 
-      await page.keyboard.press("Enter");
-      await visible(".flashcard-answer", "revealed answer");
-      await visible(".flashcard-explanation", "revealed explanation");
-      expect(await page.textContent(".flashcard-answer")).toContain(
-        "first answer",
-      );
+    await page.keyboard.press("Enter");
+    await visible(".flashcard-answer", "revealed answer");
+    await visible(".flashcard-explanation", "revealed explanation");
+    expect(await page.textContent(".flashcard-answer")).toContain(
+      "first answer",
+    );
 
-      /* Pressing 1 rates the card unknown and moves to the next one,
+    /* Pressing 1 rates the card unknown and moves to the next one,
          with its answer still hidden, showing the rating in the corner
          of the page for a moment. */
-      await page.keyboard.press("1");
-      expect(await page.textContent("#rating-indicator")).toBe("✗");
-      await page.waitForFunction(
-        () =>
-          document
-            .querySelector(".flashcard-question")
-            .textContent.includes("Second"),
-        { timeout: 5_000 },
-      );
-      expect(await page.locator(".flashcard-answer").isVisible()).toBe(false);
+    await page.keyboard.press("1");
+    expect(await page.textContent("#rating-indicator")).toBe("✗");
+    await page.waitForFunction(
+      () =>
+        document
+          .querySelector(".flashcard-question")
+          .textContent.includes("Second"),
+      { timeout: 5_000 },
+    );
+    expect(await page.locator(".flashcard-answer").isVisible()).toBe(false);
 
-      /* The rating fades out on its own. */
-      await page
-        .locator("#rating-indicator")
-        .waitFor({ state: "hidden", timeout: 5_000 });
+    /* The rating fades out on its own. */
+    await page
+      .locator("#rating-indicator")
+      .waitFor({ state: "hidden", timeout: 5_000 });
 
-      /* Rating the last card leads to the results page, where both
+    /* Rating the last card leads to the results page, where both
          ratings are counted: one unknown, one known. */
-      await page.keyboard.press("Enter");
-      await visible(".flashcard-answer", "revealed answer of the last card");
-      await page.click("#flashcard-rating .known-button");
-      await visible("#results", "results page");
+    await page.keyboard.press("Enter");
+    await visible(".flashcard-answer", "revealed answer of the last card");
+    await page.click("#flashcard-rating .known-button");
+    await visible("#results", "results page");
 
-      expect(await page.textContent("#score")).toBe("Score: 1/2");
-      expect(
-        await page.textContent("#question-corrections article"),
-      ).toContain("✗");
+    expect(await page.textContent("#score")).toBe("Score: 1/2");
+    expect(await page.textContent("#question-corrections article")).toContain(
+      "✗",
+    );
 
-      expect(errors).toEqual([]);
-    },
-    60_000,
-  );
+    expect(errors).toEqual([]);
+  }, 60_000);
 
   /*
    * A drag only keeps scrolling when something drives it while the
@@ -435,167 +418,157 @@ describe("browser smoke", () => {
    * with Playwright's mouse, which reaches a headless browser as plain
    * mouse input and never starts a native drag.
    */
-  it(
-    "keeps the list scrolling while a mouse drag is held past it",
-    async () => {
-      const directory = mkdtempSync(join(tmpdir(), "openquizui-order-mouse-"));
+  it("keeps the list scrolling while a mouse drag is held past it", async () => {
+    const directory = mkdtempSync(join(tmpdir(), "openquizui-order-mouse-"));
 
-      writeFileSync(join(directory, "long.html"), longHtml);
+    writeFileSync(join(directory, "long.html"), longHtml);
 
-      await openQuestionList(join(directory, "long.html"));
+    await openQuestionList(join(directory, "long.html"));
 
-      /* Drag the first row, put the pointer 24px below the list, and
+    /* Drag the first row, put the pointer 24px below the list, and
          send nothing else, the way a held mouse does. */
-      const pointer = await page.evaluate(() => {
-        const row = document.querySelector("#order-editor-list .order-row");
-        const list = document.getElementById("order-editor-list");
-        const rowBox = row.getBoundingClientRect();
-        const box = list.getBoundingClientRect();
-        const event = (type, x, y) =>
-          new DragEvent(type, {
-            bubbles: true,
-            cancelable: true,
-            clientX: x,
-            clientY: y,
-          });
+    const pointer = await page.evaluate(() => {
+      const row = document.querySelector("#order-editor-list .order-row");
+      const list = document.getElementById("order-editor-list");
+      const rowBox = row.getBoundingClientRect();
+      const box = list.getBoundingClientRect();
+      const event = (type, x, y) =>
+        new DragEvent(type, {
+          bubbles: true,
+          cancelable: true,
+          clientX: x,
+          clientY: y,
+        });
 
-        row.dispatchEvent(
-          event("dragstart", rowBox.x + 20, rowBox.y + rowBox.height / 2),
-        );
-        list.dispatchEvent(event("dragover", box.x + 20, box.bottom + 24));
+      row.dispatchEvent(
+        event("dragstart", rowBox.x + 20, rowBox.y + rowBox.height / 2),
+      );
+      list.dispatchEvent(event("dragover", box.x + 20, box.bottom + 24));
 
-        return { x: box.x + 20, y: box.bottom + 24 };
-      });
+      return { x: box.x + 20, y: box.bottom + 24 };
+    });
 
-      await page.waitForTimeout(600);
+    await page.waitForTimeout(600);
 
-      expect(
-        await page.evaluate(
-          () => document.getElementById("order-editor-list").scrollTop,
-        ),
-      ).toBeGreaterThan(100);
+    expect(
+      await page.evaluate(
+        () => document.getElementById("order-editor-list").scrollTop,
+      ),
+    ).toBeGreaterThan(100);
 
-      /* The slot the pointer is over stays marked while the list scrolls
+    /* The slot the pointer is over stays marked while the list scrolls
          under it, which the browser cannot do without mouse movement. */
-      expect(
-        await page.locator("#order-editor-list .order-drop-target").count(),
-      ).toBe(1);
+    expect(
+      await page.locator("#order-editor-list .order-drop-target").count(),
+    ).toBe(1);
 
-      /* Releasing there drops the row where the pointer is, not where
+    /* Releasing there drops the row where the pointer is, not where
          the row under it was when it was last reported. */
-      await page.evaluate((drop) => {
-        document.getElementById("order-editor-list").dispatchEvent(
-          new DragEvent("drop", {
-            bubbles: true,
-            cancelable: true,
-            clientX: drop.x,
-            clientY: drop.y,
-          }),
-        );
-      }, pointer);
-
-      const order = await page.evaluate(() =>
-        [...document.querySelectorAll("#order-editor-list .order-row")].map(
-          (row) => row.dataset.questionIndex,
-        ),
+    await page.evaluate((drop) => {
+      document.getElementById("order-editor-list").dispatchEvent(
+        new DragEvent("drop", {
+          bubbles: true,
+          cancelable: true,
+          clientX: drop.x,
+          clientY: drop.y,
+        }),
       );
+    }, pointer);
 
-      expect(order).toHaveLength(40);
-      expect(order[0]).not.toBe("0");
-      expect(order.indexOf("0")).toBeGreaterThan(0);
-      expect(order.filter((index) => index === "0")).toHaveLength(1);
-      expect(
-        await page.locator("#order-editor-list .order-dragging").count(),
-      ).toBe(0);
-    },
-    60_000,
-  );
+    const order = await page.evaluate(() =>
+      [...document.querySelectorAll("#order-editor-list .order-row")].map(
+        (row) => row.dataset.questionIndex,
+      ),
+    );
 
-  it(
-    "keeps the list scrolling while a touch drag is held past it",
-    async () => {
-      const directory = mkdtempSync(join(tmpdir(), "openquizui-order-touch-"));
+    expect(order).toHaveLength(40);
+    expect(order[0]).not.toBe("0");
+    expect(order.indexOf("0")).toBeGreaterThan(0);
+    expect(order.filter((index) => index === "0")).toHaveLength(1);
+    expect(
+      await page.locator("#order-editor-list .order-dragging").count(),
+    ).toBe(0);
+  }, 60_000);
 
-      writeFileSync(join(directory, "long.html"), longHtml);
+  it("keeps the list scrolling while a touch drag is held past it", async () => {
+    const directory = mkdtempSync(join(tmpdir(), "openquizui-order-touch-"));
 
-      await openQuestionList(join(directory, "long.html"));
+    writeFileSync(join(directory, "long.html"), longHtml);
 
-      /* The grip starts the drag; a single move past the list follows,
+    await openQuestionList(join(directory, "long.html"));
+
+    /* The grip starts the drag; a single move past the list follows,
          and then nothing, the way a held finger sends nothing. */
-      await page.evaluate(() => {
-        const handle = document.querySelector(
-          "#order-editor-list .order-handle",
-        );
-        const list = document.getElementById("order-editor-list");
-        const handleBox = handle.getBoundingClientRect();
-        const box = list.getBoundingClientRect();
-        const event = (type, x, y) =>
-          new PointerEvent(type, {
-            bubbles: true,
-            cancelable: true,
-            pointerId: 1,
-            pointerType: "touch",
-            isPrimary: true,
-            clientX: x,
-            clientY: y,
-          });
+    await page.evaluate(() => {
+      const handle = document.querySelector("#order-editor-list .order-handle");
+      const list = document.getElementById("order-editor-list");
+      const handleBox = handle.getBoundingClientRect();
+      const box = list.getBoundingClientRect();
+      const event = (type, x, y) =>
+        new PointerEvent(type, {
+          bubbles: true,
+          cancelable: true,
+          pointerId: 1,
+          pointerType: "touch",
+          isPrimary: true,
+          clientX: x,
+          clientY: y,
+        });
 
-        handle.dispatchEvent(
-          event(
-            "pointerdown",
-            handleBox.x + 5,
-            handleBox.y + handleBox.height / 2,
-          ),
-        );
-        document.dispatchEvent(event("pointermove", box.x + 20, box.bottom + 24));
-      });
-
-      await page.waitForTimeout(600);
-
-      expect(
-        await page.evaluate(
-          () => document.getElementById("order-editor-list").scrollTop,
+      handle.dispatchEvent(
+        event(
+          "pointerdown",
+          handleBox.x + 5,
+          handleBox.y + handleBox.height / 2,
         ),
-      ).toBeGreaterThan(100);
+      );
+      document.dispatchEvent(event("pointermove", box.x + 20, box.bottom + 24));
+    });
 
-      /* The dragged row follows the pointer down the list as it
+    await page.waitForTimeout(600);
+
+    expect(
+      await page.evaluate(
+        () => document.getElementById("order-editor-list").scrollTop,
+      ),
+    ).toBeGreaterThan(100);
+
+    /* The dragged row follows the pointer down the list as it
          scrolls. */
-      const order = await page.evaluate(() =>
+    const order = await page.evaluate(() =>
+      [...document.querySelectorAll("#order-editor-list .order-row")].map(
+        (row) => row.dataset.questionIndex,
+      ),
+    );
+
+    expect(order).toHaveLength(40);
+    expect(order[0]).not.toBe("0");
+    expect(order.indexOf("0")).toBeGreaterThan(0);
+
+    /* Lifting the finger ends the drag where it stands. */
+    await page.evaluate(() => {
+      document.dispatchEvent(
+        new PointerEvent("pointerup", {
+          bubbles: true,
+          cancelable: true,
+          pointerId: 1,
+          pointerType: "touch",
+          isPrimary: true,
+          clientX: 400,
+          clientY: 800,
+        }),
+      );
+    });
+
+    expect(
+      await page.locator("#order-editor-list .order-dragging").count(),
+    ).toBe(0);
+    expect(
+      await page.evaluate(() =>
         [...document.querySelectorAll("#order-editor-list .order-row")].map(
           (row) => row.dataset.questionIndex,
         ),
-      );
-
-      expect(order).toHaveLength(40);
-      expect(order[0]).not.toBe("0");
-      expect(order.indexOf("0")).toBeGreaterThan(0);
-
-      /* Lifting the finger ends the drag where it stands. */
-      await page.evaluate(() => {
-        document.dispatchEvent(
-          new PointerEvent("pointerup", {
-            bubbles: true,
-            cancelable: true,
-            pointerId: 1,
-            pointerType: "touch",
-            isPrimary: true,
-            clientX: 400,
-            clientY: 800,
-          }),
-        );
-      });
-
-      expect(
-        await page.locator("#order-editor-list .order-dragging").count(),
-      ).toBe(0);
-      expect(
-        await page.evaluate(() =>
-          [...document.querySelectorAll("#order-editor-list .order-row")].map(
-            (row) => row.dataset.questionIndex,
-          ),
-        ),
-      ).toEqual(order);
-    },
-    60_000,
-  );
+      ),
+    ).toEqual(order);
+  }, 60_000);
 });
