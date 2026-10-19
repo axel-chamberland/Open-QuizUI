@@ -160,6 +160,17 @@ function showCorrectionSheet() {
     [SKIPPED]: "skipped",
   };
 
+  /*
+   * A correct or wrong question carries its verdict next to its
+   * heading, so the sheet can be scanned for what went wrong without
+   * comparing the two answers of each one. Skipped and unanswered
+   * say so on the answer line below.
+   */
+  const resultMark = {
+    [CORRECT]: "✓",
+    [WRONG]: "✗",
+  };
+
   for (
     let orderIndex = 0;
     orderIndex < state.questionOrder.length;
@@ -176,8 +187,10 @@ function showCorrectionSheet() {
 
     const currentClass = resultClass[state.questionResults[index]];
 
+    const mark = resultMark[state.questionResults[index]];
+
     article.innerHTML = `
-<h3 class="${currentClass}">Question ${orderIndex + 1}</h3>
+<h3 class="${currentClass}">Question ${orderIndex + 1}${mark ? ` ${mark}` : ""}</h3>
 
 <p>${renderMarkdown(question.question, state.mathReady)}</p>
 

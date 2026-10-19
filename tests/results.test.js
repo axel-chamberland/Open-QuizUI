@@ -47,6 +47,18 @@ const correctionAnswers = () =>
         .match(/Your answer: (.*?) Correct answer: /)?.[1],
   );
 
+/** The correction headings, as they are shown. */
+const headings = () =>
+  [...document.querySelectorAll("#question-corrections h3")].map((heading) =>
+    heading.textContent.trim(),
+  );
+
+/** The correction headings' classes, which colour them. */
+const headingClasses = () =>
+  [...document.querySelectorAll("#question-corrections h3")].map(
+    (heading) => heading.className,
+  );
+
 /** The outcome bar's key entries, as the label and count they show. */
 const keyEntries = () =>
   [...document.querySelectorAll("#stats-chart .stats-bar-key li")].map((li) =>
@@ -178,6 +190,25 @@ describe("renderResults", () => {
     expect(corrections.textContent).toContain("Your answer:");
     expect(corrections.textContent).toContain("Correct answer:");
     expect(corrections.textContent).toContain("Explanation");
+  });
+
+  it("marks each heading with how the question went", async () => {
+    await renderResults();
+
+    /* Correct and wrong carry a mark, the other two say so below. */
+    expect(headings()).toEqual([
+      "Question 1 ✓",
+      "Question 2 ✗",
+      "Question 3",
+      "Question 4",
+    ]);
+
+    expect(headingClasses()).toEqual([
+      "correct",
+      "wrong",
+      "unanswered",
+      "skipped",
+    ]);
   });
 
   it("tells the picked option from a skip and from no answer", async () => {

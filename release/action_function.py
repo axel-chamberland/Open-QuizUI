@@ -5033,6 +5033,10 @@ function showCorrectionSheet() {
     [UNANSWERED]: "unanswered",
     [SKIPPED]: "skipped"
   };
+  const resultMark = {
+    [CORRECT]: "\u2713",
+    [WRONG]: "\u2717"
+  };
   for (let orderIndex = 0; orderIndex < state.questionOrder.length; orderIndex++) {
     const index = state.questionOrder[orderIndex];
     const question = questions[index];
@@ -5040,8 +5044,9 @@ function showCorrectionSheet() {
     const userAnswer = describeUserAnswer(index, question);
     const article = document.createElement("article");
     const currentClass = resultClass[state.questionResults[index]];
+    const mark = resultMark[state.questionResults[index]];
     article.innerHTML = `
-<h3 class="${currentClass}">Question ${orderIndex + 1}</h3>
+<h3 class="${currentClass}">Question ${orderIndex + 1}${mark ? ` ${mark}` : ""}</h3>
 
 <p>${renderMarkdown(question.question, state.mathReady)}</p>
 
