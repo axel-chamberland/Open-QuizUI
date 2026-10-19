@@ -688,8 +688,8 @@ def wrap_html(
     light_theme="default_light",
     dark_theme="default_dark",
     default_mode="mcq",
-    request_retention=20,
-    spaced_repetition_queue_size=0.9,
+    request_retention=0.9,
+    spaced_repetition_queue_size=20,
     enable_spaced_repetition: bool = False,
 ):
 
