@@ -1,6 +1,6 @@
 # Release Notes
 
-## 3.0
+## 3.0 - 2026-10-19
 
 ### Introducing Open QuizUI 3.0
 
@@ -64,7 +64,9 @@ No more squinting your eyes to find which questions you missed!
 
 I added multiple new explanations in the docs. If you have any questions, changes are your answer is somewhere in there!
 
-Worth mentioning: if you use iOS or iPadOS and want to do quizzes outside Open WebUI, entirely offline, than I finally found a good solution! See TODO.
+Worth mentioning: if you use iOS or iPadOS and want to do quizzes outside Open WebUI, entirely offline, then I finally found a good solution!
+
+> iOS/iPadOS does not currently have a native way to view downloaded HTML Web Apps. Consider using something such as [HTML Preview](https://avinashs.com/html-preview), which you can install as a web app for offline use (tested on Safari, iPadOS 26).
 
 #### Better remembered across a refresh
 
@@ -72,13 +74,13 @@ Your mode, review state and settings are saved per quiz and restored when the pa
 
 ### Bug fixes
 
-Most bug fixes were entirely in the scope of the dev branch, as release was already stable as off 2.2.1.
+Most bug fixes were entirely in the scope of the dev branch, as release was already stable as of 2.2.1.
 
 ### Under the hood
 
 The **test suite grew a lot**, including a headless-browser end-to-end test of the page Open WebUI actually serves, and CI runs both suites through npm.
 
-The repo now includes an AGENTS.md to speed up development.
+The repo now includes an [AGENTS.md](../AGENTS.md) to speed up development.
 
 Take a look at the list of issues on GitHub or add new ones; feedback and contributions would be much appreciated.
 
