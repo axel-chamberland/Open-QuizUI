@@ -5532,6 +5532,9 @@ var appData = loadAppData();
 var ENABLE_MATHJAX = appData.enableMathJax;
 var quiz = appData.quiz;
 var mode = appData.mode;
+if (window.self !== window.top) {
+  document.body.classList.add("embedded");
+}
 try {
   if (window.top.document.body.classList.contains("pseudo-fullscreen-active")) {
     window.top.location.reload();

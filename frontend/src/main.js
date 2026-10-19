@@ -20,6 +20,16 @@ export const ENABLE_MATHJAX = appData.enableMathJax;
 export const quiz = appData.quiz;
 export const mode = appData.mode;
 
+/*
+ * Open WebUI sizes the hosting iframe from the height this page reports.
+ * The results page lists every correction, so on its own it would make the
+ * message (and the whole chat page) as tall as the corrections are long:
+ * the embedded class caps the results column and lets it scroll instead.
+ */
+if (window.self !== window.top) {
+  document.body.classList.add("embedded");
+}
+
 // In case the iframe was reset while in fullscreen, reload the page to reset affected elements
 // This mainly happens when you call the action function on another device while being in pseudo-fullscreen,
 // causing the iframe to reset without exiting pseudo-fullscreen
