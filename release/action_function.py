@@ -2437,40 +2437,40 @@ mjx-container {
   display: inline-block;
 }
 
-#correct,
 #results .correct {
   color: var(--success);
 }
 
-#wrong,
 #results .wrong {
   color: var(--danger);
 }
 
-#unanswered,
 #results .unanswered {
   color: var(--unanswered);
 }
 
-#skipped,
 #results .skipped {
   color: var(--skipped);
 }
 
-.chart-correct {
-  stroke: var(--success);
+/*
+ * Each outcome colours itself: the bar segment and the swatch in the
+ * key below it read the same value.
+ */
+.outcome-correct {
+  --outcome-color: var(--success);
 }
 
-.chart-wrong {
-  stroke: var(--danger);
+.outcome-wrong {
+  --outcome-color: var(--danger);
 }
 
-.chart-unanswered {
-  stroke: var(--unanswered);
+.outcome-skipped {
+  --outcome-color: var(--skipped);
 }
 
-.chart-skipped {
-  stroke: var(--skipped);
+.outcome-unanswered {
+  --outcome-color: var(--unanswered);
 }
 
 #results-scroll {
@@ -2525,11 +2525,56 @@ body.embedded #results-scroll {
 }
 
 #stats-chart {
-  /* The results column is the scroller in fullscreen: a shrinkable
-     chart would be squeezed by the correction sheet below it. */
   flex: 0 0 auto;
-  height: min(50vh, 500px);
+  width: 100%;
   align-self: center;
+}
+
+.stats-bar {
+  display: flex;
+  gap: 2px;
+  width: 100%;
+  height: 16px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--btn);
+}
+
+.stats-bar > div {
+  min-width: 0;
+  background-color: var(--outcome-color);
+}
+
+.stats-bar-key {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.25rem 1.25rem;
+  margin: 0.6rem 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.9rem;
+}
+
+.stats-bar-key li {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.stats-bar-key li.empty {
+  opacity: 0.5;
+}
+
+.stats-bar-key b {
+  font-weight: 600;
+}
+
+.stats-bar-key .swatch {
+  width: 0.65rem;
+  height: 0.65rem;
+  border-radius: 50%;
+  background: var(--outcome-color);
 }
 
 .correction-sheet {
@@ -3539,24 +3584,17 @@ th {
         </div>
       </div>
       <div id="results-scroll">
-        <div id="time"></div>
-        <div id="averageTime"></div>
-
-        <div class="stat-row">
-          <div id="correct"></div>
-          <div id="wrong"></div>
-        </div>
-        <div class="stat-row">
-          <div id="skipped"></div>
-          <div id="unanswered"></div>
-        </div>
+        <div id="stats-chart"></div>
 
         <div class="stat-row">
           <div id="score"></div>
           <div id="accuracy"></div>
         </div>
 
-        <div id="stats-chart"></div>
+        <div class="stat-row">
+          <div id="time"></div>
+          <div id="averageTime"></div>
+        </div>
 
         <button id="restart-button" aria-label="Restart quiz">
           Restart Quiz
@@ -4937,67 +4975,39 @@ async function renderResults() {
   const answered = correct + wrong;
   const accuracy = answered > 0 ? correct / answered * 100 : 0;
   const elapsed = state.timer.visible ? state.timer.elapsed + Math.floor((Date.now() - state.timer.start) / 1e3) : Math.floor((Date.now() - state.defaultStartDate) / 1e3);
-  const chartData = {
-    labels: ["Correct", "Wrong", "Unanswered", "Skipped"],
-    datasets: [
-      {
-        label: "Score Chart",
-        data: [correct, wrong, unanswered, skipped],
-        classNames: [
-          "chart-correct",
-          "chart-wrong",
-          "chart-unanswered",
-          "chart-skipped"
-        ]
-      }
-    ]
-  };
+  const outcomes = [
+    { className: "outcome-correct", label: "Correct", count: correct },
+    { className: "outcome-wrong", label: "Wrong", count: wrong },
+    { className: "outcome-skipped", label: "Skipped", count: skipped },
+    { className: "outcome-unanswered", label: "Unanswered", count: unanswered }
+  ];
   document.getElementById("score").textContent = `Score: ${correct}/${wrong + correct}`;
   document.getElementById("accuracy").textContent = `Accuracy: ${accuracy.toFixed(1)}%`;
-  document.getElementById("correct").textContent = `Correct: ${correct}`;
-  document.getElementById("wrong").textContent = `Wrong: ${wrong}`;
-  document.getElementById("unanswered").textContent = `Unanswered: ${unanswered}`;
-  document.getElementById("skipped").textContent = `Skipped: ${skipped}`;
   document.getElementById("time").textContent = `Time: ${formatTime(elapsed)}`;
   document.getElementById("averageTime").textContent = `Average time per question: ${formatTime(Math.floor(elapsed / total))}`;
-  createDonutChart(document.getElementById("stats-chart"), chartData);
+  renderOutcomeBar(document.getElementById("stats-chart"), outcomes);
   showCorrectionSheet();
   await typesetMath();
 }
-function createDonutChart(container, data) {
-  const viewSize = 100;
-  const center = viewSize / 2;
-  const outerRadius = 37.5;
-  const innerRadius = 20;
-  const midRadius = (outerRadius + innerRadius) / 2;
-  const strokeWidth = outerRadius - innerRadius;
-  const circumference = 2 * Math.PI * midRadius;
-  const values = data.datasets[0].data;
-  const classNames = data.datasets[0].classNames;
-  const total = values.reduce((sum, v) => sum + v, 0);
-  let offset = 0;
-  const arcs = values.map((value, i) => {
-    if (value === 0 || total === 0) return "";
-    const fraction = value / total;
-    const dash = fraction * circumference;
-    const gap = circumference - dash;
-    const circle = `<circle
-class="${classNames[i]}"
-cx="${center}" cy="${center}" r="${midRadius}"
-fill="none"
-stroke-width="${strokeWidth}"
-stroke-dasharray="${dash} ${gap}"
-stroke-dashoffset="${-offset}"
-transform="rotate(-90 ${center} ${center})"
-/>`;
-    offset += dash;
-    return circle;
-  }).join("");
+function renderOutcomeBar(container, outcomes) {
+  const total = outcomes.reduce((sum, outcome) => sum + outcome.count, 0);
+  if (total <= 0) {
+    container.innerHTML = "";
+    return;
+  }
+  const segments = outcomes.filter((outcome) => outcome.count > 0).map(
+    ({ className, count }) => `<div class="${className}" style="flex: ${count}"></div>`
+  ).join("");
+  const key = outcomes.map(
+    ({ className, label, count }) => `
+        <li class="${className}${count > 0 ? "" : " empty"}">
+          <span class="swatch"></span>${label} <b>${count}</b>
+        </li>`
+  ).join("");
   container.innerHTML = `
-<svg viewBox="0 0 ${viewSize} ${viewSize}" preserveAspectRatio="xMidYMid meet" style="width: 100%; height: 100%; display: block;">
-    ${arcs}
-</svg>
-`;
+    <div class="stats-bar" aria-hidden="true">${segments}</div>
+    <ul class="stats-bar-key">${key}</ul>
+  `;
 }
 function describeUserAnswer(index, question) {
   const result = state.questionResults[index];
@@ -5023,6 +5033,10 @@ function showCorrectionSheet() {
     [UNANSWERED]: "unanswered",
     [SKIPPED]: "skipped"
   };
+  const resultMark = {
+    [CORRECT]: "\u2713",
+    [WRONG]: "\u2717"
+  };
   for (let orderIndex = 0; orderIndex < state.questionOrder.length; orderIndex++) {
     const index = state.questionOrder[orderIndex];
     const question = questions[index];
@@ -5030,8 +5044,9 @@ function showCorrectionSheet() {
     const userAnswer = describeUserAnswer(index, question);
     const article = document.createElement("article");
     const currentClass = resultClass[state.questionResults[index]];
+    const mark = resultMark[state.questionResults[index]];
     article.innerHTML = `
-<h3 class="${currentClass}">Question ${orderIndex + 1}</h3>
+<h3 class="${currentClass}">Question ${orderIndex + 1}${mark ? ` ${mark}` : ""}</h3>
 
 <p>${renderMarkdown(question.question, state.mathReady)}</p>
 
@@ -6707,6 +6722,9 @@ var appData = loadAppData();
 var ENABLE_MATHJAX = appData.enableMathJax;
 var quiz = appData.quiz;
 var mode = appData.mode;
+if (window.self !== window.top) {
+  document.body.classList.add("embedded");
+}
 try {
   if (window.top.document.body.classList.contains("pseudo-fullscreen-active")) {
     window.top.location.reload();

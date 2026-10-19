@@ -521,40 +521,40 @@ mjx-container {
   display: inline-block;
 }
 
-#correct,
 #results .correct {
   color: var(--success);
 }
 
-#wrong,
 #results .wrong {
   color: var(--danger);
 }
 
-#unanswered,
 #results .unanswered {
   color: var(--unanswered);
 }
 
-#skipped,
 #results .skipped {
   color: var(--skipped);
 }
 
-.chart-correct {
-  stroke: var(--success);
+/*
+ * Each outcome colours itself: the bar segment and the swatch in the
+ * key below it read the same value.
+ */
+.outcome-correct {
+  --outcome-color: var(--success);
 }
 
-.chart-wrong {
-  stroke: var(--danger);
+.outcome-wrong {
+  --outcome-color: var(--danger);
 }
 
-.chart-unanswered {
-  stroke: var(--unanswered);
+.outcome-skipped {
+  --outcome-color: var(--skipped);
 }
 
-.chart-skipped {
-  stroke: var(--skipped);
+.outcome-unanswered {
+  --outcome-color: var(--unanswered);
 }
 
 #results-scroll {
@@ -609,11 +609,56 @@ body.embedded #results-scroll {
 }
 
 #stats-chart {
-  /* The results column is the scroller in fullscreen: a shrinkable
-     chart would be squeezed by the correction sheet below it. */
   flex: 0 0 auto;
-  height: min(50vh, 500px);
+  width: 100%;
   align-self: center;
+}
+
+.stats-bar {
+  display: flex;
+  gap: 2px;
+  width: 100%;
+  height: 16px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--btn);
+}
+
+.stats-bar > div {
+  min-width: 0;
+  background-color: var(--outcome-color);
+}
+
+.stats-bar-key {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.25rem 1.25rem;
+  margin: 0.6rem 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.9rem;
+}
+
+.stats-bar-key li {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.stats-bar-key li.empty {
+  opacity: 0.5;
+}
+
+.stats-bar-key b {
+  font-weight: 600;
+}
+
+.stats-bar-key .swatch {
+  width: 0.65rem;
+  height: 0.65rem;
+  border-radius: 50%;
+  background: var(--outcome-color);
 }
 
 .correction-sheet {

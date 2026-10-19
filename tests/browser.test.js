@@ -158,6 +158,33 @@ const longQuizData = {
 
 const longHtml = generateHTML(longQuizData);
 
+/*
+ * The results page lists a correction for every question, so once it is
+ * embedded it has to scroll in a capped column instead of reporting its
+ * whole height to the hosting page. These corrections overflow that cap.
+ */
+const correctionsData = {
+  enableMathJax: false,
+  mode: "mcq",
+  srsQueueSize: 20,
+  requestRetention: 0.9,
+  srsOnLoad: false,
+  quiz: {
+    title: "Browser smoke corrections",
+    questions: Array.from({ length: 8 }, (_, index) => ({
+      question: `Correction ${index + 1}?`,
+      options: ["wrong", "right"],
+      correct_index: 1,
+      explanation:
+        "A correction long enough that the results column has to scroll. ".repeat(
+          6,
+        ),
+    })),
+  },
+};
+
+const correctionsHtml = generateHTML(correctionsData);
+
 const browser = await chromium.launch();
 const errors = [];
 
@@ -570,6 +597,98 @@ describe("browser smoke", () => {
         ),
       ),
     ).toEqual(order);
+  }, 60_000);
+
+  it("scrolls the results inside the hosting iframe instead of growing it", async () => {
+    const directory = mkdtempSync(join(tmpdir(), "openquizui-embedded-"));
+
+    writeFileSync(join(directory, "quiz.html"), correctionsHtml);
+
+    /*
+     * A host page shaped like Open WebUI's message content: an iframe
+     * sized from the height the page reports.
+     */
+    writeFileSync(
+      join(directory, "host.html"),
+      `<!doctype html>
+<html><body style="margin: 0">
+<iframe id="quiz" src="quiz.html" style="width: 100%; height: 300px; border: 0"></iframe>
+<script>
+  window.heights = [];
+  window.addEventListener("message", (event) => {
+    if (event.data?.type === "iframe:height") {
+      window.heights.push(event.data.height);
+      document.getElementById("quiz").style.height = event.data.height + "px";
+    }
+  });
+</script>
+</body></html>`,
+    );
+
+    await page.goto(`file://${join(directory, "host.html")}`);
+
+    const frame = page.frames().find((f) => f.url().endsWith("quiz.html"));
+
+    await frame.waitForSelector("#question");
+
+    /* Answer every question to reach the results page. */
+    for (let index = 0; index < correctionsData.quiz.questions.length; index++) {
+      await frame.click('#options button.option:has-text("right")');
+      await frame.click("#question-box .next-button");
+    }
+
+    await frame.waitForSelector("#results");
+
+    /* Let the page report its results height to the host. */
+    await frame.evaluate(
+      () =>
+        new Promise((resolve) =>
+          requestAnimationFrame(() => requestAnimationFrame(resolve)),
+        ),
+    );
+
+    const column = await frame.evaluate(() => {
+      const scroll = document.getElementById("results-scroll");
+
+      scroll.scrollTop = 100;
+
+      return {
+        embedded: document.body.classList.contains("embedded"),
+        maxHeight: getComputedStyle(scroll).maxHeight,
+        clientHeight: scroll.clientHeight,
+        scrollHeight: scroll.scrollHeight,
+        scrolledBy: scroll.scrollTop,
+      };
+    });
+
+    expect(column.embedded).toBe(true);
+    expect(column.maxHeight).toBe("600px");
+    expect(column.scrollHeight).toBeGreaterThan(column.clientHeight);
+    expect(column.scrolledBy).toBeGreaterThan(0);
+
+    /*
+     * And the hosting page stays around the cap: the corrections are
+     * taller than that, and without the cap they would all be reported.
+     */
+    const hostHeight = await page.evaluate(
+      () => document.querySelector("#quiz").getBoundingClientRect().height,
+    );
+
+    expect(column.scrollHeight).toBeGreaterThan(2000);
+    expect(hostHeight).toBeLessThan(900);
+
+    /* Opened as a file of its own, the page is not capped at all. */
+    await page.goto(`file://${join(directory, "quiz.html")}`);
+    await visible("#question", "question box");
+
+    const standalone = await page.evaluate(() => ({
+      embedded: document.body.classList.contains("embedded"),
+      maxHeight: getComputedStyle(
+        document.getElementById("results-scroll"),
+      ).maxHeight,
+    }));
+
+    expect(standalone).toEqual({ embedded: false, maxHeight: "none" });
   }, 60_000);
 
   it("offers each page's documentation in its own menu", async () => {

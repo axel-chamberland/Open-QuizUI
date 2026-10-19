@@ -43,92 +43,75 @@ export async function renderResults() {
     ? state.timer.elapsed + Math.floor((Date.now() - state.timer.start) / 1000)
     : Math.floor((Date.now() - state.defaultStartDate) / 1000);
 
-  const chartData = {
-    labels: ["Correct", "Wrong", "Unanswered", "Skipped"],
-    datasets: [
-      {
-        label: "Score Chart",
-        data: [correct, wrong, unanswered, skipped],
-        classNames: [
-          "chart-correct",
-          "chart-wrong",
-          "chart-unanswered",
-          "chart-skipped",
-        ],
-      },
-    ],
-  };
+  /*
+   * The outcome row, in the order it is read: the bar and the key
+   * under it carry the four counts, so they replace the tiles those
+   * counts used to have.
+   */
+  const outcomes = [
+    { className: "outcome-correct", label: "Correct", count: correct },
+    { className: "outcome-wrong", label: "Wrong", count: wrong },
+    { className: "outcome-skipped", label: "Skipped", count: skipped },
+    { className: "outcome-unanswered", label: "Unanswered", count: unanswered },
+  ];
+
   document.getElementById("score").textContent =
     `Score: ${correct}/${wrong + correct}`;
 
   document.getElementById("accuracy").textContent =
     `Accuracy: ${accuracy.toFixed(1)}%`;
 
-  document.getElementById("correct").textContent = `Correct: ${correct}`;
-
-  document.getElementById("wrong").textContent = `Wrong: ${wrong}`;
-
-  document.getElementById("unanswered").textContent =
-    `Unanswered: ${unanswered}`;
-
-  document.getElementById("skipped").textContent = `Skipped: ${skipped}`;
-
   document.getElementById("time").textContent = `Time: ${formatTime(elapsed)}`;
 
   document.getElementById("averageTime").textContent =
     `Average time per question: ${formatTime(Math.floor(elapsed / total))}`;
 
-  createDonutChart(document.getElementById("stats-chart"), chartData);
+  renderOutcomeBar(document.getElementById("stats-chart"), outcomes);
   showCorrectionSheet();
 
   await typesetMath();
 }
 
-function createDonutChart(container, data) {
-  const viewSize = 100;
-  const center = viewSize / 2;
+/**
+ * Renders the outcome bar and its key.
+ *
+ * An outcome no question ended in gets no segment, and a dimmed key
+ * entry: the segment would be invisible either way, while the key
+ * keeps saying the outcome exists and is empty.
+ *
+ * @param {HTMLElement} container Where the bar and the key go.
+ * @param {Array<{className: string, label: string, count: number}>} outcomes
+ *   The outcomes, in reading order.
+ */
+function renderOutcomeBar(container, outcomes) {
+  const total = outcomes.reduce((sum, outcome) => sum + outcome.count, 0);
 
-  const outerRadius = 37.5;
-  const innerRadius = 20;
-  const midRadius = (outerRadius + innerRadius) / 2;
-  const strokeWidth = outerRadius - innerRadius;
+  if (total <= 0) {
+    container.innerHTML = "";
+    return;
+  }
 
-  const circumference = 2 * Math.PI * midRadius;
+  const segments = outcomes
+    .filter((outcome) => outcome.count > 0)
+    .map(
+      ({ className, count }) =>
+        `<div class="${className}" style="flex: ${count}"></div>`,
+    )
+    .join("");
 
-  const values = data.datasets[0].data;
-  const classNames = data.datasets[0].classNames;
-  const total = values.reduce((sum, v) => sum + v, 0);
-
-  let offset = 0;
-
-  const arcs = values
-    .map((value, i) => {
-      if (value === 0 || total === 0) return "";
-
-      const fraction = value / total;
-      const dash = fraction * circumference;
-      const gap = circumference - dash;
-
-      const circle = `<circle
-class="${classNames[i]}"
-cx="${center}" cy="${center}" r="${midRadius}"
-fill="none"
-stroke-width="${strokeWidth}"
-stroke-dasharray="${dash} ${gap}"
-stroke-dashoffset="${-offset}"
-transform="rotate(-90 ${center} ${center})"
-/>`;
-
-      offset += dash;
-      return circle;
-    })
+  const key = outcomes
+    .map(
+      ({ className, label, count }) => `
+        <li class="${className}${count > 0 ? "" : " empty"}">
+          <span class="swatch"></span>${label} <b>${count}</b>
+        </li>`,
+    )
     .join("");
 
   container.innerHTML = `
-<svg viewBox="0 0 ${viewSize} ${viewSize}" preserveAspectRatio="xMidYMid meet" style="width: 100%; height: 100%; display: block;">
-    ${arcs}
-</svg>
-`;
+    <div class="stats-bar" aria-hidden="true">${segments}</div>
+    <ul class="stats-bar-key">${key}</ul>
+  `;
 }
 
 /**
@@ -177,6 +160,17 @@ function showCorrectionSheet() {
     [SKIPPED]: "skipped",
   };
 
+  /*
+   * A correct or wrong question carries its verdict next to its
+   * heading, so the sheet can be scanned for what went wrong without
+   * comparing the two answers of each one. Skipped and unanswered
+   * say so on the answer line below.
+   */
+  const resultMark = {
+    [CORRECT]: "✓",
+    [WRONG]: "✗",
+  };
+
   for (
     let orderIndex = 0;
     orderIndex < state.questionOrder.length;
@@ -193,8 +187,10 @@ function showCorrectionSheet() {
 
     const currentClass = resultClass[state.questionResults[index]];
 
+    const mark = resultMark[state.questionResults[index]];
+
     article.innerHTML = `
-<h3 class="${currentClass}">Question ${orderIndex + 1}</h3>
+<h3 class="${currentClass}">Question ${orderIndex + 1}${mark ? ` ${mark}` : ""}</h3>
 
 <p>${renderMarkdown(question.question, state.mathReady)}</p>
 

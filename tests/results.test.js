@@ -47,6 +47,30 @@ const correctionAnswers = () =>
         .match(/Your answer: (.*?) Correct answer: /)?.[1],
   );
 
+/** The correction headings, as they are shown. */
+const headings = () =>
+  [...document.querySelectorAll("#question-corrections h3")].map((heading) =>
+    heading.textContent.trim(),
+  );
+
+/** The correction headings' classes, which colour them. */
+const headingClasses = () =>
+  [...document.querySelectorAll("#question-corrections h3")].map(
+    (heading) => heading.className,
+  );
+
+/** The outcome bar's key entries, as the label and count they show. */
+const keyEntries = () =>
+  [...document.querySelectorAll("#stats-chart .stats-bar-key li")].map((li) =>
+    li.textContent.replace(/\s+/g, " ").trim(),
+  );
+
+/** The outcome bar's segments, as their classes, in the order drawn. */
+const segments = () =>
+  [...document.querySelectorAll("#stats-chart .stats-bar > div")].map(
+    (segment) => segment.className,
+  );
+
 describe("renderResults", () => {
   beforeEach(() => {
     document.body.innerHTML = `
@@ -56,10 +80,6 @@ describe("renderResults", () => {
 
 <div id="score"></div>
 <div id="accuracy"></div>
-<div id="correct"></div>
-<div id="wrong"></div>
-<div id="unanswered"></div>
-<div id="skipped"></div>
 <div id="time"></div>
 <div id="averageTime"></div>
 
@@ -115,7 +135,7 @@ describe("renderResults", () => {
     expect(document.getElementById("results").style.display).toBe("");
   });
 
-  it("calculates and displays the score", async () => {
+  it("calculates the score and the outcome bar", async () => {
     await renderResults();
 
     expect(document.getElementById("score").textContent).toBe("Score: 1/2");
@@ -124,15 +144,40 @@ describe("renderResults", () => {
       "Accuracy: 50.0%",
     );
 
-    expect(document.getElementById("correct").textContent).toBe("Correct: 1");
+    /* The key of the bar carries the four counts, in reading order. */
+    expect(keyEntries()).toEqual([
+      "Correct 1",
+      "Wrong 1",
+      "Skipped 1",
+      "Unanswered 1",
+    ]);
 
-    expect(document.getElementById("wrong").textContent).toBe("Wrong: 1");
+    expect(segments()).toEqual([
+      "outcome-correct",
+      "outcome-wrong",
+      "outcome-skipped",
+      "outcome-unanswered",
+    ]);
+  });
 
-    expect(document.getElementById("unanswered").textContent).toBe(
-      "Unanswered: 1",
+  it("leaves an outcome out of the bar that no question ended in", async () => {
+    state.questionResults = [CORRECT, CORRECT, CORRECT, UNANSWERED];
+
+    await renderResults();
+
+    /* The bar skips it, the key still says it is empty. */
+    expect(segments()).toEqual(["outcome-correct", "outcome-unanswered"]);
+
+    expect(keyEntries()).toEqual([
+      "Correct 3",
+      "Wrong 0",
+      "Skipped 0",
+      "Unanswered 1",
+    ]);
+
+    expect(document.querySelectorAll(".stats-bar-key li.empty")).toHaveLength(
+      2,
     );
-
-    expect(document.getElementById("skipped").textContent).toBe("Skipped: 1");
   });
 
   it("shows the correction sheet", async () => {
@@ -145,6 +190,25 @@ describe("renderResults", () => {
     expect(corrections.textContent).toContain("Your answer:");
     expect(corrections.textContent).toContain("Correct answer:");
     expect(corrections.textContent).toContain("Explanation");
+  });
+
+  it("marks each heading with how the question went", async () => {
+    await renderResults();
+
+    /* Correct and wrong carry a mark, the other two say so below. */
+    expect(headings()).toEqual([
+      "Question 1 ✓",
+      "Question 2 ✗",
+      "Question 3",
+      "Question 4",
+    ]);
+
+    expect(headingClasses()).toEqual([
+      "correct",
+      "wrong",
+      "unanswered",
+      "skipped",
+    ]);
   });
 
   it("tells the picked option from a skip and from no answer", async () => {
