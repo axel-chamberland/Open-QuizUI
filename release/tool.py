@@ -2,7 +2,7 @@
 title: QuizUI
 author: Axel Chamberland
 git_url: https://github.com/axel-chamberland/OpenQuizUI
-description: This tool allows large language models to generated interactive multiple-choice quizzes.
+description: This tool allows large language models to generate interactive multiple-choice quizzes and flashcards.
 version: 2.2.1
 licence: MIT
 """
@@ -119,7 +119,7 @@ class Tools:
         enable_mathjax: bool = Field(
             default=False,
             description=(
-                "Disabled by default for privacy. Enable LaTeX/math rendering with MathJax."
+                "Disabled by default for privacy. Enable LaTeX/math rendering with MathJax. "
                 "Requires Internet access to load the MathJax library from a CDN. When disabled or"
                 "offline, LaTeX expressions are displayed as plain text."
             ),

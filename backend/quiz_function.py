@@ -29,7 +29,7 @@ class Action:
         enable_mathjax: bool = Field(
             default=False,
             description=(
-                "Disabled by default for privacy. Enable LaTeX/math rendering with MathJax."
+                "Disabled by default for privacy. Enable LaTeX/math rendering with MathJax. "
                 "Requires Internet access to load the MathJax library from a CDN. When disabled or"
                 "offline, LaTeX expressions are displayed as plain text."
             ),
@@ -165,7 +165,7 @@ class Action:
         enable_mathjax: bool = Field(
             default=False,
             description=(
-                "Disabled by default for privacy. Enable LaTeX/math rendering with MathJax."
+                "Disabled by default for privacy. Enable LaTeX/math rendering with MathJax. "
                 "Requires Internet access to load the MathJax library from a CDN. When disabled or"
                 "offline, LaTeX expressions are displayed as plain text."
             ),
