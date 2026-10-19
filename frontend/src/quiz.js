@@ -110,7 +110,9 @@ export async function nextQuestion() {
  * Moves to the previous question.
  *
  * Normal mode moves backward through state.questionOrder.
- * SRS mode undoes the most recent SRS answer.
+ * SRS mode undoes the most recent SRS answer, and with none to undo -
+ * none rated since the page loaded, or none rated at all - steps back
+ * from the results page to the question in view, as normal mode does.
  *
  * @returns {void}
  */
@@ -119,6 +121,35 @@ export function prevQuestion() {
     const questionIndex = prevSRSQuestion(state.quizStorageKey);
 
     if (questionIndex === null) {
+      /*
+       * There is no rating to undo when none was given since the page
+       * loaded - the undo history is not persisted, so a reload leaves
+       * it empty - and none when the queue was already empty. Stepping
+       * back from the results page still shows the question they were
+       * reached from, the way it does outside SRS mode.
+       */
+      if (!isResultsVisible()) {
+        return;
+      }
+
+      const lastOrderIndex = state.questionOrder.length - 1;
+
+      if (lastOrderIndex < 0) {
+        return;
+      }
+
+      hideRatingIndicator();
+
+      hideResults();
+
+      // A number past the last question leaves no question in view,
+      // which is the case the last question in the order is for.
+      goTo(
+        state.questionOrder.includes(state.currentQuestionIndex)
+          ? state.currentQuestionIndex
+          : state.questionOrder[lastOrderIndex],
+      );
+
       return;
     }
 

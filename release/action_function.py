@@ -5230,6 +5230,18 @@ function prevQuestion() {
   if (state.srs) {
     const questionIndex = prevSRSQuestion(state.quizStorageKey);
     if (questionIndex === null) {
+      if (!isResultsVisible()) {
+        return;
+      }
+      const lastOrderIndex = state.questionOrder.length - 1;
+      if (lastOrderIndex < 0) {
+        return;
+      }
+      hideRatingIndicator();
+      hideResults();
+      goTo(
+        state.questionOrder.includes(state.currentQuestionIndex) ? state.currentQuestionIndex : state.questionOrder[lastOrderIndex]
+      );
       return;
     }
     hideRatingIndicator();

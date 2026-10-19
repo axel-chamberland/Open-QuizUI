@@ -264,6 +264,43 @@ describe("prevQuestion", () => {
     expect(document.getElementById("results").style.display).toBe("none");
   });
 
+  it("returns to the question in view from the results page in SRS mode", () => {
+    // Rating is what SRS mode steps back through, and the ratings are
+    // only remembered for the session: after a reload there is none to
+    // undo, so back has to show the question the results were reached
+    // from instead of doing nothing.
+    state.srs = true;
+    state.currentQuestionIndex = 1;
+    document.getElementById("results").style.display = "";
+
+    prevQuestion();
+
+    expect(state.currentQuestionIndex).toBe(1);
+    expect(document.getElementById("results").style.display).toBe("none");
+  });
+
+  it("falls back to the last question when SRS has none in view", () => {
+    // How the navigation field reaches the results page in SRS mode:
+    // a number past the last question leaves no question to return to.
+    state.srs = true;
+    state.currentQuestionIndex = state.quiz.questions.length;
+    document.getElementById("results").style.display = "";
+
+    prevQuestion();
+
+    expect(state.currentQuestionIndex).toBe(1);
+    expect(document.getElementById("results").style.display).toBe("none");
+  });
+
+  it("does nothing on a question in SRS mode with no rating to undo", () => {
+    state.srs = true;
+    state.currentQuestionIndex = 1;
+
+    prevQuestion();
+
+    expect(state.currentQuestionIndex).toBe(1);
+  });
+
   it("does nothing on the first question of the order", () => {
     state.currentQuestionIndex = 2;
 
