@@ -594,9 +594,9 @@ describe("browser smoke", () => {
     );
 
     expect(docs).toEqual([
-      "https://axel-chamberland.github.io/Open-QuizUI/docs/Usage.html#taking-a-quiz",
-      "https://axel-chamberland.github.io/Open-QuizUI/docs/Usage.html#flashcards",
-      "https://axel-chamberland.github.io/Open-QuizUI/docs/Usage.html#editing-a-quiz",
+      "https://github.com/axel-chamberland/Open-QuizUI/blob/main/docs/Usage.md#taking-a-quiz",
+      "https://github.com/axel-chamberland/Open-QuizUI/blob/main/docs/Usage.md#flashcards",
+      "https://github.com/axel-chamberland/Open-QuizUI/blob/main/docs/Usage.md#editing-a-quiz",
     ]);
   });
 });

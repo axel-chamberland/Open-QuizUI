@@ -3320,7 +3320,7 @@ th {
         </button>
         <a
           class="docs-link"
-          href="https://axel-chamberland.github.io/Open-QuizUI/docs/Usage.html#taking-a-quiz"
+          href="https://github.com/axel-chamberland/Open-QuizUI/blob/main/docs/Usage.md#taking-a-quiz"
           target="_blank"
           rel="noopener noreferrer"
           title="Documentation"
@@ -3464,7 +3464,7 @@ th {
         </button>
         <a
           class="docs-link"
-          href="https://axel-chamberland.github.io/Open-QuizUI/docs/Usage.html#flashcards"
+          href="https://github.com/axel-chamberland/Open-QuizUI/blob/main/docs/Usage.md#flashcards"
           target="_blank"
           rel="noopener noreferrer"
           title="Documentation"
@@ -3644,7 +3644,7 @@ th {
         </button>
         <a
           class="docs-link"
-          href="https://axel-chamberland.github.io/Open-QuizUI/docs/Usage.html#editing-a-quiz"
+          href="https://github.com/axel-chamberland/Open-QuizUI/blob/main/docs/Usage.md#editing-a-quiz"
           target="_blank"
           rel="noopener noreferrer"
           title="Documentation"
