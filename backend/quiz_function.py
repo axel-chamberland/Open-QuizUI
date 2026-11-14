@@ -631,7 +631,7 @@ def question_parser(
         choice_match = choice_re.match(line)
 
         if choice_match:
-            value = clean_text(choice_match.group(2), False)
+            value = clean_text(choice_match.group(2))
             current_question["options"].append(value)
 
             # Fallback only.
@@ -857,7 +857,7 @@ def build_flashcard(heading, body, label_re, explanations=True):
         if not label_match:
             continue
 
-        answer = clean_text(label_match.group(1), False)
+        answer = clean_text(label_match.group(1))
 
         if not answer:
             return None
@@ -876,7 +876,7 @@ def build_flashcard(heading, body, label_re, explanations=True):
         explanation = "\n".join(body[i + 1 :]).strip()
 
         if explanations and explanation:
-            explanation = clean_text(explanation)
+            explanation = clean_explanation(explanation)
 
             if explanation:
                 card["explanation"] = explanation
@@ -899,7 +899,7 @@ def build_flashcard(heading, body, label_re, explanations=True):
         answer = paragraphs[1] if len(paragraphs) > 1 else ""
         rest = paragraphs[2:]
 
-    answer = clean_text(answer, False)
+    answer = clean_text(answer)
 
     question = question.strip()
 
@@ -913,7 +913,7 @@ def build_flashcard(heading, body, label_re, explanations=True):
     }
 
     if explanations and rest:
-        explanation = clean_text("\n\n".join(rest))
+        explanation = clean_explanation("\n\n".join(rest))
 
         if explanation:
             card["explanation"] = explanation
@@ -971,7 +971,7 @@ def flashcard_table_parser(lines, explanations=True):
                 continue
 
             question = row[0].strip()
-            answer = clean_text(row[1], False)
+            answer = clean_text(row[1])
 
             if not question or not answer:
                 continue
@@ -983,7 +983,7 @@ def flashcard_table_parser(lines, explanations=True):
             }
 
             if explanations and len(row) > 2:
-                explanation = clean_text(row[2])
+                explanation = clean_explanation(row[2])
 
                 if explanation:
                     card["explanation"] = explanation
@@ -1313,7 +1313,7 @@ def answer_parser(
             # Start immediately after the current answer.
             start = answer_match.end()
 
-            explanation = text[start:end].strip()
+            explanation = re.sub(r"^[^\S\r\n]*—", "", text[start:end]).strip()
             # If this is the last answer in an answer key, don't consume
             # unrelated text after the explanation.
             is_last_answer = i == len(answer_matches) - 1
@@ -1326,7 +1326,7 @@ def answer_parser(
                 )[0].strip()
 
             if explanation:
-                explanation = clean_text(explanation)
+                explanation = clean_explanation(explanation)
 
                 # Only add the explanation if cleanup left actual text.
                 if explanation:
@@ -1508,7 +1508,11 @@ def _normalize_bullet(text: str) -> str:
     )
 
 
-def clean_text(text: str, add_period=True) -> str:
+def clean_explanation(text: str) -> str:
+    return clean_text(re.sub(r"(?:^|\n[ \t]*\n)[ \t]*---[ \t]*$", "", text.strip()))
+
+
+def clean_text(text: str) -> str:
     text = text.strip()
 
     while True:
@@ -1580,20 +1584,6 @@ def clean_text(text: str, add_period=True) -> str:
     # If nothing but punctuation/whitespace remains, there is no explanation.
     if not re.search(r"[^\W_]", text, re.UNICODE):
         return ""
-
-    # Add terminal punctuation.
-    if add_period:
-        lines = []
-
-        for line in text.splitlines():
-            line = line.rstrip()
-
-            if line and line[-1] not in ".!?;:)]}":
-                line += "."
-
-            lines.append(line)
-
-        text = "\n".join(lines).strip()
 
     return text
 

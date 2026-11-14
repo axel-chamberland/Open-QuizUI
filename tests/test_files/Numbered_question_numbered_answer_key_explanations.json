@@ -12,7 +12,7 @@
           "<p>Nodes and weights</p>"
         ],
         "correct_index": 1,
-        "explanation": "<p>Vertices and edges.</p>"
+        "explanation": "<p>Vertices and edges</p>"
       },
       {
         "question": "<p>In graph theory, what is a \"loop\" (boucle)?</p>",
@@ -23,7 +23,7 @@
           "<p>A type of edge that connects two different graphs</p>"
         ],
         "correct_index": 1,
-        "explanation": "<p>A cycle of length 1.</p>"
+        "explanation": "<p>A cycle of length 1</p>"
       },
       {
         "question": "<p>Which of the following is a defining characteristic of a \"Tree\" (Arbre)?</p>",
@@ -34,7 +34,7 @@
           "<p>It is a directed graph that is always strongly connected</p>"
         ],
         "correct_index": 2,
-        "explanation": "<p>$|V| = |E| + 1$ and it is acyclic.</p>"
+        "explanation": "<p>$|V| = |E| + 1$ and it is acyclic</p>"
       },
       {
         "question": "<p>If you are working with a \"sparse\" graph (where the number of edges $|E|$ is much smaller than $|V|^2$), which representation is recommended?</p>",
@@ -45,7 +45,7 @@
           "<p>Complete Matrix</p>"
         ],
         "correct_index": 1,
-        "explanation": "<p>Adjacency list.</p>"
+        "explanation": "<p>Adjacency list</p>"
       },
       {
         "question": "<p>Which traversal algorithm is specifically noted for its ability to find the shortest path between two vertices using the minimum number of edges?</p>",
@@ -56,7 +56,7 @@
           "<p>Prim's Algorithm</p>"
         ],
         "correct_index": 1,
-        "explanation": "<p>Breadth-First Search.</p>"
+        "explanation": "<p>Breadth-First Search</p>"
       }
     ]
   ]

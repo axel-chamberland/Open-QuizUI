@@ -12,7 +12,7 @@
           "<p>O(n²)</p>"
         ],
         "correct_index": 0,
-        "explanation": "<p>(O(1)) - En moyenne, les accès sont constants.</p>"
+        "explanation": "<p>(O(1)) - En moyenne, les accès sont constants</p>"
       },
       {
         "question": "<p>Dans quel type de structure de données l'élément en dernier entré est le premier à sortir ?</p>",
@@ -23,7 +23,7 @@
           "<p>Arbre binaire</p>"
         ],
         "correct_index": 1,
-        "explanation": "<p>Pile/Stack/LIFO - Last In First Out.</p>"
+        "explanation": "<p>Pile/Stack/LIFO - Last In First Out</p>"
       },
       {
         "question": "<p>Quelle opération est la plus lente dans une liste chaînée comparée à un tableau ?</p>",

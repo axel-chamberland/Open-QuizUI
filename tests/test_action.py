@@ -5,9 +5,36 @@ import os
 import pytest
 
 from backend import quiz_function, quiz_tool
-from backend.quiz_function import clean_message, parse_quiz
+from backend.quiz_function import clean_explanation, clean_message, parse_quiz
 
 TEST_DIR = "tests/test_files"
+
+
+@pytest.mark.parametrize(
+    "text, expected",
+    [
+        ("See pages 5–7", "See pages 5–7"),
+        ("*See pages 5–7.*", "*See pages 5–7.*"),
+        ("$$\nx = 2\n$$", "$$\nx = 2\n$$"),
+        ("See pages 5–7.\n\n---", "See pages 5–7."),
+        ("— See pages 5–7.", "— See pages 5–7."),
+    ],
+)
+def test_explanation_preserves_punctuation(text, expected):
+    assert clean_explanation(text) == expected
+
+
+@pytest.mark.parametrize(
+    "answer, expected",
+    [
+        ("1. B — Explanation", "<p>Explanation</p>"),
+        ("Answer: B — Explanation", "<p>Explanation</p>"),
+        ("Answer: B\n— Explanation", "<p>— Explanation</p>"),
+    ],
+)
+def test_answer_key_em_dash_separator(answer, expected):
+    _, questions = parse_quiz(f"1. Which?\nA) One\nB) Two\n\n{answer}", True)
+    assert questions[0]["explanation"] == expected
 
 
 @pytest.mark.parametrize("backend", [quiz_function, quiz_tool])

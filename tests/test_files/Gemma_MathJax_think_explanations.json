@@ -12,7 +12,7 @@
           "<p>$20$</p>"
         ],
         "correct_index": 1,
-        "explanation": "<p>$x = 13$.</p>"
+        "explanation": "<p>$x = 13$</p>"
       },
       {
         "question": "<p>Exponents &amp; Square Roots\nCalculate the value of:\n$$\\sqrt{64} + 3^2 - 5^0$$</p>",
@@ -23,7 +23,7 @@
           "<p>$0$</p>"
         ],
         "correct_index": 0,
-        "explanation": "<p>$8 + 9 - 1 = 16$.</p>"
+        "explanation": "<p>$8 + 9 - 1 = 16$</p>"
       },
       {
         "question": "<p>Fractions &amp; Division\nSimplify the following expression:\n$$\\frac{15 + 5}{10 - 5}$$</p>",
@@ -34,7 +34,7 @@
           "<p>$20$</p>"
         ],
         "correct_index": 1,
-        "explanation": "<p>$\\frac{20}{5} = 4$.</p>"
+        "explanation": "<p>$\\frac{20}{5} = 4$</p>"
       },
       {
         "question": "<p>Summation Notation (Sigma)\nEvaluate the sum:\n$$\\sum_{n=1}^{4} n$$</p>",
@@ -45,7 +45,7 @@
           "<p>$15$</p>"
         ],
         "correct_index": 2,
-        "explanation": "<p>$1 + 2 + 3 + 4 = 10$.</p>"
+        "explanation": "<p>$1 + 2 + 3 + 4 = 10$</p>"
       },
       {
         "question": "<p>The \"Ultimate MathJax\" Challenge\nDetermine which of these mathematical expressions evaluates exactly to $1$:</p>",
@@ -56,7 +56,7 @@
           "<p>All of the above are equal to $1$.</p>"
         ],
         "correct_index": 3,
-        "explanation": "<p>All expressions evaluate to $1$.</p>"
+        "explanation": "<p>All expressions evaluate to $1$</p>"
       }
     ]
   ]

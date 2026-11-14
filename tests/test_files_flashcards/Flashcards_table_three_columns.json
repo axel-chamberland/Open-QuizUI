@@ -9,7 +9,7 @@
           "<p>Jupiter</p>"
         ],
         "correct_index": 0,
-        "explanation": "<p>About 139,820 km.</p>"
+        "explanation": "<p>About 139,820 km</p>"
       },
       {
         "question": "<p>Which planet is closest to the Sun?</p>",
@@ -17,7 +17,7 @@
           "<p>Mercury</p>"
         ],
         "correct_index": 0,
-        "explanation": "<p>It has no moons.</p>"
+        "explanation": "<p>It has no moons</p>"
       }
     ]
   ]
