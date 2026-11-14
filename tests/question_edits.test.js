@@ -1,7 +1,7 @@
 /**
  * @vitest-environment jsdom
  */
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 
 import {
   appendQuestion,
@@ -17,6 +17,8 @@ import {
 } from "../frontend/src/persistence/question_order.js";
 import {
   loadQuizEdits,
+  removeAllLocalEdits,
+  removeLocalEdit,
   removeLocalEditAndShift,
 } from "../frontend/src/persistence/quiz_edits.js";
 import {
@@ -375,6 +377,30 @@ describe("added question round trip", () => {
     expect(state.quiz.questions).toHaveLength(2);
     expect(state.questionOrder).toEqual([0, 1]);
   });
+});
+
+it("contains storage errors when restoring quiz edits", () => {
+  localStorage.clear();
+  initializeState(structuredClone(QUIZ));
+  storeEdits({ 0: { question: "edited" }, title: "Renamed" });
+
+  const storage = vi
+    .spyOn(Storage.prototype, "setItem")
+    .mockImplementation(() => {
+      throw new DOMException("Storage is full", "QuotaExceededError");
+    });
+  const access = vi.spyOn(window, "localStorage", "get");
+
+  try {
+    expect(removeLocalEdit(0)).toBe(false);
+    access.mockImplementation(() => {
+      throw new DOMException("Storage is blocked", "SecurityError");
+    });
+    expect(() => removeAllLocalEdits()).not.toThrow();
+  } finally {
+    access.mockRestore();
+    storage.mockRestore();
+  }
 });
 
 describe("removeLocalEditAndShift", () => {

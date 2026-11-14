@@ -116,29 +116,26 @@ function appendStoredQuestions(edits) {
 export function removeLocalEdit(index) {
   const key = getQuizEditsKey(state.quizStorageKey);
 
-  let edits;
-
   try {
-    edits = JSON.parse(localStorage.getItem(key)) || {};
+    const edits = JSON.parse(localStorage.getItem(key)) || {};
+    delete edits[index];
+
+    if (Object.keys(edits).length === 0) {
+      localStorage.removeItem(key);
+    } else {
+      localStorage.setItem(key, JSON.stringify(edits));
+    }
+
+    return true;
   } catch {
     return false;
   }
-
-  delete edits[index];
-
-  // If nothing remains, remove the whole edits entry.
-  if (Object.keys(edits).length === 0) {
-    localStorage.removeItem(key);
-  } else {
-    localStorage.setItem(key, JSON.stringify(edits));
-  }
-
-  return true;
 }
 
 export function removeAllLocalEdits() {
-  const key = getQuizEditsKey(state.quizStorageKey);
-  localStorage.removeItem(key);
+  try {
+    localStorage.removeItem(getQuizEditsKey(state.quizStorageKey));
+  } catch {}
 }
 
 /**

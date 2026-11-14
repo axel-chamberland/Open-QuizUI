@@ -3962,23 +3962,24 @@ function appendStoredQuestions(edits) {
 }
 function removeLocalEdit(index) {
   const key = getQuizEditsKey(state.quizStorageKey);
-  let edits;
   try {
-    edits = JSON.parse(localStorage.getItem(key)) || {};
+    const edits = JSON.parse(localStorage.getItem(key)) || {};
+    delete edits[index];
+    if (Object.keys(edits).length === 0) {
+      localStorage.removeItem(key);
+    } else {
+      localStorage.setItem(key, JSON.stringify(edits));
+    }
+    return true;
   } catch {
     return false;
   }
-  delete edits[index];
-  if (Object.keys(edits).length === 0) {
-    localStorage.removeItem(key);
-  } else {
-    localStorage.setItem(key, JSON.stringify(edits));
-  }
-  return true;
 }
 function removeAllLocalEdits() {
-  const key = getQuizEditsKey(state.quizStorageKey);
-  localStorage.removeItem(key);
+  try {
+    localStorage.removeItem(getQuizEditsKey(state.quizStorageKey));
+  } catch {
+  }
 }
 function removeLocalEditAndShift(index) {
   const key = getQuizEditsKey(state.quizStorageKey);
