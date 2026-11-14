@@ -2976,7 +2976,7 @@ function renderMath(text, mathReady) {
     if (mathReady) {
       return match;
     }
-    return `<code>${expr}</code>`;
+    return `<code>${escapeHtml(expr)}</code>`;
   });
 }
 function escapeHtml(value) {

@@ -16,6 +16,12 @@ describe("renderMarkdown", () => {
     expect(renderMarkdown("$x^2$", false)).toBe("<code>x^2</code>");
   });
 
+  it("renders HTML entities and tags literally in the math fallback", () => {
+    expect(renderMarkdown("$x &lt; y$ and $<b>x</b>$", false)).toBe(
+      "<code>x &amp;lt; y</code> and <code>&lt;b&gt;x&lt;/b&gt;</code>",
+    );
+  });
+
   it("preserves valid HTML", () => {
     expect(renderMarkdown("<b>hello</b>", true)).toBe("<b>hello</b>");
   });
