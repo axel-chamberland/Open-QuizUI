@@ -117,7 +117,7 @@
         "question": "<p>In an oriented (directed) graph, how is degree distinguished?</p>",
         "options": [
           "<p>Between total degree and edge weight</p>",
-          "<p>Between incoming degree ($\\text{deg_in}$) and outgoing degree ($\\text{════}\\text{deg_out}$)</p>",
+          "<p>Between incoming degree ($\\text{deg\\_in}$) and outgoing degree ($\\text{════}\\text{deg\\_out}$)</p>",
           "<p>Between the number of vertices and the number of edges</p>",
           "<p>Between cycles and paths</p>"
         ],
@@ -139,7 +139,7 @@
           "<p>$|V| = |E|$</p>",
           "<p>$|V| = |E| + 1$</p>",
           "<p>$|V| = |E| - 1$</p>",
-          "<p>$|V| &lt; |E|$</p>"
+          "<p>$|V| < |E|$</p>"
         ],
         "correct_index": 1
       },

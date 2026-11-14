@@ -124,7 +124,7 @@
         "correct_index": 0
       },
       {
-        "question": "<p>Evaluate the sum: $\\sum_{n=0}^{\\infty} r^n$ (where $|r|&lt;1$)</p>",
+        "question": "<p>Evaluate the sum: $\\sum_{n=0}^{\\infty} r^n$ (where $|r|<1$)</p>",
         "options": [
           "<p>3</p>",
           "<p>$-1/(r - 1)$</p>",

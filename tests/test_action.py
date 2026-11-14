@@ -4,9 +4,24 @@ import os
 
 import pytest
 
+from backend import quiz_function, quiz_tool
 from backend.quiz_function import clean_message, parse_quiz
 
 TEST_DIR = "tests/test_files"
+
+
+@pytest.mark.parametrize("backend", [quiz_function, quiz_tool])
+def test_markdown_conversion_preserves_math_verbatim(backend):
+    text = "$x > y$ and $x < y$ and $x &lt; y$\n\n$$\na & b\n$$"
+    assert backend._markdown_to_html(text) == (
+        "<p>$x > y$ and $x < y$ and $x &lt; y$</p>\n<p>$$\na & b\n$$</p>"
+    )
+
+
+@pytest.mark.parametrize("backend", [quiz_function, quiz_tool])
+def test_inline_math_does_not_span_blockquotes(backend):
+    text = "$5\n\n> quote\n\n$3"
+    assert "<blockquote>" in backend._markdown_to_html(text)
 
 
 def minimal_body(content: str):

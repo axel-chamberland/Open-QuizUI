@@ -117,7 +117,7 @@
         "question": "<p>Comment l'algorithme de Prim choisit-il la prochaine arête à ajouter ?</p>",
         "options": [
           "<p>En choisissant l'arête la plus longue</p>",
-          "<p>En choisissant l'arête $(s_1, s'_2)$ telle que $s_1 \\in V'$ et $s_2 \\notin V'$ avec le coût minimal</p>",
+          "<p>En choisissant l'arête $(s_1, s'\\_2)$ telle que $s_1 \\in V'$ et $s_2 \\notin V'$ avec le coût minimal</p>",
           "<p>En choisissant une arête au hasard</p>",
           "<p>En suivant l'ordre alphabétique des sommets</p>"
         ],
@@ -137,7 +137,7 @@
         "question": "<p>Quelle est la première étape de l'algorithme de Kruskal ?</p>",
         "options": [
           "<p>Choisir un sommet arbitraire</p>",
-          "<p>Créer des ensembles ${v}$ pour chaque sommet</p>",
+          "<p>Créer des ensembles $\\{v\\}$ pour chaque sommet</p>",
           "<p>Trier les arêtes par poids</p>",
           "<p>Supprimer les cycles</p>"
         ],

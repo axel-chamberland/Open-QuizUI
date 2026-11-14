@@ -1596,19 +1596,20 @@ def clean_text(text: str, add_period=True) -> str:
 
 
 def _markdown_to_html(text):
-    code = []
+    protected = []
 
     def protect(match):
-        code.append(match.group(0))
-        return f"\x00CODE{len(code) - 1}\x00"
+        protected.append(match.group(0))
+        return f"\x00CODE{len(protected) - 1}\x00"
 
-    text = re.sub(r"`[^`]*`", protect, text)
+    text = re.sub(
+        r"`[^`]*`|\$\$[\s\S]*?\$\$|\$(?!\$)[^\r\n]*?\$(?!\$)",
+        protect,
+        text,
+    )
     text = markdown.markdown(text, extensions=["tables"])
 
-    for i, value in enumerate(code):
-        text = text.replace(f"\x00CODE{i}\x00", value)
-
-    return text
+    return re.sub(r"\x00CODE(\d+)\x00", lambda match: protected[int(match[1])], text)
 
 
 # =========================
