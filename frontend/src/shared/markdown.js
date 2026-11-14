@@ -97,6 +97,9 @@ export function renderMarkdown(text, mathReady) {
   // Markdown.
   // Code spans and code blocks are already protected.
   text = text
+    .replace(/(?<!\\)((?:\\\\)*)\\\*/g, (_, slashes) =>
+      protect("\\".repeat(slashes.length / 2) + "&#42;"),
+    )
     .replace(/\*\*(.*?)\*\*/g, "<b>$1</b>")
     .replace(/\*(.*?)\*/g, "<i>$1</i>");
 

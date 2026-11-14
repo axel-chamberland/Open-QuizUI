@@ -413,11 +413,17 @@ def _markdown_to_html(text):
     protected = []
 
     def protect(match):
-        protected.append(match.group(0))
+        value = match[0]
+        if value.endswith(r"\*"):
+            # Keep escaped asterisks literal in the frontend Markdown pass.
+            value = "\\" * ((len(value) - 2) // 2) + "&#42;"
+        protected.append(value)
         return f"\x00CODE{len(protected) - 1}\x00"
 
     text = re.sub(
-        r"`[^`]*`|\$\$[\s\S]*?\$\$|\$(?!\$)[^\r\n]*?\$(?!\$)|" + BACKSLASH_MATH,
+        r"`[^`]*`|\$\$[\s\S]*?\$\$|\$(?!\$)[^\r\n]*?\$(?!\$)|"
+        + BACKSLASH_MATH
+        + r"|(?<!\\)(?:\\\\)*\\\*",
         protect,
         text,
     )
@@ -3043,7 +3049,10 @@ function renderMarkdown(text, mathReady) {
       return match.replace(/</g, "&lt;").replace(/>/g, "&gt;");
     }
   );
-  text = text.replace(/\*\*(.*?)\*\*/g, "<b>$1</b>").replace(/\*(.*?)\*/g, "<i>$1</i>");
+  text = text.replace(
+    /(?<!\\)((?:\\\\)*)\\\*/g,
+    (_, slashes) => protect("\\".repeat(slashes.length / 2) + "&#42;")
+  ).replace(/\*\*(.*?)\*\*/g, "<b>$1</b>").replace(/\*(.*?)\*/g, "<i>$1</i>");
   return text.replace(
     /\uE000(\d+)\uE001/g,
     (_, index) => protectedParts[Number(index)]

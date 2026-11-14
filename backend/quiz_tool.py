@@ -324,11 +324,17 @@ def _markdown_to_html(text):
     protected = []
 
     def protect(match):
-        protected.append(match.group(0))
+        value = match[0]
+        if value.endswith(r"\*"):
+            # Keep escaped asterisks literal in the frontend Markdown pass.
+            value = "\\" * ((len(value) - 2) // 2) + "&#42;"
+        protected.append(value)
         return f"\x00CODE{len(protected) - 1}\x00"
 
     text = re.sub(
-        r"`[^`]*`|\$\$[\s\S]*?\$\$|\$(?!\$)[^\r\n]*?\$(?!\$)|" + BACKSLASH_MATH,
+        r"`[^`]*`|\$\$[\s\S]*?\$\$|\$(?!\$)[^\r\n]*?\$(?!\$)|"
+        + BACKSLASH_MATH
+        + r"|(?<!\\)(?:\\\\)*\\\*",
         protect,
         text,
     )

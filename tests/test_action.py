@@ -88,6 +88,14 @@ B. Another detail
 
 
 @pytest.mark.parametrize("backend", [quiz_function, quiz_tool])
+def test_escaped_asterisks_survive_markdown_conversion(backend):
+    text = r"Here is a literal \*asterisk\* and *real emphasis*."
+    assert backend._markdown_to_html(text) == (
+        "<p>Here is a literal &#42;asterisk&#42; and <em>real emphasis</em>.</p>"
+    )
+
+
+@pytest.mark.parametrize("backend", [quiz_function, quiz_tool])
 def test_backslash_math_delimiters(backend):
     inline = r"\(x < y\)"
     display = "\\[\nx > y\n\\]"

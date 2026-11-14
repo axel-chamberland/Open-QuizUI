@@ -2,6 +2,18 @@ import { describe, it, expect } from "vitest";
 import { renderMarkdown, toMarkdown } from "../frontend/src/shared/markdown.js";
 
 describe("renderMarkdown", () => {
+  it("preserves escaped asterisks as literal text", () => {
+    const container = document.createElement("div");
+    container.innerHTML = renderMarkdown(
+      String.raw`<p>Here is a literal \*asterisk\* and *real emphasis*.</p>`,
+      false,
+    );
+    expect(container.textContent).toBe(
+      "Here is a literal *asterisk* and real emphasis.",
+    );
+    expect(container.querySelector("i").textContent).toBe("real emphasis");
+  });
+
   it("renders bold and italic Markdown", () => {
     expect(renderMarkdown("**bold** and *italic*", true)).toBe(
       "<b>bold</b> and <i>italic</i>",
