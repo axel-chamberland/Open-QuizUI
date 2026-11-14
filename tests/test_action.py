@@ -11,6 +11,15 @@ TEST_DIR = "tests/test_files"
 
 
 @pytest.mark.parametrize("backend", [quiz_function, quiz_tool])
+def test_backslash_math_delimiters(backend):
+    inline = r"\(x < y\)"
+    display = "\\[\nx > y\n\\]"
+    text = f"{inline}\n\n{display}"
+    assert clean_message(text, True, True) == text
+    assert backend._markdown_to_html(text) == f"<p>{inline}</p>\n<p>{display}</p>"
+
+
+@pytest.mark.parametrize("backend", [quiz_function, quiz_tool])
 def test_markdown_conversion_preserves_math_verbatim(backend):
     text = "$x > y$ and $x < y$ and $x &lt; y$\n\n$$\na & b\n$$"
     assert backend._markdown_to_html(text) == (

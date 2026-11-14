@@ -314,6 +314,9 @@ def _first_present(d: dict, keys, expected_type=None):
     return None
 
 
+BACKSLASH_MATH = r"\\\([^\r\n]*?\\\)|\\\[[\s\S]*?\\\]"
+
+
 def _markdown_to_html(text):
     protected = []
 
@@ -322,7 +325,7 @@ def _markdown_to_html(text):
         return f"\x00CODE{len(protected) - 1}\x00"
 
     text = re.sub(
-        r"`[^`]*`|\$\$[\s\S]*?\$\$|\$(?!\$)[^\r\n]*?\$(?!\$)",
+        r"`[^`]*`|\$\$[\s\S]*?\$\$|\$(?!\$)[^\r\n]*?\$(?!\$)|" + BACKSLASH_MATH,
         protect,
         text,
     )

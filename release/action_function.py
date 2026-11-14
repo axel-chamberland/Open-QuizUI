@@ -1487,6 +1487,9 @@ def clean_message(text: str, strip_refs: bool, strip_end_brackets: bool):
         text,
     )
 
+    # Keep display math intact when stripping trailing bracketed hints.
+    text = re.sub(BACKSLASH_MATH, protect, text)
+
     # Remove reference-style link definitions: [id]: url
     if strip_refs:
         text = re.sub(
@@ -1684,6 +1687,9 @@ def clean_text(text: str, add_period=True) -> str:
     return text
 
 
+BACKSLASH_MATH = r"\\\([^\r\n]*?\\\)|\\\[[\s\S]*?\\\]"
+
+
 def _markdown_to_html(text):
     protected = []
 
@@ -1692,7 +1698,7 @@ def _markdown_to_html(text):
         return f"\x00CODE{len(protected) - 1}\x00"
 
     text = re.sub(
-        r"`[^`]*`|\$\$[\s\S]*?\$\$|\$(?!\$)[^\r\n]*?\$(?!\$)",
+        r"`[^`]*`|\$\$[\s\S]*?\$\$|\$(?!\$)[^\r\n]*?\$(?!\$)|" + BACKSLASH_MATH,
         protect,
         text,
     )
@@ -4146,15 +4152,6 @@ function initializeState(quiz2) {
 }
 
 // frontend/src/shared/markdown.js
-function renderMath(text, mathReady) {
-  if (!text) return "";
-  return text.replace(/\$(.+?)\$/g, (match, expr) => {
-    if (mathReady) {
-      return match;
-    }
-    return `<code>${escapeHtml(expr)}</code>`;
-  });
-}
 function escapeHtml(value) {
   return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/'/g, "&#39;");
 }
@@ -4174,8 +4171,16 @@ function renderMarkdown(text, mathReady) {
     /`([^`]*?)`/g,
     (_, content) => protect(`<code>${escapeHtml(content)}</code>`)
   );
-  text = text.replace(/\$\$[\s\S]*?\$\$/g, protect);
-  text = text.replace(/\$(?!\$)[\s\S]*?\$(?!\$)/g, protect);
+  text = text.replace(
+    /\$\$[\s\S]*?\$\$|\$(?!\$)[^\r\n]*?\$(?!\$)|\\\([^\r\n]*?\\\)|\\\[[\s\S]*?\\\]/g,
+    (match) => {
+      if (mathReady) return protect(escapeHtml(match));
+      const delimiterLength = match.startsWith("$") && !match.startsWith("$$") ? 1 : 2;
+      return protect(
+        `<code>${escapeHtml(match.slice(delimiterLength, -delimiterLength))}</code>`
+      );
+    }
+  );
   const voidElements = /* @__PURE__ */ new Set([
     "area",
     "base",
@@ -4213,11 +4218,10 @@ function renderMarkdown(text, mathReady) {
     }
   );
   text = text.replace(/\*\*(.*?)\*\*/g, "<b>$1</b>").replace(/\*(.*?)\*/g, "<i>$1</i>");
-  text = text.replace(
+  return text.replace(
     /\uE000(\d+)\uE001/g,
     (_, index) => protectedParts[Number(index)]
   );
-  return renderMath(text, mathReady);
 }
 function toMarkdown(text) {
   if (!text) return "";

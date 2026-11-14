@@ -1398,6 +1398,9 @@ def clean_message(text: str, strip_refs: bool, strip_end_brackets: bool):
         text,
     )
 
+    # Keep display math intact when stripping trailing bracketed hints.
+    text = re.sub(BACKSLASH_MATH, protect, text)
+
     # Remove reference-style link definitions: [id]: url
     if strip_refs:
         text = re.sub(
@@ -1595,6 +1598,9 @@ def clean_text(text: str, add_period=True) -> str:
     return text
 
 
+BACKSLASH_MATH = r"\\\([^\r\n]*?\\\)|\\\[[\s\S]*?\\\]"
+
+
 def _markdown_to_html(text):
     protected = []
 
@@ -1603,7 +1609,7 @@ def _markdown_to_html(text):
         return f"\x00CODE{len(protected) - 1}\x00"
 
     text = re.sub(
-        r"`[^`]*`|\$\$[\s\S]*?\$\$|\$(?!\$)[^\r\n]*?\$(?!\$)",
+        r"`[^`]*`|\$\$[\s\S]*?\$\$|\$(?!\$)[^\r\n]*?\$(?!\$)|" + BACKSLASH_MATH,
         protect,
         text,
     )

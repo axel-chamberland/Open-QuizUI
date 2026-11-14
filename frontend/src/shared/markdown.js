@@ -1,14 +1,3 @@
-function renderMath(text, mathReady) {
-  if (!text) return "";
-
-  return text.replace(/\$(.+?)\$/g, (match, expr) => {
-    if (mathReady) {
-      return match;
-    }
-    return `<code>${escapeHtml(expr)}</code>`;
-  });
-}
-
 function escapeHtml(value) {
   return value
     .replace(/&/g, "&amp;")
@@ -41,8 +30,18 @@ export function renderMarkdown(text, mathReady) {
   );
 
   // Protect math from Markdown processing.
-  text = text.replace(/\$\$[\s\S]*?\$\$/g, protect);
-  text = text.replace(/\$(?!\$)[\s\S]*?\$(?!\$)/g, protect);
+  text = text.replace(
+    /\$\$[\s\S]*?\$\$|\$(?!\$)[^\r\n]*?\$(?!\$)|\\\([^\r\n]*?\\\)|\\\[[\s\S]*?\\\]/g,
+    (match) => {
+      if (mathReady) return protect(escapeHtml(match));
+
+      const delimiterLength =
+        match.startsWith("$") && !match.startsWith("$$") ? 1 : 2;
+      return protect(
+        `<code>${escapeHtml(match.slice(delimiterLength, -delimiterLength))}</code>`,
+      );
+    },
+  );
 
   // Escape things that look like HTML tags but aren't actually
   // part of a valid HTML element.
@@ -102,12 +101,10 @@ export function renderMarkdown(text, mathReady) {
     .replace(/\*(.*?)\*/g, "<i>$1</i>");
 
   // Restore protected content.
-  text = text.replace(
+  return text.replace(
     /\uE000(\d+)\uE001/g,
     (_, index) => protectedParts[Number(index)],
   );
-
-  return renderMath(text, mathReady);
 }
 
 /*

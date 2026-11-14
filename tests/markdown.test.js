@@ -12,8 +12,19 @@ describe("renderMarkdown", () => {
     expect(renderMarkdown("$**x**$", true)).toBe("$**x**$");
   });
 
+  it("preserves TeX as DOM text for MathJax", () => {
+    const math = "$x < y$ and $$x &lt; y$$ and \\(x < y\\) and \\[\nx > y\n\\]";
+    const container = document.createElement("div");
+    container.innerHTML = renderMarkdown(`<p>${math}</p>`, true);
+
+    expect(container.querySelector("p").textContent).toBe(math);
+  });
+
   it("renders math as code when math is not ready", () => {
     expect(renderMarkdown("$x^2$", false)).toBe("<code>x^2</code>");
+    expect(renderMarkdown("\\(x < y\\) and \\[x > y\\]", false)).toBe(
+      "<code>x &lt; y</code> and <code>x &gt; y</code>",
+    );
   });
 
   it("renders HTML entities and tags literally in the math fallback", () => {
