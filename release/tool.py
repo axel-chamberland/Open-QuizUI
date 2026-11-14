@@ -700,13 +700,15 @@ def wrap_html(
         "quiz": quiz,
     }
 
-    app_data = json.dumps(payload, ensure_ascii=False)
-
-    return (
-        HTML_TEMPLATE
-        .replace("__APP_DATA__", app_data)
-        .replace("__LIGHT_THEME__", light_theme)
-        .replace("__DARK_THEME__", dark_theme)
+    replacements = {
+        "__APP_DATA__": json.dumps(payload, ensure_ascii=False),
+        "__LIGHT_THEME__": light_theme,
+        "__DARK_THEME__": dark_theme,
+    }
+    return regex.sub(
+        "|".join(replacements),
+        lambda match: replacements[match.group()],
+        HTML_TEMPLATE,
     )
 
 

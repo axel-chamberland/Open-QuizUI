@@ -135,6 +135,22 @@ async def action_output(action, body):
     return extract_output(result)
 
 
+def test_theme_placeholders_in_quiz_text_are_preserved(built_action):
+    wrap_html = sys.modules[built_action.__module__].wrap_html
+    quiz = {
+        "title": "What do __LIGHT_THEME__ and __DARK_THEME__ stand for?",
+        "questions": [],
+    }
+    output = wrap_html(
+        quiz,
+        enable_mathjax=False,
+        light_theme=THEMES["default_light"],
+        dark_theme=THEMES["default_dark"],
+    )
+
+    assert extract_payload(output)["quiz"] == quiz
+
+
 def error_emitter():
     """An event emitter that records the notifications it receives."""
     notifications = []
