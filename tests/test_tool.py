@@ -53,6 +53,16 @@ async def test_generate_quiz_success(quiz_tool):
 
 
 @pytest.mark.asyncio
+async def test_generate_quiz_rejects_object_title(quiz_tool):
+    questions = [{"question": "What is 2+2?", "answer": "4", "distractors": ["3"]}]
+
+    response = await quiz_tool.generate_quiz({"name": "Math"}, questions)
+
+    assert isinstance(response, str)
+    assert "title must be a string" in response
+
+
+@pytest.mark.asyncio
 async def test_generate_quiz_flashcard(quiz_tool):
     """Test that a valid flashcard quiz generates an HTMLResponse without distractors."""
     title = "Test Flashcards"

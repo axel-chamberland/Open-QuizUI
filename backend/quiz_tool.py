@@ -171,7 +171,7 @@ class Tools:
 
         return object.__getattribute__(self, name)
 
-    async def generate_quiz(self, title, questions: list[dict]):
+    async def generate_quiz(self, title: str, questions: list[dict]):
         """
         Generate a multiple-choice quiz and display it to the user.
 
@@ -205,6 +205,9 @@ class Tools:
             Generated quiz accessible to the user,
             or an error message.
         """
+        if not isinstance(title, str):
+            return "The quiz title must be a string. Please retry with a text title."
+
         try:
             questions_and_answers, warnings = normalize_questions(
                 questions, self.valves.quiz_mode
