@@ -24,6 +24,13 @@ def test_inline_math_does_not_span_blockquotes(backend):
     assert "<blockquote>" in backend._markdown_to_html(text)
 
 
+@pytest.mark.parametrize("backend", [quiz_function, quiz_tool])
+@pytest.mark.parametrize("delimiter", ["$", "$$"])
+def test_markdown_conversion_preserves_latex_escapes(backend, delimiter):
+    text = delimiter + r"\text{a\_b} + \{x\}" + delimiter
+    assert backend._markdown_to_html(text) == f"<p>{text}</p>"
+
+
 def minimal_body(content: str):
     return {"messages": [{"role": "user", "content": content}]}
 
