@@ -632,7 +632,11 @@ describe("browser smoke", () => {
     await frame.waitForSelector("#question");
 
     /* Answer every question to reach the results page. */
-    for (let index = 0; index < correctionsData.quiz.questions.length; index++) {
+    for (
+      let index = 0;
+      index < correctionsData.quiz.questions.length;
+      index++
+    ) {
       await frame.click('#options button.option:has-text("right")');
       await frame.click("#question-box .next-button");
     }
@@ -683,9 +687,8 @@ describe("browser smoke", () => {
 
     const standalone = await page.evaluate(() => ({
       embedded: document.body.classList.contains("embedded"),
-      maxHeight: getComputedStyle(
-        document.getElementById("results-scroll"),
-      ).maxHeight,
+      maxHeight: getComputedStyle(document.getElementById("results-scroll"))
+        .maxHeight,
     }));
 
     expect(standalone).toEqual({ embedded: false, maxHeight: "none" });

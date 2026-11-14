@@ -152,7 +152,11 @@ describe("loadQuizEdits", () => {
   });
 
   it("applies edits to existing questions", () => {
-    const edited = { question: "edited", options: ["a", "b"], correct_index: 1 };
+    const edited = {
+      question: "edited",
+      options: ["a", "b"],
+      correct_index: 1,
+    };
 
     storeEdits({ 0: edited });
 
@@ -162,8 +166,16 @@ describe("loadQuizEdits", () => {
   });
 
   it("appends questions stored past the end of the quiz", () => {
-    const addedA = { question: "added A", options: ["a", "b"], correct_index: 0 };
-    const addedB = { question: "added B", options: ["a", "b"], correct_index: 1 };
+    const addedA = {
+      question: "added A",
+      options: ["a", "b"],
+      correct_index: 0,
+    };
+    const addedB = {
+      question: "added B",
+      options: ["a", "b"],
+      correct_index: 1,
+    };
 
     storeEdits({ 2: addedA, 3: addedB });
 
@@ -175,7 +187,9 @@ describe("loadQuizEdits", () => {
   });
 
   it("extends the order and the per-question state for appended questions", () => {
-    storeEdits({ 2: { question: "added", options: ["a", "b"], correct_index: 0 } });
+    storeEdits({
+      2: { question: "added", options: ["a", "b"], correct_index: 0 },
+    });
 
     loadQuizEdits(state);
 
@@ -264,7 +278,11 @@ describe("removeAppendedQuestion", () => {
   });
 
   it("removes the question and its slot in the order", () => {
-    appendQuestion({ question: "added", options: ["a", "b"], correct_index: 0 });
+    appendQuestion({
+      question: "added",
+      options: ["a", "b"],
+      correct_index: 0,
+    });
 
     removeAppendedQuestion(2);
 
@@ -275,8 +293,16 @@ describe("removeAppendedQuestion", () => {
   });
 
   it("shifts the questions after the removed one down an index", () => {
-    appendQuestion({ question: "added A", options: ["a", "b"], correct_index: 0 });
-    appendQuestion({ question: "added B", options: ["a", "b"], correct_index: 0 });
+    appendQuestion({
+      question: "added A",
+      options: ["a", "b"],
+      correct_index: 0,
+    });
+    appendQuestion({
+      question: "added B",
+      options: ["a", "b"],
+      correct_index: 0,
+    });
 
     removeAppendedQuestion(2);
 

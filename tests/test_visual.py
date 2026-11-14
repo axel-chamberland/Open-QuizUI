@@ -240,7 +240,9 @@ async def test_forcing_flashcards_on_a_multiple_choice_quiz(built_action):
 async def test_forcing_multiple_choice_on_flashcards(built_action):
     """Forcing a quiz with choices refuses a flashcard message."""
 
-    with open(FLASHCARD_DIR / "Flashcards_bare_heading.json", "r", encoding="utf-8") as f:
+    with open(
+        FLASHCARD_DIR / "Flashcards_bare_heading.json", "r", encoding="utf-8"
+    ) as f:
         content = json.load(f)["content"]
 
     notifications, emitter = error_emitter()

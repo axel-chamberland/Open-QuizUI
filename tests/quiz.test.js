@@ -371,9 +371,9 @@ describe("toggleSRS", () => {
 
     expect(state.srs).toBe(false);
     expect(setStoredQuestionIndex).toHaveBeenCalledWith("test-quiz", 2);
-    expect(JSON.parse(localStorage.getItem("appDataOverrides_test-quiz"))).toEqual(
-      { srsOnLoad: false },
-    );
+    expect(
+      JSON.parse(localStorage.getItem("appDataOverrides_test-quiz")),
+    ).toEqual({ srsOnLoad: false });
     expect(document.body.classList.contains("srs-mode")).toBe(false);
   });
 

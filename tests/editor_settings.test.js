@@ -44,13 +44,11 @@ vi.mock("../frontend/src/srs.js", async () => {
 document.documentElement.innerHTML =
   indexHtml.match(/<html[^>]*>([\s\S]*)<\/html>/i)?.[1] ?? indexHtml;
 
-const { openEditor, saveEdit } = await import(
-  "../frontend/src/rendering/editor.js"
-);
+const { openEditor, saveEdit } =
+  await import("../frontend/src/rendering/editor.js");
 
-const { saveLocalEdit } = await import(
-  "../frontend/src/persistence/quiz_edits.js"
-);
+const { saveLocalEdit } =
+  await import("../frontend/src/persistence/quiz_edits.js");
 
 const { initSRS } = await import("../frontend/src/srs.js");
 

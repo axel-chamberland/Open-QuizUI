@@ -3,6 +3,7 @@
     "esbuild": "^0.28.2",
     "jsdom": "^30.0.1",
     "playwright": "1.62.0",
+    "prettier": "3.9.10",
     "vitest": "^5.0.0"
   },
   "allowScripts": {
@@ -13,6 +14,8 @@
     "test": "vitest run",
     "test:python": "pytest",
     "test:all": "npm test && pytest",
+    "format": "prettier --write \"frontend/**/*.{js,css,html}\" \"tests/**/*.js\" && python -m ruff format backend tests && npm run build",
+    "format:check": "prettier --check \"frontend/**/*.{js,css,html}\" \"tests/**/*.js\" && python -m ruff format --check backend tests release",
     "build": "python backend/build.py",
     "release": "npm run test:all && npm run build"
   }

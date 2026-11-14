@@ -7,11 +7,13 @@ Machine-specific notes (environment, in-flight work) live in the gitignored `AGE
 ## Commands
 
 ```bash
-pip install -e .        # Python deps (no requirements.txt); use a venv
+pip install -e '.[dev]' # Python deps and Ruff; use a venv
 npm ci                  # JS dev deps; its postinstall also fetches Playwright's Chromium
 npm test                # Vitest (tests/*.test.js)
 npm run test:python     # pytest (tests/test_*.py)
 npm run test:all        # both
+npm run format          # format source with Prettier and Ruff, then rebuild release/
+npm run format:check    # check source and release formatting without editing files
 npm run build           # python backend/build.py — regenerates release/
 npm run release         # test:all, then build (what CI/PR should end with)
 ```
@@ -53,8 +55,8 @@ npm run release         # test:all, then build (what CI/PR should end with)
 ## Gotchas
 
 - Python ≥ 3.12 (pyproject). CI uses Python 3.12 / Node 22; the docs claim 3.11 too — pyproject wins.
-- CI (`.github/workflows/tests.yml`) runs `npm run test:all` only, and only for pushes to `main` / PRs targeting it — a `dev` push runs nothing — and it never verifies the build is fresh, so a stale `release/` from source changes passes CI unnoticed.
-- No formatter is configured or pinned: no Python formatter is a dependency, and `npx prettier` fetches a version newer than most of the JS tree was written with, so keep touched files clean rather than reformatting wholesale.
+- CI (`.github/workflows/tests.yml`) checks formatting, runs the release command, and verifies that the build leaves `release/` unchanged. It runs on pushes to `main` and PRs targeting it.
+- Prettier and Ruff versions are pinned in the JavaScript and Python development dependencies. The build runs Ruff on the generated Python release files.
 - Spaced repetition imports `ts-fsrs@5.4.2` from jsDelivr at runtime, like MathJax, so both need Internet access. Offline, MathJax leaves LaTeX as plain text and starting review mode raises an alert that the library could not be loaded (`quiz.js`).
 - Per-user valves are stored **per user**, not per chat (in Open WebUI: Chat Controls → Valves → Functions). The Action's `effective_valves()` layers only the fields a user actually set (`model_dump(exclude_unset=True)`) over the admin's `Valves`, so untouched fields — and users who never opened the panel — keep the admin's values. The Tool has no `UserValves`.
 - repo remote is `Open-QuizUI` (`git@github.com:axel-chamberland/Open-QuizUI.git`), while backend docstrings reference `OpenQuizUI` GitHub Pages — docs are in `docs/` (Home, Getting-Started, Usage, Customization, Formatting, Troubleshooting, Development, Contributing).

@@ -58,10 +58,10 @@ source .venv/bin/activate
 Install the project and its dependencies:
 
 ```bash
-pip install -e .
+pip install -e '.[dev]'
 ```
 
-The Python dependencies are defined in `pyproject.toml`; there is no separate `requirements.txt` file to maintain.
+The Python dependencies and the pinned Ruff version are defined in `pyproject.toml`.
 
 ```bash
 pytest
@@ -86,3 +86,15 @@ npm run test:all
 ```
 
 Run the full test suite before submitting changes to make sure the affected functionality still works.
+
+### Formatting and release files
+
+With the virtual environment active, run `npm ci` to install the pinned Prettier version. Then use these commands from the repository root.
+
+```bash
+npm run format        # Format source and regenerate release files
+npm run format:check  # Check source and release formatting without editing files
+npm run release       # Run both test suites and regenerate release files
+```
+
+Prettier formats the frontend and JavaScript tests. Ruff formats the Python source and tests, and the build runs Ruff on both generated release files. Commit any regenerated release files with the source changes that produced them. CI rebuilds the release files and checks that they match the committed copies.

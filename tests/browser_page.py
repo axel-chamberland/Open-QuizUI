@@ -21,9 +21,7 @@ from backend.build import ACTION_FILE, ACTION_OUTPUT, build
 
 build(ACTION_FILE, ACTION_OUTPUT)
 
-spec = importlib.util.spec_from_file_location(
-    "browser_smoke_action", ACTION_OUTPUT
-)
+spec = importlib.util.spec_from_file_location("browser_smoke_action", ACTION_OUTPUT)
 assert spec is not None, "Could not load the built action function"
 assert spec.loader is not None
 

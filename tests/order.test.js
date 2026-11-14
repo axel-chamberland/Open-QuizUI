@@ -19,10 +19,8 @@ document.documentElement.innerHTML =
 
 const { openOrderEditor } = await import("../frontend/src/rendering/order.js");
 
-const {
-  closeEditorConfirm,
-  openEditor,
-} = await import("../frontend/src/rendering/editor.js");
+const { closeEditorConfirm, openEditor } =
+  await import("../frontend/src/rendering/editor.js");
 
 const { state } = await import("../frontend/src/state.js");
 
@@ -117,8 +115,9 @@ describe("question list overlay", () => {
       document.getElementById("global-prompt").classList.contains("visible"),
     ).toBe(false);
 
-    expect(document.getElementById("order-editor").classList.contains("visible"))
-      .toBe(true);
+    expect(
+      document.getElementById("order-editor").classList.contains("visible"),
+    ).toBe(true);
     expect(editorNumber()).toBe("Question 2 of 4");
   });
 
@@ -245,9 +244,9 @@ describe("question list overlay", () => {
     expect(state.currentQuestionIndex).toBe(2);
     expect(editorNumber()).toBe("Question 3 of 3");
 
-    expect(
-      document.querySelector(".order-current").dataset.questionIndex,
-    ).toBe("2");
+    expect(document.querySelector(".order-current").dataset.questionIndex).toBe(
+      "2",
+    );
 
     // Nothing was waiting to be saved.
     expect(

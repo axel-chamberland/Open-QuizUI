@@ -14,6 +14,12 @@ dependencies = [
   "regex==2026.9.10",
 ]
 
+[project.optional-dependencies]
+dev = ["ruff==0.17.1"]
+
+[tool.ruff]
+target-version = "py312"
+
 [tool.setuptools.packages.find]
 where = ["backend"]
 

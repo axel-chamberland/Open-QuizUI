@@ -4298,15 +4298,9 @@ ${value.replace(/\n+$/, "")}
       }
       // Lists
       case "ul":
-        return "\n\n" + [...node.children].filter(
-          (child) => child.tagName.toLowerCase() === "li"
-        ).map((child) => `- ${convert(child).trim()}`).join("\n") + "\n\n";
+        return "\n\n" + [...node.children].filter((child) => child.tagName.toLowerCase() === "li").map((child) => `- ${convert(child).trim()}`).join("\n") + "\n\n";
       case "ol":
-        return "\n\n" + [...node.children].filter(
-          (child) => child.tagName.toLowerCase() === "li"
-        ).map(
-          (child, index) => `${index + 1}. ${convert(child).trim()}`
-        ).join("\n") + "\n\n";
+        return "\n\n" + [...node.children].filter((child) => child.tagName.toLowerCase() === "li").map((child, index) => `${index + 1}. ${convert(child).trim()}`).join("\n") + "\n\n";
       case "li":
         return content;
       // Tables
@@ -4340,14 +4334,14 @@ ${"#".repeat(level)} ${content.trim()}
     }
   }
   function convertTable(table) {
-    const rows = [...table.querySelectorAll(":scope > tbody > tr, :scope > tr")];
+    const rows = [
+      ...table.querySelectorAll(":scope > tbody > tr, :scope > tr")
+    ];
     if (!rows.length) {
       return "";
     }
     const data = rows.map(
-      (row) => [...row.children].filter(
-        (cell) => ["th", "td"].includes(cell.tagName.toLowerCase())
-      ).map(
+      (row) => [...row.children].filter((cell) => ["th", "td"].includes(cell.tagName.toLowerCase())).map(
         (cell) => convert(cell).trim().replace(/\|/g, "\\|").replace(/\n+/g, " ")
       )
     );
@@ -4359,15 +4353,9 @@ ${"#".repeat(level)} ${content.trim()}
       { length: columnCount },
       (_, i) => data[0][i] || ""
     );
-    const separator = Array.from(
-      { length: columnCount },
-      () => "---"
-    );
+    const separator = Array.from({ length: columnCount }, () => "---");
     const body = data.slice(1).map(
-      (row) => Array.from(
-        { length: columnCount },
-        (_, i) => row[i] || ""
-      )
+      (row) => Array.from({ length: columnCount }, (_, i) => row[i] || "")
     );
     return [
       "",

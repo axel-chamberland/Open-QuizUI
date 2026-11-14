@@ -1,5 +1,6 @@
 import re
 import subprocess
+import sys
 import tempfile
 from pathlib import Path
 
@@ -236,6 +237,10 @@ HTML_TEMPLATE = r"""{html}"""
 
     output_file.parent.mkdir(exist_ok=True)
     output_file.write_text(python)
+    subprocess.run(
+        [sys.executable, "-m", "ruff", "format", "--quiet", str(output_file)],
+        check=True,
+    )
 
     print(f"Built: {output_file}")
 
