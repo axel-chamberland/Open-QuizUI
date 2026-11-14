@@ -7,7 +7,7 @@
         "question": "<p>Quelle est la complexité temporelle moyenne d'une opération SEARCH dans une Hash Map ?</p>",
         "options": [
           "<p>O(1)</p>",
-          "<p><em>O(log n)</em></p>",
+          "<p>O(log n)</p>",
           "<p>$a \\leftarrow b$  O(n)</p>",
           "<p>O(n²)</p>"
         ],
@@ -23,7 +23,7 @@
           "<p>Arbre binaire</p>"
         ],
         "correct_index": 1,
-        "explanation": "<p>Pile/Stack/LIFO - Last In First Out</p>"
+        "explanation": "<p>(Pile/Stack/LIFO - Last In First Out)</p>"
       },
       {
         "question": "<p>Quelle opération est la plus lente dans une liste chaînée comparée à un tableau ?</p>",
@@ -34,7 +34,7 @@
           "<p>Parcourir tous les éléments</p>"
         ],
         "correct_index": 0,
-        "explanation": "<p>Accès O(n) vs O(1)</p>"
+        "explanation": "<p>(Accès O(n) vs O(1))</p>"
       },
       {
         "question": "<p>Quelle structure de données est utilisée pour implémenter un algorithme d'inversage ?</p>",
@@ -45,7 +45,7 @@
           "<p>Hash Table</p>"
         ],
         "correct_index": 1,
-        "explanation": "<p>Utilise 2 piles ou une pile + queue inversée pour invertir le contenu sans modifier la structure originale.</p>"
+        "explanation": "<p>(Utilise 2 piles ou une pile + queue inversée pour invertir le contenu sans modifier la structure originale.</p>"
       },
       {
         "question": "<p>Quel est l'inconvénient principal des tables de hachage ?</p>",
@@ -56,7 +56,7 @@
           "<p>Elles nécessitent une connaissance du nombre exact d'opérations avant création</p>"
         ],
         "correct_index": 1,
-        "explanation": "<p>Les mauvaises fonctions de hachage ou les collisions fréquentes dégradent la performance.</p>"
+        "explanation": "<p>(Les mauvaises fonctions de hachage ou les collisions fréquentes dégradent la performance.</p>"
       },
       {
         "question": "<p>Dans un arbre B, qu'est-ce que M représente ?</p>",
@@ -67,7 +67,7 @@
           "<p>La charge moyenne du disque dur lors des insertions/suppressions.</p>"
         ],
         "correct_index": 1,
-        "explanation": "<p>M = nombre max d'enfants par noeud interne, M-1 nombres max clés internes.</p>"
+        "explanation": "<p>(M = nombre max d'enfants par noeud interne, M-1 nombres max clés internes.)</p>"
       },
       {
         "question": "<p>Quelle opération est O(√n dans le pire cas pour un arbre B ?</p>",
@@ -78,7 +78,7 @@
           "<p>Mise à jour racine après insertion/suppression massives.</p>"
         ],
         "correct_index": 1,
-        "explanation": "<p>L'équilibrage prend O(√n) quand le nombre de clés dépasse un certain seuil.</p>"
+        "explanation": "<p>(L'équilibrage prend O(√n) quand le nombre de clés dépasse un certain seuil.)</p>"
       },
       {
         "question": "<p>Dans quelle structure peut-on trouver une paire de nombres dont la somme est égale à une valeur cible en temps optimal ?</p>",
@@ -89,7 +89,7 @@
           "<p>Arbre binaire binomial ou arbre AVL.</p>"
         ],
         "correct_index": 2,
-        "explanation": "<p>On garde la somme dans le hash et on cherche O(1).</p>"
+        "explanation": "<p>(On garde la somme dans le hash et on cherche O(1)).</p>"
       },
       {
         "question": "<p>Quel type de structure convient mieux à un navigateur d'historique ?</p>",
@@ -100,7 +100,7 @@
           "<p>Arbre B multi-niveaux hiérarchisé par session utilisateur.</p>"
         ],
         "correct_index": 2,
-        "explanation": "<p>La pile implémente parfaitement le \"undo\" classique navigateur.</p>"
+        "explanation": "<p>(La pile implémente parfaitement le \"undo\" classique navigateur.)</p>"
       },
       {
         "question": "<p>Quelle opération est O(√n dans un tas binaire ?</p>",
@@ -111,7 +111,7 @@
           "<p>Parcourir toutes les feuilles pour trouver une valeur cible donnée par niveau maximal autorisé.</p>"
         ],
         "correct_index": 2,
-        "explanation": "<p>L'équilibrage prend O(√n) quand le nombre de clés dépasse un certain seuil.</p>"
+        "explanation": "<p>(L'équilibrage prend O(√n) quand le nombre de clés dépasse un certain seuil.)</p>"
       },
       {
         "question": "<p>Dans quel cas l'arbre B redimensionne-t-il sa taille ?</p>",
@@ -122,7 +122,7 @@
           "<p>Si le facteur d'équilibrage global dépasse 50% du nombre maximal théorique possible de clés stockées dans l'arbre B actuel.</p>"
         ],
         "correct_index": 1,
-        "explanation": "<p>La racine devient inapte après insertion massive, donc redimensionne son aire.</p>"
+        "explanation": "<p>(La racine devient inapte après insertion massive, donc redimensionne son aire.)</p>"
       },
       {
         "question": "<p>Quelle opération est O(√n dans le pire cas pour un arbre AVL ?</p>",
@@ -133,7 +133,7 @@
           "<p>Mise à jour racine après insertion/suppression massives.</p>"
         ],
         "correct_index": 1,
-        "explanation": "<p>L'équilibrage prend O(√n) quand le nombre de clés dépasse un certain seuil.</p>"
+        "explanation": "<p>(L'équilibrage prend O(√n) quand le nombre de clés dépasse un certain seuil.)</p>"
       },
       {
         "question": "<p>Dans quelle structure peut-on trouver une paire de nombres dont la somme est égale à une valeur cible en temps optimal ?</p>",
@@ -144,7 +144,7 @@
           "<p>Arbre binaire binomial ou arbre AVL.</p>"
         ],
         "correct_index": 2,
-        "explanation": "<p>On garde la somme dans le hash et on cherche O(1).</p>"
+        "explanation": "<p>(On garde la somme dans le hash et on cherche O(1)).</p>"
       },
       {
         "question": "<p>Quelle opération est O(log n) dans un tas binaire ?</p>",
@@ -155,7 +155,7 @@
           "<p>Parcourir toutes les feuilles pour trouver une valeur cible donnée par niveau maximal autorisé.</p>"
         ],
         "correct_index": 0,
-        "explanation": "<p>La recherche prend O(log n).</p>"
+        "explanation": "<p>(La recherche prend O(log n)).</p>"
       },
       {
         "question": "<p>Quelle opération est constante en temps dans un tas binaire ?</p>",
@@ -166,7 +166,7 @@
           "<p>Parcourir toutes les feuilles pour trouver une valeur cible donnée par niveau maximal autorisé.</p>"
         ],
         "correct_index": 3,
-        "explanation": "<p>L'extraction prend O(1).</p>"
+        "explanation": "<p>(L'extraction prend O(1)).</p>"
       }
     ]
   ]

@@ -5,7 +5,7 @@ import os
 import pytest
 
 from backend import quiz_function, quiz_tool
-from backend.quiz_function import clean_explanation, clean_message, parse_quiz
+from backend.quiz_function import clean_message, clean_text, parse_quiz
 
 TEST_DIR = "tests/test_files"
 
@@ -14,14 +14,40 @@ TEST_DIR = "tests/test_files"
     "text, expected",
     [
         ("See pages 5–7", "See pages 5–7"),
-        ("*See pages 5–7.*", "*See pages 5–7.*"),
+        ("*See pages 5–7.*", "See pages 5–7."),
+        ("**Explanation**", "Explanation"),
+        ("*Explanation", "Explanation"),
+        (r"\*Explanation", r"\*Explanation"),
+        ("* Explanation", "* Explanation"),
+        ("See *page 5*", "See *page 5*"),
+        ("*First* and *second*", "*First* and *second*"),
+        ("**First** and **second**", "**First** and **second**"),
+        (r"*Escaped closer\*", r"Escaped closer\*"),
+        ("*First\nSecond*", "First\nSecond*"),
+        ("**First\nSecond**", "**First\nSecond**"),
+        ("*First\r\n*Second*", "First\r\n*Second*"),
+        ("*First*\nSecond", "*First*\nSecond"),
+        ("    ", ""),
+        ("B) Sputnik 1", "B) Sputnik 1"),
+        ("a -> b. :)", "a -> b. :)"),
+        (":(", ":("),
+        ("(See page 5.)", "(See page 5.)"),
+        ("Heading\n---", "Heading\n---"),
         ("$$\nx = 2\n$$", "$$\nx = 2\n$$"),
         ("See pages 5–7.\n\n---", "See pages 5–7."),
         ("— See pages 5–7.", "— See pages 5–7."),
     ],
 )
-def test_explanation_preserves_punctuation(text, expected):
-    assert clean_explanation(text) == expected
+def test_clean_text_preserves_content(text, expected):
+    assert clean_text(text) == expected
+
+
+@pytest.mark.parametrize("separator", [",", "|"])
+def test_answer_key_separators_do_not_become_explanations(separator):
+    message = f"1. First?\nA) One\nB) Two\n\n2. Second?\nA) Three\nB) Four\n\n1.B {separator} 2.A"
+    _, questions = parse_quiz(message, True)
+    assert [question["correct_index"] for question in questions] == [1, 0]
+    assert all("explanation" not in question for question in questions)
 
 
 @pytest.mark.parametrize(
@@ -30,6 +56,11 @@ def test_explanation_preserves_punctuation(text, expected):
         ("1. B — Explanation", "<p>Explanation</p>"),
         ("Answer: B — Explanation", "<p>Explanation</p>"),
         ("Answer: B\n— Explanation", "<p>— Explanation</p>"),
+        (
+            "1. **B** An **important** detail",
+            "<p>An <strong>important</strong> detail</p>",
+        ),
+        ("1. B) a -> b. :)", "<p>a -&gt; b. :)</p>"),
     ],
 )
 def test_answer_key_em_dash_separator(answer, expected):

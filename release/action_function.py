@@ -561,6 +561,9 @@ class NoQuestionsFound(ValueError):
 # \*{0,2} is used to allow bold characters.
 # Asterix could also be stripped them from lines to simplify the regex.
 ANSWER_HEADING = r"^[ \t]*#{1,6}[ \t]+\d+[.)][ \t]+({CHOICE_PATTERN})(?=[ \t]+—)"
+ANSWER_TABLE_ROW = (
+    r"^\|\s*\*{0,2}\d+\*{0,2}\s*\|\s*\*{0,2}({CHOICE_PATTERN})\*{0,2}[^|\n]*(?=\|)"
+)
 
 ANSWER_PATTERNS = [
     ANSWER_HEADING,
@@ -579,7 +582,7 @@ ANSWER_PATTERNS = [
     # Adding a space as option:
     r"\b\d+\s*\*{0,2}\s*[-.):\s]\s*\*{0,2}\s*({CHOICE_PATTERN})\s*\)?(?=\s*(?:\||,|$|\s+\d+\s*[-.):\s]))",
     # In Table
-    r"^\|\s*\*{0,2}\d+\*{0,2}\s*\|\s*\*{0,2}({CHOICE_PATTERN})\*{0,2}[^|\n]*(?=\|)",
+    ANSWER_TABLE_ROW,
     # Numbered list with trailing text: 1. **B** (Vertices and edges) [1]
     # Excludes numbered questions containing '?'
     r"^\s*\*{0,2}\d+\s*\*{0,2}\s*[\.\):-]\s*\*{0,2}({CHOICE_PATTERN})\*{0,2}(?=\s+[^?\n]+$)",
@@ -976,7 +979,7 @@ def build_flashcard(heading, body, label_re, explanations=True):
         explanation = "\n".join(body[i + 1 :]).strip()
 
         if explanations and explanation:
-            explanation = clean_explanation(explanation)
+            explanation = clean_text(explanation)
 
             if explanation:
                 card["explanation"] = explanation
@@ -1013,7 +1016,7 @@ def build_flashcard(heading, body, label_re, explanations=True):
     }
 
     if explanations and rest:
-        explanation = clean_explanation("\n\n".join(rest))
+        explanation = clean_text("\n\n".join(rest))
 
         if explanation:
             card["explanation"] = explanation
@@ -1083,7 +1086,7 @@ def flashcard_table_parser(lines, explanations=True):
             }
 
             if explanations and len(row) > 2:
-                explanation = clean_explanation(row[2])
+                explanation = clean_text(row[2])
 
                 if explanation:
                     card["explanation"] = explanation
@@ -1413,7 +1416,19 @@ def answer_parser(
             # Start immediately after the current answer.
             start = answer_match.end()
 
-            explanation = re.sub(r"^[^\S\r\n]*—", "", text[start:end]).strip()
+            explanation = text[start:end]
+            if pattern == ANSWER_TABLE_ROW:
+                explanation = split_table_row(explanation.split("\n", 1)[0])[0]
+            elif explanation.strip() in {",", "|"}:
+                continue
+            else:
+                explanation = explanation.removeprefix(")")
+                if text[answer_match.start(1) - 2 : answer_match.start(1)] == "**" and (
+                    answer_match.end() == answer_match.end(1)
+                ):
+                    first_line, newline, rest = explanation.partition("\n")
+                    explanation = first_line.replace("**", "", 1) + newline + rest
+                explanation = re.sub(r"^[^\S\r\n]*—", "", explanation).strip()
             # If this is the last answer in an answer key, don't consume
             # unrelated text after the explanation.
             is_last_answer = i == len(answer_matches) - 1
@@ -1428,7 +1443,7 @@ def answer_parser(
                 )[0].strip()
 
             if explanation:
-                explanation = clean_explanation(explanation)
+                explanation = clean_text(explanation)
 
                 # Only add the explanation if cleanup left actual text.
                 if explanation:
@@ -1545,147 +1560,32 @@ def clean_message(text: str, strip_refs: bool, strip_end_brackets: bool):
     return text.strip().replace("\r", "")
 
 
-def _remove_unmatched_delimiters(text: str) -> str:
-    """Remove unmatched (), [], {} delimiters without touching valid pairs."""
-    pairs = {")": "(", "]": "[", "}": "{"}
-    openings = set(pairs.values())
-
-    stack: list[tuple[str, int]] = []
-    remove: set[int] = set()
-
-    for i, char in enumerate(text):
-        if char in openings:
-            stack.append((char, i))
-
-        elif char in pairs:
-            if stack and stack[-1][0] == pairs[char]:
-                stack.pop()
-            else:
-                remove.add(i)
-
-    # Anything left open was unmatched.
-    remove.update(i for _, i in stack)
-
-    if not remove:
-        return text
-
-    return "".join(char for i, char in enumerate(text) if i not in remove)
-
-
-def _remove_unmatched_bold(text: str) -> str:
-    """
-    Remove unmatched ** markers.
-
-    IMPORTANT:
-    Single '*' is never touched, because it may be valid Markdown
-    such as *Why:*.
-    """
-    markers = list(re.finditer(r"\*\*", text))
-
-    if len(markers) % 2 == 0:
-        return text
-
-    # Pair markers from left to right. The final marker is unmatched.
-    marker = markers[-1]
-
-    return text[: marker.start()] + text[marker.end() :]
-
-
-def _normalize_bullet(text: str) -> str:
-    """
-    Convert a malformed Markdown bullet:
-
-        * *Why:* Venus...
-
-    into:
-
-        - *Why:* Venus...
-
-    The *Why:* emphasis is preserved.
-    """
-    return re.sub(
-        r"(?m)^([ \t]*)\*[ \t]+(\*[^*\r\n]+\*)",
-        r"\1- \2",
-        text,
-    )
-
-
-def clean_explanation(text: str) -> str:
-    return clean_text(re.sub(r"(?:^|\n[ \t]*\n)[ \t]*---[ \t]*$", "", text.strip()))
-
-
 def clean_text(text: str) -> str:
-    text = text.strip()
+    text = re.sub(r"(?:^|\n[ \t]*\n)[ \t]*---$", "", text.strip()).rstrip()
+    if not text.startswith("*"):
+        return text
 
-    while True:
-        previous = text
+    # Check leading asterisks on the first line so emphasis on later lines
+    # cannot be mistaken for a closing marker.
+    first_line = re.split(r"[\r\n]", text, maxsplit=1)[0]
 
-        # Remove terminal punctuation temporarily so wrappers
-        body = text
-        suffix = ""
+    # Keep a lone "*" as-is. Whitespace after "*" can start a Markdown list item.
+    if first_line == "*" or first_line[1].isspace():
+        return text
 
-        while body and body[-1] in ".!?;:":
-            suffix = body[-1] + suffix
-            body = body[:-1].rstrip()
+    unescaped = re.sub(r"\\.", "x", first_line)
+    if unescaped.endswith("\\"):
+        return text
 
-        # Remove obvious artifacts at the outermost beginning.
-        body = re.sub(
-            r"^(?:\*\*|[,)\]}>|]+)\s*",
-            "",
-            body,
-        ).strip()
+    stars = unescaped.count("*")
+    if stars == 1:
+        return text[1:]
 
-        # Remove wrappers ONLY when they surround the entire remaining text
-        wrappers = (
-            ('"', '"'),
-            ("(", ")"),
-            ("[", "]"),
-            ("{", "}"),
-            ("**", "**"),
-        )
-
-        for opening, closing in wrappers:
-            if (
-                len(body) >= len(opening) + len(closing)
-                and body.startswith(opening)
-                and body.endswith(closing)
-            ):
-                body = body[len(opening) : -len(closing)].strip()
-                break
-
-        text = body + suffix
-
-        # Remove unmatched brackets anywhere in the text.
-        cleaned = _remove_unmatched_delimiters(text)
-
-        if cleaned != text:
-            text = cleaned
-            continue
-
-        # Remove unmatched ** anywhere in the text.
-        cleaned = _remove_unmatched_bold(text)
-
-        if cleaned != text:
-            text = cleaned
-            continue
-
-        # Normalize malformed Markdown bullets.
-        cleaned = _normalize_bullet(text)
-
-        if cleaned != text:
-            text = cleaned
-            continue
-
-        # Nothing changed -> all recursive cleanup is finished.
-        if text == previous:
-            break
-
-    # Remove a trailing Markdown table delimiter.
-    text = re.sub(r"\s*\|\s*$", "", text).strip()
-
-    # If nothing but punctuation/whitespace remains, there is no explanation.
-    if not re.search(r"[^\W_]", text, re.UNICODE):
-        return ""
+    marker = "**" if first_line.startswith("**") else "*"
+    if first_line == text and stars == 2 * len(marker) and unescaped.endswith(marker):
+        inner = text[len(marker) : -len(marker)]
+        if inner and inner == inner.strip():
+            return inner
 
     return text
 

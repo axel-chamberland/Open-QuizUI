@@ -12,7 +12,7 @@
           "<p>Neptune</p>"
         ],
         "correct_index": 1,
-        "explanation": "<p>Venus\n- <em>Why:</em> Venus rotates on its axis incredibly slowly. It takes about 243 Earth days to complete one full rotation (a day), but only about 225 Earth days to travel all the way around the Sun (a year).</p>"
+        "explanation": "<p>Venus\n* <em>Why:</em> Venus rotates on its axis incredibly slowly. It takes about 243 Earth days to complete one full rotation (a day), but only about 225 Earth days to travel all the way around the Sun (a year).</p>"
       },
       {
         "question": "<p>Which country is completely surrounded by South Africa?</p>",
@@ -23,7 +23,7 @@
           "<p>Namibia</p>"
         ],
         "correct_index": 0,
-        "explanation": "<p>Lesotho\n- <em>Why:</em> Lesotho is an enclaved country completely landlocked within the borders of South Africa. While Eswatini shares most of its border with South Africa, it also borders Mozambique.</p>"
+        "explanation": "<p>Lesotho\n* <em>Why:</em> Lesotho is an enclaved country completely landlocked within the borders of South Africa. While Eswatini shares most of its border with South Africa, it also borders Mozambique.</p>"
       },
       {
         "question": "<p>What is the active ingredient in chili peppers that gives them their heat?</p>",
@@ -34,7 +34,7 @@
           "<p>Curcumin</p>"
         ],
         "correct_index": 2,
-        "explanation": "<p>Capsaicin\n- <em>Why:</em> Capsaicin binds to pain receptors in our mouths that normally detect heat, tricking our brains into feeling a burning sensation. (Piperine is found in black pepper, and allyl isothiocyanate is in wasabi/mustard).</p>"
+        "explanation": "<p>Capsaicin\n* <em>Why:</em> Capsaicin binds to pain receptors in our mouths that normally detect heat, tricking our brains into feeling a burning sensation. (Piperine is found in black pepper, and allyl isothiocyanate is in wasabi/mustard).</p>"
       },
       {
         "question": "<p>In what year did the Berlin Wall fall, signaling the symbolic collapse of the Iron Curtain?</p>",
@@ -45,7 +45,7 @@
           "<p>1993</p>"
         ],
         "correct_index": 1,
-        "explanation": "<p>1989\n- <em>Why:</em> The gates of the Berlin Wall were opened on November 9, 1989, leading to the reunification of Germany and the eventual formal dissolution of the Soviet Union in late 1991.</p>"
+        "explanation": "<p>1989\n* <em>Why:</em> The gates of the Berlin Wall were opened on November 9, 1989, leading to the reunification of Germany and the eventual formal dissolution of the Soviet Union in late 1991.</p>"
       },
       {
         "question": "<p>Which organ in the human body is responsible for producing insulin?</p>",
@@ -56,7 +56,7 @@
           "<p>Spleen</p>"
         ],
         "correct_index": 2,
-        "explanation": "<p>Pancreas\n- <em>Why:</em> Specialized cells in the pancreas (called beta cells in the islets of Langerhans) produce insulin to help regulate glucose levels in your bloodstream.</p>"
+        "explanation": "<p>Pancreas\n* <em>Why:</em> Specialized cells in the pancreas (called beta cells in the islets of Langerhans) produce insulin to help regulate glucose levels in your bloodstream.</p>"
       }
     ]
   ]
