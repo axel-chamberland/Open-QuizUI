@@ -5,17 +5,18 @@ description = "This is a tool / action function for displaying multiple choice a
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-  "pytest~=8.4.1",
-  "pytest-asyncio==1.4.0",
   "pydantic==2.12.5",
   "fastapi==0.135.1",
-  "pytest-asyncio==1.4.0",
   "markdown==3.10.3",
   "regex==2026.9.10",
 ]
 
 [project.optional-dependencies]
-dev = ["ruff==0.17.1"]
+dev = [
+  "pytest~=8.4.1",
+  "pytest-asyncio==1.4.0",
+  "ruff==0.17.1",
+]
 
 [tool.ruff]
 target-version = "py312"
