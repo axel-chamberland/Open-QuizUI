@@ -5,6 +5,12 @@ import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+ESBUILD = (
+    ROOT
+    / "node_modules"
+    / ".bin"
+    / ("esbuild.cmd" if sys.platform == "win32" else "esbuild")
+)
 
 ACTION_FILE = ROOT / "backend" / "quiz_function.py"
 TOOL_FILE = ROOT / "backend" / "quiz_tool.py"
@@ -119,17 +125,22 @@ def main():
 
 
 def build(python_file, output_file):
+    if not ESBUILD.is_file():
+        raise FileNotFoundError(
+            "Local esbuild is missing. Run npm ci in the repository root."
+        )
+
     # Bundle JS
     with tempfile.NamedTemporaryFile(suffix=".js") as tmp:
         subprocess.run(
             [
-                "npx",
-                "esbuild",
+                str(ESBUILD),
                 str(ROOT / "frontend" / "src" / "main.js"),
                 "--bundle",
                 "--format=esm",
                 f"--outfile={tmp.name}",
             ],
+            cwd=ROOT,
             check=True,
         )
 
