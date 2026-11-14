@@ -560,7 +560,10 @@ class NoQuestionsFound(ValueError):
 # This needs polishing, as some could be redundant.
 # \*{0,2} is used to allow bold characters.
 # Asterix could also be stripped them from lines to simplify the regex.
+ANSWER_HEADING = r"^[ \t]*#{1,6}[ \t]+\d+[.)][ \t]+({CHOICE_PATTERN})(?=[ \t]+—)"
+
 ANSWER_PATTERNS = [
+    ANSWER_HEADING,
     # Numbered list: 1. B
     r"^\s*\*{0,2}\d+\s*\*{0,2}\s*[\.\):-]\s*\*{0,2}({CHOICE_PATTERN})\*{0,2}(?=\s*(?:,|$))",
     # Numbered list: 1. B (less strict)
@@ -673,6 +676,9 @@ def question_parser(
         ),
         regex.IGNORECASE,
     )
+    answer_heading_re = regex.compile(
+        ANSWER_HEADING.replace("{CHOICE_PATTERN}", choice_pattern)
+    )
 
     questions = []
     question_lines = []
@@ -698,6 +704,11 @@ def question_parser(
             )
 
     for line_no, line in enumerate(lines):
+        if answer_heading_re.match(line):
+            finish_question()
+            current_question = None
+            continue
+
         question_match = question_re.match(line) if line else None
 
         if question_match:
@@ -1409,7 +1420,9 @@ def answer_parser(
 
             if is_last_answer:
                 explanation = re.split(
-                    r"\n\s*\n",
+                    r"\n[ \t]*(?:---[ \t]*(?=\n|$)|#{1,6}[ \t]+)"
+                    if pattern == ANSWER_HEADING
+                    else r"\n\s*\n",
                     explanation,
                     maxsplit=1,
                 )[0].strip()

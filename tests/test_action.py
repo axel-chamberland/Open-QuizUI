@@ -37,6 +37,25 @@ def test_answer_key_em_dash_separator(answer, expected):
     assert questions[0]["explanation"] == expected
 
 
+def test_answer_key_headings_with_lettered_explanation_lists():
+    message = """### Question 1: Which choice?
+A. First
+B. Second
+
+### 1. B — Second choice
+
+A. A detail
+B. Another detail
+"""
+    _, questions = parse_quiz(message, True)
+    assert len(questions) == 1
+    assert questions[0]["correct_index"] == 1
+    assert (
+        questions[0]["explanation"]
+        == "<p>Second choice</p>\n<p>A. A detail\nB. Another detail</p>"
+    )
+
+
 @pytest.mark.parametrize("backend", [quiz_function, quiz_tool])
 def test_backslash_math_delimiters(backend):
     inline = r"\(x < y\)"
