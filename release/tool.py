@@ -670,10 +670,6 @@ def refers_to_other_options(
 
     patterns.extend(choice_reference_patterns)
 
-    for pattern in patterns:
-        if "previous" in pattern:
-            print(repr(pattern))
-            print(regex.search(pattern, text, regex.IGNORECASE))
     return any(regex.search(pattern, text, regex.IGNORECASE) for pattern in patterns)
 
 
